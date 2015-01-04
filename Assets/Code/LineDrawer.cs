@@ -44,16 +44,10 @@ namespace BGE
         void LateUpdate()
         {
             Camera[] cameras;
-            if (Params.riftEnabled)
-            {
-                GameObject ovrCameraController = (GameObject)GameObject.FindGameObjectWithTag("ovrcamera");
-                cameras = (Camera[])ovrCameraController.GetComponentsInChildren<Camera>();            
-            }
-            else
-            {
-                cameras = new Camera[1];
-                cameras[0] = GameObject.FindObjectOfType<Camera>();
-            }
+            
+            cameras = new Camera[1];
+            cameras[0] = GameObject.FindObjectOfType<Camera>();
+            
 
             for (int j = 0 ; j < cameras.Length ; j ++)
             {
@@ -176,57 +170,17 @@ namespace BGE
 
         void OnPostRender()
         {
-            // This technique wont work with multiple cameras
-            // We have to use Vectrosity if we have multiple cameras
-            if (!Params.riftEnabled)
+            CreateLineMaterial();
+            // set the current material
+            lineMaterial.SetPass(0);
+            GL.Begin(GL.LINES);
+            foreach (Line line in lines)
             {
-                CreateLineMaterial();
-                // set the current material
-                lineMaterial.SetPass(0);
-                GL.Begin(GL.LINES);
-                foreach (Line line in lines)
-                {
-                    GL.Color(line.color);
-                    GL.Vertex3(line.start.x, line.start.y, line.start.z);
-                    GL.Vertex3(line.end.x, line.end.y, line.end.z);
-                }
-                GL.End();
-
-                /*
-                Rect[] viewports;
-
-                Camera[] cameras = null;
-                if (Params.riftEnabled)
-                {
-                    viewports = new Rect[2];
-                    viewports[0] = new Rect(0, 0, Screen.width / 2, Screen.height);
-                    viewports[1] = viewports[0]; // new Rect(Screen.width / 2, 0, Screen.width / 2, Screen.height);
-                    GameObject ovrCameraController = (GameObject)GameObject.FindGameObjectWithTag("ovrcamera");
-                    cameras = (Camera[])ovrCameraController.GetComponentsInChildren<Camera>();
-                    
-                }
-                else
-                {
-                    viewports = new Rect[1];
-                    viewports[0] = new Rect(0, 0, Screen.width, Screen.height);
-                    cameras = new Camera[1];
-                    cameras[0] = GameObject.FindObjectOfType<Camera>();
-                }
-
-                for (int i = 0; i < viewports.Length; i++)
-                {
-                    SteeringManager.PrintVector("Cam " + i, cameras[i].transform.position);
-                    GL.PushMatrix();
-                    lineMaterial.SetPass(0);                                        
-                    GL.modelview = cameras[i].worldToCameraMatrix;
-                    GL.LoadProjectionMatrix(cameras[i].projectionMatrix);
-                    GL.Viewport(viewports[i]);
-                   
-                    GL.PopMatrix();
-                }
-                 */
+                GL.Color(line.color);
+                GL.Vertex3(line.start.x, line.start.y, line.start.z);
+                GL.Vertex3(line.end.x, line.end.y, line.end.z);
             }
-            
+            GL.End();            
             lines.Clear();
         }
     }

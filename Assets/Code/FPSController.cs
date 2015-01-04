@@ -46,26 +46,12 @@ namespace BGE
 
         void Walk(float units)
         {
-            if (Params.riftEnabled)
-            {
-                transform.position += GameObject.FindGameObjectWithTag("rightcamera").transform.forward * units;
-            }
-            else 
-            {
-                transform.position += transform.forward * units;
-            }
+            transform.position += transform.forward * units;
         }
 
         void Strafe(float units)
         {
-            if (Params.riftEnabled)
-            {
-                transform.position += GameObject.FindGameObjectWithTag("rightcamera").transform.right * units;
-            }
-            else
-            {
-                transform.position += transform.right * units;
-            }
+            transform.position += transform.right * units;
         }
 
         // Update is called once per frame
@@ -126,19 +112,13 @@ namespace BGE
             Yaw(contYaw);
 
             // If in Rift mode, dont pitch
-            if (!Params.riftEnabled)
-            {
-                Pitch(-mouseY);
-                Pitch(contPitch);
-            }
+            Pitch(-mouseY);
+            Pitch(contPitch);
 
             float contWalk = Input.GetAxis("Walk Axis");
             float contStrafe = Input.GetAxis("Strafe Axis");
             Walk(-contWalk * speed * Time.deltaTime);
-            Strafe(contStrafe * speed * Time.deltaTime);
-            
-            SteeringManager.PrintVector("Cam pos: ", transform.position);
-            SteeringManager.PrintVector("Cam forward: ", transform.forward);
+            Strafe(contStrafe * speed * Time.deltaTime);            
         }
     }
 }

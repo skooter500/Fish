@@ -17,9 +17,9 @@ namespace BGE
         public Space()
         {            
             // generate the list of cells
-            cellWidth = Params.GetFloat("cell_width");
+            cellWidth = BoidManager.Instance.cellWidth;
             // Create an additional cell either side of the world range 
-            worldRadius = Params.GetFloat("world_range") + Params.GetFloat("cell_width");
+            worldRadius = BoidManager.Instance.worldHalfExtents + cellWidth;
 
             int num = 0;
 

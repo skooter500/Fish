@@ -1,4 +1,4 @@
-world_range = 300
+world_range = 200
 steering_weight_tweaker = 200
 alignment_weight = 1
 wander_radius = 1.2
@@ -6,7 +6,7 @@ wander_distance = 2
 wander_jitter = 80
 tag_range = 50
 max_force = 400
-max_speed = 150
+max_speed = 100
 separation_weight = 1
 alignment_weight = 1
 cohesion_weight = 2

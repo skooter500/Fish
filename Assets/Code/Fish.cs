@@ -110,7 +110,7 @@ namespace BGE
         void Update()
         {
             Boid steering = GetComponent<Boid>();
-            float speed = steering.velocity.magnitude;
+            float speed = steering.acceleration.magnitude;
             Mesh mesh = GetComponent<MeshFilter>().mesh;
             Vector3[] meshVertices = mesh.vertices;
             Vector3[] meshNormals = mesh.normals;

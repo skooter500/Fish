@@ -44,7 +44,8 @@ namespace BGE
         public Vector3 arriveTargetPos;
         public float arriveWeight;
         public float arriveSlowingDistance;
-        public float arriveDecelerationTweaker;
+        [Range(0.0f, 1.0f)]
+        public float arriveDeceleration;
 
         [Header("Wander")]                
         public bool wanderEnabled;
@@ -103,9 +104,11 @@ namespace BGE
 
         [Header("Offset Pursuit")]                                
         public bool offsetPursuitEnabled;
-        public GameObject offsetPursuitTarget;
-        public Vector3 offset;
+        public GameObject offsetPursuitTarget;        
         public float offsetPursuitWeight;
+
+        [HideInInspector]
+        public Vector3 offset;
 
         [Header("Sphere Constrain")]                                
         public bool sphereConstrainEnabled;
@@ -116,10 +119,13 @@ namespace BGE
         [Header("Random Walk")]
         public bool randomWalkEnabled;
         public Vector3 randomWalkCenter;
+        public float randomWalkWait;
+        
         public float randomWalkRadius;
-
+        public bool randomWalkKeepY;
         public float randomWalkWeight;
-
+        private Vector3 randomWalkForce;
+        
         [HideInInspector]        
         public Vector3 force;
         
@@ -151,6 +157,8 @@ namespace BGE
             force = Vector3.zero;
             velocity = Vector3.zero;
             mass = 1.0f;
+            damping = 0.01f;
+            radius = 50.0f;
             neighbourDistance = 50.0f;
 
             calculationMethod = CalculationMethods.WeightedTruncatedRunningSumWithPrioritisation;
@@ -162,15 +170,16 @@ namespace BGE
             fleeTarget = null;
             fleeRange = 100.0f;
 
-            arriveSlowingDistance = 8.0f;
-            arriveDecelerationTweaker = 5.0f;
+            arriveSlowingDistance = 15.0f;
+            arriveDeceleration = 0.9f;
             arriveTargetPos = Vector3.zero;
+            arriveWeight = 1.0f;
 
-            wanderRadius = 20.0f;
-            wanderDistance = 15.0f;
-            wanderJitter = 20.0f;
-            wanderTargetPos = UnityEngine.Random.insideUnitSphere * wanderRadius;
-
+            wanderRadius = 10.0f;
+            wanderDistance = 25.0f;
+            wanderJitter = 200.0f;
+            wanderWeight = 1.0f;
+            
             cohesionWeight = 1.0f;
             separationWeight = 1.0f;
             alignmentWeight = 1.0f;
@@ -189,22 +198,40 @@ namespace BGE
             interposeWeight = 1.0f;
             hideWeight = 1.0f;
 
+            planeAvoidanceWeight = 1.0f;
+
             offsetPursuitTarget = null;
             offsetPursuitWeight = 1.0f;
-            offset = Vector3.zero;
 
             sphereCentre = Vector3.zero;
+            sphereConstrainWeight = 1.0f;
             sphereRadius = 1000.0f;
 
             randomWalkWeight = 1.0f;
-            randomWalkTarget = randomWalkCenter + UnityEngine.Random.insideUnitSphere * randomWalkRadius;
             randomWalkCenter = Vector3.zero;
-            randomWalkRadius = 1000.0f;
+            randomWalkRadius = 500.0f;
+            randomWalkKeepY = true;
+
+            randomWalkForce = Vector3.zero;
+            randomWalkWait = 5.0f;
 
             maxSpeed = 20;
             maxForce = 10;
         }
 
+        void Start()
+        {
+            wanderTargetPos = UnityEngine.Random.insideUnitSphere * wanderRadius;
+            randomWalkTarget = randomWalkCenter + UnityEngine.Random.insideUnitSphere * randomWalkRadius;
+            if (randomWalkKeepY)
+            {
+                randomWalkTarget.y = transform.position.y;
+            }
+            if (offsetPursuitTarget != null)
+            {
+                offset = offsetPursuitTarget.transform.position - transform.position;
+            }
+        }
 
         #region Flags
 
@@ -503,7 +530,7 @@ namespace BGE
             if (drawForces)
             {
                 Quaternion q = Quaternion.FromToRotation(Vector3.forward, force);
-                LineDrawer.DrawArrowLine(transform.position, transform.position + force * 5.0f, Color.blue, q);
+                LineDrawer.DrawArrowLine(transform.position, transform.position + force * 5.0f, Color.magenta, q);
             }
             Utilities.checkNaN(force);
             Vector3 newAcceleration = force / mass;
@@ -742,7 +769,8 @@ namespace BGE
             Vector3 targetPos = pursuitTarget.transform.position + (time * pursuitTarget.GetComponent<Boid>().velocity);
             if (drawGizmos)
             {
-                LineDrawer.DrawLine(transform.position, targetPos, debugLineColour);
+                LineDrawer.DrawTarget(targetPos, Color.red);
+                LineDrawer.DrawLine(transform.position, targetPos, Color.cyan);
             }
 
             return Seek(targetPos);
@@ -764,30 +792,45 @@ namespace BGE
         Vector3 RandomWalk()
         {
             float dist = (transform.position - randomWalkTarget).magnitude;
-            if (dist < 50)
+            if (dist < 1)
             {
+                StartCoroutine("RandomWalkWait");
                 randomWalkTarget = randomWalkCenter + UnityEngine.Random.insideUnitSphere * randomWalkRadius;
+                if (randomWalkKeepY)
+                {
+                    randomWalkTarget.y = transform.position.y;
+                }                
             }
-            return Seek(randomWalkTarget);
+            return Arrive(randomWalkTarget);
         }
 
-
+        IEnumerator RandomWalkWait()
+        {
+            randomWalkEnabled = false;
+            yield return new WaitForSeconds(randomWalkWait);
+            randomWalkEnabled = true;
+        }
 
         Vector3 Wander()
         {
+            // Rotate the wandertargetpos a little each frame
             float jitterTimeSlice = wanderJitter * timeDelta;
 
-            Vector3 toAdd = UnityEngine.Random.insideUnitSphere * jitterTimeSlice;
-            wanderTargetPos += toAdd;
-            wanderTargetPos.Normalize();
-            wanderTargetPos *= wanderRadius;
-
-            Vector3 localTarget = wanderTargetPos + Vector3.forward * wanderDistance;
+            Quaternion q = Quaternion.AngleAxis(jitterTimeSlice, UnityEngine.Random.insideUnitSphere);
+            wanderTargetPos = q * wanderTargetPos;
+            wanderTargetPos = wanderTargetPos.normalized * wanderRadius;
+            Vector3 localTarget = wanderTargetPos + (Vector3.forward * wanderDistance);
             Vector3 worldTarget = transform.TransformPoint(localTarget);
             if (drawGizmos)
             {
-                LineDrawer.DrawTarget(worldTarget, Color.blue);
+                LineDrawer.DrawTarget(worldTarget, Color.red);
+                Vector3 worldCenter = transform.TransformPoint(Vector3.forward * wanderDistance);
+                //GameObject s = GameObject.FindGameObjectWithTag("sphere");
+                //s.transform.localScale = new Vector3(wanderRadius * 2, wanderRadius * 2, wanderRadius * 2);
+                //s.transform.position = worldCenter;
+                LineDrawer.DrawCircle(worldCenter, wanderRadius, 10, Color.yellow);
             }
+            //return Vector3.zero;
             return (worldTarget - transform.position);
         }
 
@@ -826,23 +869,31 @@ namespace BGE
 
         public Vector3 Arrive(Vector3 target)
         {
-            Vector3 toTarget = target - transform.position;
+            Vector3 desired = target - transform.position;
 
-            float distance = toTarget.magnitude;
-            if (distance == 0.0f)
-            {
-                return Vector3.zero;
-            }
-            float DecelerationTweaker = maxSpeed / arriveDecelerationTweaker;
-            float ramped = maxSpeed * (distance / (arriveSlowingDistance * DecelerationTweaker));
-
-            float clamped = Mathf.Min(ramped, maxSpeed);
-            Vector3 desired = clamped * (toTarget / distance);
+            float distance = desired.magnitude;
+            //toTarget.Normalize();
             if (drawGizmos)
             {
-                LineDrawer.DrawTarget(target, Color.gray);
+                LineDrawer.DrawTarget(target, Color.red);
+                LineDrawer.DrawCircle(target, arriveSlowingDistance, 10, Color.yellow);
             }
-            Utilities.checkNaN(desired);
+
+            if (distance < 1.0f)
+            {
+                return Vector3.zero;
+            }            
+            float desiredSpeed = 0;
+            if (distance < arriveSlowingDistance)
+            {
+                desiredSpeed = (distance / arriveSlowingDistance) * maxSpeed * (1.0f - arriveDeceleration);
+            }
+            else
+            {
+                desiredSpeed = maxSpeed;
+            }
+            desired *= desiredSpeed;
+
             return desired - velocity;
         }
 
@@ -1037,9 +1088,6 @@ namespace BGE
         }
         #endregion Flocking
 
-        // Use this for initialization
-        void Start()
-        {
-        }
+        
     }
 }

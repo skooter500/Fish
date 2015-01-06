@@ -123,6 +123,25 @@ namespace BGE
             }
         }
 
+        public static void DrawSphere(Vector3 centre, float radius, int points, Color colour)
+        {
+            float thetaInc = (Mathf.PI * 2.0f) / (float)points;
+            Vector3 lastPointHoriz = centre + new Vector3(0, 0, radius);
+            Vector3 lastPointVert = centre + new Vector3(0, radius, 0);
+            for (int i = 1; i <= points; i++)
+            {
+                float theta = thetaInc * i;
+                Vector3 point = centre +
+                    (new Vector3((float)Math.Sin(theta), 0, (float)Math.Cos(theta)) * radius);
+                DrawLine(lastPointHoriz, point, colour);
+                lastPointHoriz = point;
+                point = centre +
+                    (new Vector3((float)Math.Sin(theta), (float)Math.Cos(theta), 0) * radius);
+                DrawLine(lastPointVert, point, colour);
+                lastPointVert = point;
+            }
+        }
+
         public static void DrawVectors(Transform transform)
         {
             float length = 20.0f;

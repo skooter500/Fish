@@ -13,11 +13,13 @@ namespace BGE
         public float mass;
         public float maxSpeed;
         public float maxForce;
+        public float forceMultiplier;
         [Range(0.0f, 1.0f)]
         public float damping;
         public enum CalculationMethods { WeightedTruncatedSum, WeightedTruncatedRunningSumWithPrioritisation, PrioritisedDithering };
         public CalculationMethods calculationMethod;
         public float radius;
+        public Flock flock;
 
         public bool useCellSpacePartitioning;
         public bool enforceNonPenetrationConstraint;
@@ -54,9 +56,8 @@ namespace BGE
         public float wanderDistance;
         public float wanderWeight;
 
-
         [Header("Flocking")]
-        float neighbourDistance;
+        public float neighbourDistance;
 
         [Header("Separation")]                
         public bool separationEnabled;
@@ -144,6 +145,12 @@ namespace BGE
         Color debugLineColour = Color.cyan;
         float timeDelta;
 
+        public void OnDrawGizmos()
+        {
+            //Gizmos.color = Color.yellow;
+            //Gizmos.DrawWireSphere(transform.position, radius);
+        }
+
         public Boid()
         {
             TurnOffAll();
@@ -152,14 +159,16 @@ namespace BGE
             drawForces = false;
             drawVectors = false;
             drawNeighbours = false;
+            flock = null;
         
             // Set default values
             force = Vector3.zero;
             velocity = Vector3.zero;
             mass = 1.0f;
             damping = 0.01f;
-            radius = 50.0f;
-            neighbourDistance = 50.0f;
+            radius = 5.0f;
+            forceMultiplier = 1.0f;
+            neighbourDistance = 10.0f;
 
             calculationMethod = CalculationMethods.WeightedTruncatedRunningSumWithPrioritisation;
             
@@ -526,7 +535,7 @@ namespace BGE
         void Update()
         {
             float smoothRate;
-            force = Calculate();
+            force = Calculate() * forceMultiplier;
             if (drawForces)
             {
                 Quaternion q = Quaternion.FromToRotation(Vector3.forward, force);
@@ -813,7 +822,7 @@ namespace BGE
 
         Vector3 Wander()
         {
-            // Rotate the wandertargetpos a little each frame
+            /*// Rotate the wandertargetpos a little each frame
             float jitterTimeSlice = wanderJitter * timeDelta;
 
             Quaternion q = Quaternion.AngleAxis(jitterTimeSlice, UnityEngine.Random.insideUnitSphere);
@@ -821,6 +830,18 @@ namespace BGE
             wanderTargetPos = wanderTargetPos.normalized * wanderRadius;
             Vector3 localTarget = wanderTargetPos + (Vector3.forward * wanderDistance);
             Vector3 worldTarget = transform.TransformPoint(localTarget);
+             * */
+
+            float jitterTimeSlice = wanderJitter * timeDelta;
+
+            Vector3 toAdd = UnityEngine.Random.insideUnitSphere * jitterTimeSlice;
+            wanderTargetPos += toAdd;
+            wanderTargetPos.Normalize();
+            wanderTargetPos *= wanderRadius;
+
+            Vector3 localTarget = wanderTargetPos + Vector3.forward * wanderDistance;
+            Vector3 worldTarget = transform.TransformPoint(localTarget);
+            
             if (drawGizmos)
             {
                 LineDrawer.DrawTarget(worldTarget, Color.red);
@@ -828,7 +849,7 @@ namespace BGE
                 //GameObject s = GameObject.FindGameObjectWithTag("sphere");
                 //s.transform.localScale = new Vector3(wanderRadius * 2, wanderRadius * 2, wanderRadius * 2);
                 //s.transform.position = worldCenter;
-                LineDrawer.DrawCircle(worldCenter, wanderRadius, 10, Color.yellow);
+                LineDrawer.DrawSphere(worldCenter, wanderRadius, 10, Color.yellow);
             }
             //return Vector3.zero;
             return (worldTarget - transform.position);
@@ -876,7 +897,7 @@ namespace BGE
             if (drawGizmos)
             {
                 LineDrawer.DrawTarget(target, Color.red);
-                LineDrawer.DrawCircle(target, arriveSlowingDistance, 10, Color.yellow);
+                LineDrawer.DrawSphere(target, arriveSlowingDistance, 10, Color.yellow);
             }
 
             if (distance < 1.0f)
@@ -933,15 +954,15 @@ namespace BGE
         {
             tagged.Clear();
 
-            GameObject[] allBoids = GameObject.FindGameObjectsWithTag("boid");
+            GameObject[] allBoids = GameObject.FindGameObjectsWithTag(tag);
 
             foreach (GameObject boid in allBoids)
             {
                 if (boid != gameObject)
                 {
-                    if (drawNeighbours && drawGizmos)
+                    if (drawNeighbours)
                     {
-                        LineDrawer.DrawLine(transform.position, boid.transform.position, Color.yellow);
+                        LineDrawer.DrawLine(transform.position, boid.transform.position, Color.cyan);
                     }
                     if ((transform.position - boid.transform.position).magnitude < inRange)
                     {
@@ -955,7 +976,7 @@ namespace BGE
 
         private void DrawNeighbours(Color color)
         {
-            if ((drawNeighbours) && (drawGizmos))
+            if (drawNeighbours)
             {
                 foreach (GameObject neighbour in tagged)
                 {
@@ -971,7 +992,7 @@ namespace BGE
             expanded.min = new Vector3(transform.position.x - inRange, 0, transform.position.z - inRange);
             expanded.max = new Vector3(transform.position.x + inRange, 0, transform.position.z + inRange);
 
-            if (drawNeighbours && drawGizmos)
+            if (drawNeighbours)
             {
                 LineDrawer.DrawSquare(expanded.min, expanded.max, Color.yellow);
             }
@@ -990,7 +1011,7 @@ namespace BGE
             {
                 if (cell.Intersects(expanded))
                 {
-                    if (drawNeighbours && drawGizmos)
+                    if (drawNeighbours)
                     {
                         LineDrawer.DrawSquare(cell.bounds.min, cell.bounds.max, Color.magenta);
                     }
@@ -1000,7 +1021,7 @@ namespace BGE
                     {
                         if (neighbour != gameObject)
                         {
-                            if (drawNeighbours && drawGizmos)
+                            if (drawNeighbours)
                             {
                                 LineDrawer.DrawLine(transform.position, neighbour.transform.position, Color.yellow);
                             }

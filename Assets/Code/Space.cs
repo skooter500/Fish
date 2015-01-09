@@ -8,36 +8,39 @@ namespace BGE
 {
     public class Space
     {
+        public Bounds spaceBounds;        
         public List<Cell> cells = new List<Cell>();
-        float worldRadius;
-        int spaceWidth;
-        float cellWidth;
-        GameObject[] boids; 
+        Vector3 spaceCells = new Vector3();
+        Vector3 cellUnit = new Vector3();
+        Boid[] boids; 
 
         public Space()
-        {            
-            // generate the list of cells
-            cellWidth = BoidManager.Instance.cellWidth;
-            // Create an additional cell either side of the world range 
-            worldRadius = BoidManager.Instance.worldHalfExtents + cellWidth;
+        {
+            // Default bounds for the space in world space
+            float w = 1000;
+            float s = 20;
+            spaceBounds = new Bounds(Vector3.zero, new Vector3(w, w, w));
+            spaceCells = new Vector3(s, s, s); // The number of cells in each axis
+            cellUnit.x = spaceBounds.size.x / spaceCells.x;
+            cellUnit.y = spaceBounds.size.y / spaceCells.y;
+            cellUnit.z = spaceBounds.size.z / spaceCells.z;
 
             int num = 0;
 
             float y = 0;
             {
-                for (float z = -worldRadius; z < worldRadius; z += cellWidth)
+                for (float z = spaceBounds.min.z; z < spaceBounds.max.z; z += cellUnit.z)
                 {
-                    for (float x = -worldRadius; x < worldRadius; x += cellWidth)
+                    for (float x = spaceBounds.min.x; x < spaceBounds.max.z; x += cellUnit.x)
                     {
                         Cell cell = new Cell();
                         cell.bounds.min = new Vector3(x, y, z);
-                        cell.bounds.max = new Vector3(x + cellWidth, y, z + cellWidth);
+                        cell.bounds.max = new Vector3(x + cellUnit.x, y, z + cellUnit.z);
                         cell.number = num++;
                         cells.Add(cell);
                     }
                 }
             }
-            spaceWidth = (int) ((worldRadius * 2.0f) / cellWidth);
 
             //Now find each of the neighbours for each cell
             foreach (Cell cell in cells)
@@ -60,10 +63,10 @@ namespace BGE
         {          
 
             pos.y = 0;            
-			pos.x += worldRadius;
-			pos.z += worldRadius;
-			int cellNumber = ((int)(pos.x / cellWidth))
-				+ ((int)(pos.z / cellWidth)) * spaceWidth;
+			pos.x += (spaceBounds.size.x / 2);
+            pos.z += (spaceBounds.size.z / 2); ;
+			int cellNumber = ((int)(pos.x / cellUnit.x))
+                + ((int)(pos.z / cellUnit.x)) * (int) spaceCells.x;
 
             if ((cellNumber >= cells.Count) || (cellNumber < 0))
             {
@@ -87,18 +90,19 @@ namespace BGE
         {
             if (boids == null)
             {
-                boids = GameObject.FindGameObjectsWithTag("boid");            
+                boids = GameObject.FindObjectsOfType(typeof(Boid)) as Boid[];
+                        
             }
             foreach (Cell cell in cells)
             {
                 cell.contained.Clear();
             }
-            foreach (GameObject boid in boids)
+            foreach (Boid boid in boids)
             {
                 int cell = FindCell(boid.transform.position);
                 if (cell != -1)
                 {
-                    cells[cell].contained.Add(boid);
+                    cells[cell].contained.Add(boid.gameObject);
                }
             }
         }

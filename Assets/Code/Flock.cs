@@ -14,6 +14,9 @@ namespace BGE
         List<GameObject> boids;
         List<GameObject> enemies;
 
+        [Range(0, 2)]
+        public float timeMultiplier;
+
         void OnDrawGizmos()
         {
             Gizmos.color = Color.yellow;
@@ -24,6 +27,7 @@ namespace BGE
         {
             radius = 100;
             boidCount = 200;
+            timeMultiplier = 1.0f;
             boids = new List<GameObject>();
             enemies = new List<GameObject>();
         }
@@ -35,14 +39,14 @@ namespace BGE
                 GameObject boid = (GameObject)GameObject.Instantiate(boidPrefab);
                 boids.Add(boid);
                 boid.transform.position = transform.position + UnityEngine.Random.insideUnitSphere * UnityEngine.Random.RandomRange(0, radius);
+                boid.GetComponent<Boid>().flock = this;
                 boid.GetComponent<Boid>().sphereConstrainEnabled = true;
                 boid.GetComponent<Boid>().sphereRadius = radius;
                 boid.GetComponent<Boid>().sphereCentre = transform.position;
                 if (i == boidCount / 2)
                 {
-                    //boid.GetComponent<Boid>().drawNeighbours = true;
+                    boid.GetComponent<Boid>().drawNeighbours = true;
                 }
-                boid.GetComponent<Boid>().sphereConstrainEnabled = true;
             }
         }
     }

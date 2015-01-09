@@ -14,14 +14,18 @@ namespace BGE
         public float maxSpeed;
         public float maxForce;
         public float forceMultiplier;
+        [Range(0.0f, 2.0f)]
+        public float timeMultiplier;
         [Range(0.0f, 1.0f)]
         public float damping;
         public enum CalculationMethods { WeightedTruncatedSum, WeightedTruncatedRunningSumWithPrioritisation, PrioritisedDithering };
         public CalculationMethods calculationMethod;
         public float radius;
+        public Boolean applyBanking;
+
+        [HideInInspector]
         public Flock flock;
 
-        public bool useCellSpacePartitioning;
         public bool enforceNonPenetrationConstraint;
 
         [Header("Debugging")]
@@ -55,6 +59,9 @@ namespace BGE
         public float wanderJitter;
         public float wanderDistance;
         public float wanderWeight;
+        public float wanderNoiseDelta;
+        private float wanderNoiseX;
+        private float wanderNoiseY;
 
         [Header("Flocking")]
         public float neighbourDistance;
@@ -159,6 +166,7 @@ namespace BGE
             drawForces = false;
             drawVectors = false;
             drawNeighbours = false;
+            applyBanking = true;
             flock = null;
         
             // Set default values
@@ -168,6 +176,7 @@ namespace BGE
             damping = 0.01f;
             radius = 5.0f;
             forceMultiplier = 1.0f;
+            timeMultiplier = 1.0f;
             neighbourDistance = 10.0f;
 
             calculationMethod = CalculationMethods.WeightedTruncatedRunningSumWithPrioritisation;
@@ -185,10 +194,12 @@ namespace BGE
             arriveWeight = 1.0f;
 
             wanderRadius = 10.0f;
-            wanderDistance = 25.0f;
-            wanderJitter = 200.0f;
+            wanderDistance = 15.0f;
+            wanderJitter = 20.0f;
             wanderWeight = 1.0f;
-            
+            wanderNoiseX = 0;
+            wanderNoiseDelta = 0.01f;
+
             cohesionWeight = 1.0f;
             separationWeight = 1.0f;
             alignmentWeight = 1.0f;
@@ -219,7 +230,7 @@ namespace BGE
             randomWalkWeight = 1.0f;
             randomWalkCenter = Vector3.zero;
             randomWalkRadius = 500.0f;
-            randomWalkKeepY = true;
+            randomWalkKeepY = false;
 
             randomWalkForce = Vector3.zero;
             randomWalkWait = 5.0f;
@@ -231,6 +242,7 @@ namespace BGE
         void Start()
         {
             wanderTargetPos = UnityEngine.Random.insideUnitSphere * wanderRadius;
+            wanderNoiseX = UnityEngine.Random.Range(-1000, 1000);
             randomWalkTarget = randomWalkCenter + UnityEngine.Random.insideUnitSphere * randomWalkRadius;
             if (randomWalkKeepY)
             {
@@ -303,6 +315,7 @@ namespace BGE
 
         private bool accumulateForce(ref Vector3 runningTotal, Vector3 force)
         {
+            force *= forceMultiplier;
             float soFar = runningTotal.magnitude;
 
             float remaining = maxForce - soFar;
@@ -423,7 +436,7 @@ namespace BGE
             int tagged = 0;
             if (separationEnabled || cohesionEnabled || alignmentEnabled)
             {
-                if (useCellSpacePartitioning)
+                if (BoidManager.Instance.cellSpacePartitioning)
                 {
                     tagged = TagNeighboursPartitioned(neighbourDistance);
                     //int testTagged = TagNeighboursSimple(Params.GetFloat("tag_range"));
@@ -532,10 +545,19 @@ namespace BGE
             return steeringForce;
         }
 
+        
+
         void Update()
         {
             float smoothRate;
-            force = Calculate() * forceMultiplier;
+
+            timeDelta = Time.deltaTime * timeMultiplier;
+            if (flock != null)
+            {
+                timeDelta *= flock.timeMultiplier;
+            }
+
+            force = Calculate();
             if (drawForces)
             {
                 Quaternion q = Quaternion.FromToRotation(Vector3.forward, force);
@@ -548,8 +570,7 @@ namespace BGE
                 LineDrawer.DrawVectors(transform);
             }
 
-            timeDelta = Time.deltaTime;
-
+            
             if (timeDelta > 0.0f)
             {
                 smoothRate = Utilities.Clip(9.0f * timeDelta, 0.15f, 0.4f) / 2.0f;
@@ -584,12 +605,13 @@ namespace BGE
             {
                 transform.forward = velocity;
                 transform.forward.Normalize();
-                //transform.LookAt(transform.position + transform.forward, tempUp);
-                // Apply damping
+                if (applyBanking)
+                {
+                    transform.LookAt(transform.position + transform.forward, tempUp);               
+                }
+                 // Apply damping
                 velocity *= (1.0f - damping);
             }
-
-            
 
             path.Draw();
 
@@ -819,19 +841,9 @@ namespace BGE
             yield return new WaitForSeconds(randomWalkWait);
             randomWalkEnabled = true;
         }
-
+        
         Vector3 Wander()
         {
-            /*// Rotate the wandertargetpos a little each frame
-            float jitterTimeSlice = wanderJitter * timeDelta;
-
-            Quaternion q = Quaternion.AngleAxis(jitterTimeSlice, UnityEngine.Random.insideUnitSphere);
-            wanderTargetPos = q * wanderTargetPos;
-            wanderTargetPos = wanderTargetPos.normalized * wanderRadius;
-            Vector3 localTarget = wanderTargetPos + (Vector3.forward * wanderDistance);
-            Vector3 worldTarget = transform.TransformPoint(localTarget);
-             * */
-
             float jitterTimeSlice = wanderJitter * timeDelta;
 
             Vector3 toAdd = UnityEngine.Random.insideUnitSphere * jitterTimeSlice;
@@ -841,20 +853,61 @@ namespace BGE
 
             Vector3 localTarget = wanderTargetPos + Vector3.forward * wanderDistance;
             Vector3 worldTarget = transform.TransformPoint(localTarget);
-            
+            if (drawGizmos)
+            {
+                LineDrawer.DrawTarget(worldTarget, Color.blue);
+            }
+            return (worldTarget - transform.position);
+        }
+        // Tested this and it doesnt work very well because noise is not uniformly distributed
+        /*
+         Vector3 Wander()
+        {
+            float n = Mathf.PerlinNoise(wanderNoiseX, 0);
+            //Debug.Log(n);
+            float theta = Utilities.Map(n, 0.2f, 0.7f, 0, Mathf.PI * 2.0f);
+            wanderTargetPos.x = Mathf.Sin(theta);
+            wanderTargetPos.y = -Mathf.Cos(theta);
+            wanderTargetPos.z = 0;
+            wanderTargetPos *= wanderRadius;
+            Vector3 localTarget = wanderTargetPos + (Vector3.forward * wanderDistance);
+            Vector3 worldTarget = transform.TransformPoint(localTarget);
+
             if (drawGizmos)
             {
                 LineDrawer.DrawTarget(worldTarget, Color.red);
                 Vector3 worldCenter = transform.TransformPoint(Vector3.forward * wanderDistance);
-                //GameObject s = GameObject.FindGameObjectWithTag("sphere");
-                //s.transform.localScale = new Vector3(wanderRadius * 2, wanderRadius * 2, wanderRadius * 2);
-                //s.transform.position = worldCenter;
+                LineDrawer.DrawSphere(worldCenter, wanderRadius, 10, Color.yellow);
+            }
+            wanderNoiseX += wanderNoiseDelta;
+            return Vector3.zero;
+           //return (worldTarget - transform.position);
+        }
+         */
+
+        // Wander with quaternions
+        /*
+        Vector3 Wander()
+        {
+            // Rotate the wandertargetpos a little each frame
+            float jitterTimeSlice = wanderJitter * timeDelta;
+
+            Quaternion q = Quaternion.AngleAxis(jitterTimeSlice, UnityEngine.Random.insideUnitSphere);
+            wanderTargetPos = q * wanderTargetPos;
+            wanderTargetPos = wanderTargetPos.normalized * wanderRadius;
+            Vector3 localTarget = wanderTargetPos + (Vector3.forward * wanderDistance);
+            Vector3 worldTarget = transform.TransformPoint(localTarget);
+                        
+            if (drawGizmos)
+            {
+                LineDrawer.DrawTarget(worldTarget, Color.red);
+                Vector3 worldCenter = transform.TransformPoint(Vector3.forward * wanderDistance);
                 LineDrawer.DrawSphere(worldCenter, wanderRadius, 10, Color.yellow);
             }
             //return Vector3.zero;
             return (worldTarget - transform.position);
         }
-
+        */
         public Vector3 PlaneAvoidance()
         {
             makeFeelers();

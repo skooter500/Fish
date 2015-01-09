@@ -31,6 +31,8 @@ namespace BGE
 
         public float extents = 0;
         public float border = 0;
+        [Range(0, 2)]
+        public float speedMultiplier;
         public float theta;
         float field = Mathf.PI / 10;
         float rotSpeed = 0.25f;
@@ -40,6 +42,7 @@ namespace BGE
             extents = 50;
             border = extents * 0.1f;
             theta = 0;
+            speedMultiplier = 1.0f;
         }
 
         Vector3[] initialVertices;
@@ -50,8 +53,13 @@ namespace BGE
         // Use this for initialization
         void Start()
         {
+            
             gameObject.AddComponent<MeshFilter>();
             MeshRenderer renderer = gameObject.AddComponent<MeshRenderer>();
+            if (renderer == null)
+            {
+                Debug.Log("Renderer is null 1");
+            }
             Mesh mesh = GetComponent<MeshFilter>().mesh;
             mesh.Clear();
             int numSegments = 3;
@@ -92,9 +100,14 @@ namespace BGE
             mesh.normals = initialNormals;
             mesh.triangles = meshTriangles;
 
+            Shader shader = Shader.Find("Specular");
             Material material = new Material(Shader.Find("Specular"));
             material.color = Color.cyan;
             material.mainTexture = Resources.Load<Texture2D>("white512x512");
+            if (renderer == null)
+            {
+                Debug.Log("Renderer is null 2");
+            }
             renderer.material = material;
         }
 
@@ -110,7 +123,6 @@ namespace BGE
         void Update()
         {
             Boid steering = GetComponent<Boid>();
-            float speed = steering.acceleration.magnitude;
             Mesh mesh = GetComponent<MeshFilter>().mesh;
             Vector3[] meshVertices = mesh.vertices;
             Vector3[] meshNormals = mesh.normals;
@@ -151,8 +163,8 @@ namespace BGE
                 meshVertices[i] = RotateAroundPoint(meshVertices[i], q, rotationPoint);
                 meshNormals[i] = RotateAroundPoint(meshNormals[i], q, Vector3.zero);
             }
-            float rSpeed = speed;
-            theta += rSpeed * rotSpeed * Time.deltaTime;
+            float speed = steering.acceleration.magnitude;
+            theta += speed * rotSpeed * Time.deltaTime * speedMultiplier;
             if (theta > Mathf.PI * 2.0f)
             {
                 theta = 0.0f;

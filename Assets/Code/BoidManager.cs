@@ -13,17 +13,20 @@ namespace BGE
         [Header("Cell Space Partitioning")]
         public bool cellSpacePartitioning;
         public float cellWidth;
-        public float worldHalfExtents;
-
+        public Bounds spaceBounds;
+        
         [Header("Debugging")]
         public bool showMessages;
-
-        [Header("Debugging")]
+        public bool drawGizmos;
 
         public Space space;
         static BoidManager instance;
         // Use this for initialization
         GUIStyle style = new GUIStyle();
+
+        BoidManager()
+        {
+        }
                 
         void Awake()
         {
@@ -105,11 +108,25 @@ namespace BGE
             }
         }
 
+
         // Update is called once per frame
         void Update()
         {
             int fps = (int)(1.0f / Time.deltaTime);
             PrintFloat("FPS: ", fps);      
+
+            if (drawGizmos)
+            {
+                space.Draw();
+            }
+        }
+
+        void LateUpdate()
+        {
+            if (cellSpacePartitioning)
+            {
+                space.Partition();
+            }
         }
     }
 }

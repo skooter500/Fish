@@ -17,6 +17,12 @@ namespace BGE
     public class Utilities
     {
 
+        public static float Map(float value, float r1, float r2, float m1, float m2)
+        {
+            float range1 = r2 - r1;
+            float range2 = m2 - m1;
+            return m1 + ((value / range1) * range2);
+        }
         public static Vector3 RandomPosition(float range)
         {
             Vector3 pos = new Vector3();

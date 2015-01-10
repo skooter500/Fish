@@ -18,7 +18,7 @@ namespace BGE
         {
             // Default bounds for the space in world space
             float w = 1000;
-            float s = 20;
+            float s = 50;
             spaceBounds = new Bounds(Vector3.zero, new Vector3(w, w, w));
             spaceCells = new Vector3(s, s, s); // The number of cells in each axis
             cellUnit.x = spaceBounds.size.x / spaceCells.x;
@@ -90,8 +90,7 @@ namespace BGE
         {
             if (boids == null)
             {
-                boids = GameObject.FindObjectsOfType(typeof(Boid)) as Boid[];
-                        
+                boids = GameObject.FindObjectsOfType(typeof(Boid)) as Boid[];                        
             }
             foreach (Cell cell in cells)
             {

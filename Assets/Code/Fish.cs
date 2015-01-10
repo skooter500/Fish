@@ -55,7 +55,7 @@ namespace BGE
         // Use this for initialization
         void Start()
         {
-            
+      
             gameObject.AddComponent<MeshFilter>();
             MeshRenderer renderer = gameObject.AddComponent<MeshRenderer>();
             if (renderer == null)
@@ -122,6 +122,7 @@ namespace BGE
         }
 
         // Update is called once per frame
+        
         void Update()
         {
             Boid steering = GetComponent<Boid>();

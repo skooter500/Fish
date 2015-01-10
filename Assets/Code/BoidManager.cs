@@ -21,6 +21,7 @@ namespace BGE
 
         public Space space;
         static BoidManager instance;
+        public Obstacle[] obstacles;
         // Use this for initialization
         GUIStyle style = new GUIStyle();
 
@@ -42,7 +43,7 @@ namespace BGE
             style.normal.textColor = Color.white;
 
             space = new Space();
-            
+            obstacles = GameObject.FindObjectsOfType(typeof(Obstacle)) as Obstacle[];
         }
 
         public static BoidManager Instance

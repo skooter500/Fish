@@ -22,11 +22,8 @@ namespace BGE
 
         void OnDrawGizmos()
         {
-            if (!drawGizmos)
-            {
-                Gizmos.color = Color.yellow;
-                Gizmos.DrawWireSphere(transform.position, radius);
-            }
+            Gizmos.color = Color.yellow;
+            Gizmos.DrawWireSphere(transform.position, radius);
         }
 
         Flock()

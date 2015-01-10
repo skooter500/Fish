@@ -661,7 +661,7 @@ namespace BGE
             }
 
 
-            Obstacle[] obstacles = GameObject.FindObjectsOfType(typeof(Obstacle)) as Obstacle[];
+            Obstacle[] obstacles = BoidManager.Instance.obstacles;
             // Matt Bucklands Obstacle avoidance
             // First tag obstacles in range
             if (obstacles.Length == 0)

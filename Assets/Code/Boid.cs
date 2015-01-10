@@ -936,7 +936,7 @@ namespace BGE
             {
                 foreach (Vector3 feeler in Feelers)
                 {
-                    LineDrawer.DrawLine(transform.position, feeler, debugLineColour);
+                    LineDrawer.DrawLine(transform.position, feeler, Color.green);
                 }
             }            
         }

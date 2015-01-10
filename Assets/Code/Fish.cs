@@ -36,6 +36,7 @@ namespace BGE
         public float theta;
         float field = Mathf.PI / 10;
         float rotSpeed = 0.25f;
+        public Color color;
                 
         Fish()
         {
@@ -43,6 +44,7 @@ namespace BGE
             border = extents * 0.1f;
             theta = 0;
             speedMultiplier = 1.0f;
+            color = Color.cyan;
         }
 
         Vector3[] initialVertices;
@@ -102,7 +104,7 @@ namespace BGE
 
             Shader shader = Shader.Find("Specular");
             Material material = new Material(Shader.Find("Specular"));
-            material.color = Color.cyan;
+            material.color = color;
             material.mainTexture = Resources.Load<Texture2D>("white512x512");
             if (renderer == null)
             {

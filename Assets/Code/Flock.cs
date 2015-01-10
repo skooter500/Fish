@@ -17,10 +17,16 @@ namespace BGE
         [Range(0, 2)]
         public float timeMultiplier;
 
+        [Header("Debug")]
+        public bool drawGizmos;
+
         void OnDrawGizmos()
         {
-            Gizmos.color = Color.yellow;
-            Gizmos.DrawWireSphere(transform.position, radius);
+            if (!drawGizmos)
+            {
+                Gizmos.color = Color.yellow;
+                Gizmos.DrawWireSphere(transform.position, radius);
+            }
         }
 
         Flock()
@@ -47,6 +53,14 @@ namespace BGE
                 {
                     boid.GetComponent<Boid>().drawNeighbours = true;
                 }
+            }
+        }
+
+        public void Update()
+        {
+            if (drawGizmos)
+            {
+                LineDrawer.DrawSphere(transform.position, radius, 20, Color.yellow);
             }
         }
     }

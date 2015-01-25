@@ -80,10 +80,26 @@ namespace BGE
 
         public void Draw()
         {
-            foreach (Cell cell in cells)
+            float y = 0;
+            for (float x = spaceBounds.min.x; x <= spaceBounds.max.z; x += cellUnit.x)
+            {
+                Vector3 start, end;
+                start = new Vector3(x, y, spaceBounds.min.z);
+                end = new Vector3(x, y, spaceBounds.max.z);
+                LineDrawer.DrawLine(start, end, Color.cyan);
+            }
+            for (float z = spaceBounds.min.z; z <= spaceBounds.max.z; z += cellUnit.z)
+            {
+                Vector3 start, end;
+                start = new Vector3(spaceBounds.min.x, y, z);
+                end = new Vector3(spaceBounds.max.x, y, z);
+                LineDrawer.DrawLine(start, end, Color.cyan);
+            } 
+            /*foreach (Cell cell in cells)
             {
                 LineDrawer.DrawSquare(cell.bounds.min, cell.bounds.max, Color.cyan);
             }
+             */
         }
 
         public void Partition()

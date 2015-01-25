@@ -12,7 +12,7 @@ namespace BGE
         public int boidCount;
         public GameObject boidPrefab;
         List<GameObject> boids;
-        List<GameObject> enemies;
+        public List<GameObject> enemies;
 
         [Range(0, 2)]
         public float timeMultiplier;
@@ -41,14 +41,32 @@ namespace BGE
             {
                 GameObject boid = (GameObject)GameObject.Instantiate(boidPrefab);
                 boids.Add(boid);
-                boid.transform.position = transform.position + UnityEngine.Random.insideUnitSphere * UnityEngine.Random.RandomRange(0, radius);
+                bool inside = false;
+                do
+                {
+                    boid.transform.position = transform.position + UnityEngine.Random.insideUnitSphere * UnityEngine.Random.RandomRange(0, radius);
+                    inside = false;
+                    foreach (Obstacle obstacle in BoidManager.Instance.obstacles)
+                    {
+                        if (Vector3.Distance(obstacle.transform.position, boid.transform.position) < obstacle.radius + boid.GetComponent<Boid>().minBoxLength)
+                        {
+                            inside = true;
+                            break;
+                        }
+                    }                    
+                }
+                while (inside);
                 boid.GetComponent<Boid>().flock = this;
                 boid.GetComponent<Boid>().sphereConstrainEnabled = true;
                 boid.GetComponent<Boid>().sphereRadius = radius;
                 boid.GetComponent<Boid>().sphereCentre = transform.position;
+                boid.GetComponent<Boid>().fleeTarget = GameObject.FindGameObjectWithTag("enemy");
                 if (i == boidCount / 2)
                 {
-                    boid.GetComponent<Boid>().drawNeighbours = true;
+                    if (drawGizmos)
+                    {
+                        boid.GetComponent<Boid>().drawNeighbours = true;
+                    }
                 }
             }
         }
@@ -58,6 +76,14 @@ namespace BGE
             if (drawGizmos)
             {
                 LineDrawer.DrawSphere(transform.position, radius, 20, Color.yellow);
+            }
+
+            if (GetComponent<Boid>() != null)
+            {
+                foreach (GameObject o in boids)
+                {
+                    o.GetComponent<Boid>().sphereCentre = transform.position;
+                }
             }
         }
     }

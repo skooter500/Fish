@@ -34,7 +34,7 @@ namespace BGE
         [Range(0, 2)]
         public float speedMultiplier;
         public float theta;
-        float field = Mathf.PI / 10;
+        float field = Mathf.PI / 20;
         float rotSpeed = 0.25f;
         public Color color;
                 

@@ -315,7 +315,6 @@ namespace BGE
 
         private bool accumulateForce(ref Vector3 runningTotal, Vector3 force)
         {
-            force *= forceMultiplier;
             float soFar = runningTotal.magnitude;
 
             float remaining = maxForce - soFar;
@@ -384,11 +383,10 @@ namespace BGE
             Vector3 force = Vector3.zero;
             Vector3 steeringForce = Vector3.zero;
 
-
             if (obstacleAvoidanceEnabled)
             {
                 force = ObstacleAvoidance() * obstacleAvoidanceWeight;
-
+                force *= forceMultiplier;
                 if (!accumulateForce(ref steeringForce, force))
                 {
                     return steeringForce;
@@ -400,6 +398,7 @@ namespace BGE
             if (planeAvoidanceEnabled)
             {
                 force = PlaneAvoidance() * planeAvoidanceWeight;
+                force *= forceMultiplier;
                 if (!accumulateForce(ref steeringForce, force))
                 {
                     return steeringForce;
@@ -409,6 +408,7 @@ namespace BGE
             if (sphereConstrainEnabled)
             {
                 force = SphereConstrain(sphereRadius) * sphereConstrainWeight;
+                force *= forceMultiplier;
                 if (!accumulateForce(ref steeringForce, force))
                 {
                     return steeringForce;
@@ -418,6 +418,7 @@ namespace BGE
             if (evadeEnabled)
             {
                 force = Evade() * evadeWeight;
+                force *= forceMultiplier;
                 if (!accumulateForce(ref steeringForce, force))
                 {
                     return steeringForce;
@@ -426,7 +427,16 @@ namespace BGE
 
             if (fleeEnabled)
             {
-                force = Flee(fleeTarget.transform.position) * fleeWeight;
+                //force = Flee(fleeTarget.transform.position) * fleeWeight;                
+                if (flock != null)
+                {
+                    force = Vector3.zero;
+                    foreach(GameObject enemy in flock.enemies)
+                    {
+                        force += Flee(enemy.transform.position) * fleeWeight;
+                        force *= forceMultiplier;                
+                    }
+                }
                 if (!accumulateForce(ref steeringForce, force))
                 {
                     return steeringForce;
@@ -455,6 +465,7 @@ namespace BGE
             if (separationEnabled && (tagged > 0))
             {
                 force = Separation() * separationWeight;
+                force *= forceMultiplier;
                 if (!accumulateForce(ref steeringForce, force))
                 {
                     return steeringForce;
@@ -464,6 +475,7 @@ namespace BGE
             if (alignmentEnabled && (tagged > 0))
             {
                 force = Alignment() * alignmentWeight;
+                force *= forceMultiplier;
                 if (!accumulateForce(ref steeringForce, force))
                 {
                     return steeringForce;
@@ -473,6 +485,7 @@ namespace BGE
             if (cohesionEnabled && (tagged > 0))
             {
                 force = Cohesion() * cohesionWeight;
+                force *= forceMultiplier;
                 if (!accumulateForce(ref steeringForce, force))
                 {
                     return steeringForce;
@@ -482,6 +495,7 @@ namespace BGE
             if (seekEnabled)
             {
                 force = Seek(seekTargetPos) * seekWeight;
+                force *= forceMultiplier;
                 if (!accumulateForce(ref steeringForce, force))
                 {
                     return steeringForce;
@@ -491,6 +505,7 @@ namespace BGE
             if (arriveEnabled)
             {
                 force = Arrive(arriveTargetPos) * arriveWeight;
+                force *= forceMultiplier;
                 if (!accumulateForce(ref steeringForce, force))
                 {
                     return steeringForce;
@@ -500,6 +515,7 @@ namespace BGE
             if (wanderEnabled)
             {
                 force = Wander() * wanderWeight;
+                force *= forceMultiplier;
                 if (!accumulateForce(ref steeringForce, force))
                 {
                     return steeringForce;
@@ -509,6 +525,7 @@ namespace BGE
             if (pursuitEnabled)
             {
                 force = Pursue() * pursuitWeight;
+                force *= forceMultiplier;
                 if (!accumulateForce(ref steeringForce, force))
                 {
                     return steeringForce;
@@ -518,6 +535,7 @@ namespace BGE
             if (offsetPursuitEnabled)
             {
                 force = OffsetPursuit(offset) * offsetPursuitWeight;
+                force *= forceMultiplier;
                 if (!accumulateForce(ref steeringForce, force))
                 {
                     return steeringForce;
@@ -527,6 +545,7 @@ namespace BGE
             if (followPathEnabled)
             {
                 force = FollowPath() * followPathWeight;
+                force *= forceMultiplier;
                 if (!accumulateForce(ref steeringForce, force))
                 {
                     return steeringForce;
@@ -536,6 +555,7 @@ namespace BGE
             if (randomWalkEnabled)
             {
                 force = RandomWalk() * randomWalkWeight;
+                force *= forceMultiplier;
                 if (!accumulateForce(ref steeringForce, force))
                 {
                     return steeringForce;
@@ -651,7 +671,7 @@ namespace BGE
         Vector3 ObstacleAvoidance()
         {
             Vector3 force = Vector3.zero;
-            makeFeelers();
+            //makeFeelers();
             List<Obstacle> tagged = new List<Obstacle>();
             float boxLength = minBoxLength + ((velocity.magnitude / maxSpeed) * minBoxLength * 2.0f);
 
@@ -670,9 +690,9 @@ namespace BGE
             }
             foreach (Obstacle obstacle in obstacles)
             {
-                if (obstacle == null)
+                //
+                if (obstacle == null || obstacle.gameObject == gameObject)
                 {
-                    Debug.Log("Null object");
                     continue;
                 }
                 
@@ -702,7 +722,7 @@ namespace BGE
                     // is a potential intersection.
 
                     //float obstacleRadius = o.transform.localScale.x / 2;
-                    float obstacleRadius = o.radius; ;
+                    float obstacleRadius = o.radius;
                     float expandedRadius = radius + obstacleRadius;
                     if ((Math.Abs(localPos.y) < expandedRadius) && (Math.Abs(localPos.x) < expandedRadius))
                     {
@@ -814,6 +834,10 @@ namespace BGE
             if (desiredVelocity.magnitude > fleeRange)
             {
                 return Vector3.zero;
+            }
+            if (drawGizmos)
+            {
+                LineDrawer.DrawSphere(transform.position, fleeRange, 20, Color.yellow);
             }
             desiredVelocity.Normalize();
             desiredVelocity *= maxSpeed;
@@ -950,7 +974,7 @@ namespace BGE
             if (drawGizmos)
             {
                 LineDrawer.DrawTarget(target, Color.red);
-                LineDrawer.DrawSphere(target, arriveSlowingDistance, 10, Color.yellow);
+                LineDrawer.DrawSphere(target, arriveSlowingDistance, 20, Color.yellow);
             }
 
             if (distance < 1.0f)
@@ -1072,16 +1096,16 @@ namespace BGE
                     float rangeSquared = inRange * inRange;
                     foreach (GameObject neighbour in entities)
                     {
-                        if (neighbour != gameObject)
+                        if (neighbour != gameObject && neighbour.tag == tag)
                         {
-                            if (drawNeighbours)
-                            {
-                                LineDrawer.DrawLine(transform.position, neighbour.transform.position, Color.yellow);
-                            }
                             
                             if (Vector3.SqrMagnitude(transform.position - neighbour.transform.position) < rangeSquared)
                             {
                                 tagged.Add(neighbour);
+                                if (drawNeighbours)
+                                {
+                                    LineDrawer.DrawLine(transform.position, neighbour.transform.position, Color.yellow);
+                                }
                             }
                         }
                     }

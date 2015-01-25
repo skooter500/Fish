@@ -12,8 +12,8 @@ namespace BGE
 
         [Header("Cell Space Partitioning")]
         public bool cellSpacePartitioning;
-        public float cellWidth;
-        public Bounds spaceBounds;
+        public float numCells;
+        public Vector3 spaceBounds;
         
         [Header("Debugging")]
         public bool showMessages;
@@ -21,12 +21,17 @@ namespace BGE
 
         public Space space;
         static BoidManager instance;
+
+        [HideInInspector]
         public Obstacle[] obstacles;
+
         // Use this for initialization
         GUIStyle style = new GUIStyle();
 
         BoidManager()
         {
+            spaceBounds = new Vector3(1000, 1000, 1000);
+            numCells = 50;
         }
                 
         void Awake()
@@ -42,7 +47,7 @@ namespace BGE
             style.fontSize = 18;
             style.normal.textColor = Color.white;
 
-            space = new Space();
+            space = new Space(spaceBounds.x, spaceBounds.y, spaceBounds.z, numCells);
             obstacles = GameObject.FindObjectsOfType(typeof(Obstacle)) as Obstacle[];
         }
 

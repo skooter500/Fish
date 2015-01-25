@@ -14,13 +14,13 @@ namespace BGE
         Vector3 cellUnit = new Vector3();
         Boid[] boids; 
 
-        public Space()
+        public Space(float w, float h, float d, float numCells)
         {
             // Default bounds for the space in world space
-            float w = 1000;
-            float s = 50;
-            spaceBounds = new Bounds(Vector3.zero, new Vector3(w, w, w));
-            spaceCells = new Vector3(s, s, s); // The number of cells in each axis
+            //float w = 1000;
+            //float s = 50;
+            spaceBounds = new Bounds(Vector3.zero, new Vector3(w, h, d));
+            spaceCells = new Vector3(numCells, numCells, numCells); // The number of cells in each axis
             cellUnit.x = spaceBounds.size.x / spaceCells.x;
             cellUnit.y = spaceBounds.size.y / spaceCells.y;
             cellUnit.z = spaceBounds.size.z / spaceCells.z;

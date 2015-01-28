@@ -60,7 +60,7 @@ namespace BGE
                 boid.GetComponent<Boid>().sphereConstrainEnabled = true;
                 boid.GetComponent<Boid>().sphereRadius = radius;
                 boid.GetComponent<Boid>().sphereCentre = transform.position;
-                boid.GetComponent<Boid>().fleeTarget = GameObject.FindGameObjectWithTag("enemy");
+                boid.GetComponent<Boid>().fleeTarget = GameObject.FindGameObjectWithTag("Player");
                 if (i == boidCount / 2)
                 {
                     if (drawGizmos)

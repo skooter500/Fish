@@ -7,7 +7,12 @@ using System.Collections.Generic;
 namespace BGE
 {
     public class LineDrawer : MonoBehaviour
-    {        
+    {
+
+        Camera[] cameras;
+
+        GameObject ovrCameraController;
+
         struct Line
         {
             public Vector3 start;
@@ -34,7 +39,18 @@ namespace BGE
 
         // Use this for initialization
         void Start()
-        {            
+        {
+            ovrCameraController = (GameObject)GameObject.FindGameObjectWithTag("ovrcamera");
+            if (ovrCameraController != null)
+            {
+                cameras = (Camera[])ovrCameraController.GetComponentsInChildren<Camera>();
+            }
+            else
+            {
+                cameras = new Camera[1];
+                cameras = GameObject.FindObjectsOfType<Camera>();
+            }
+
         }
 
         void Awake()
@@ -46,12 +62,6 @@ namespace BGE
         {
             if (useVectocity)
             {
-                Camera[] cameras;
-
-                cameras = new Camera[1];
-                cameras[0] = GameObject.FindObjectOfType<Camera>();
-
-
                 for (int j = 0; j < cameras.Length; j++)
                 {
                     Vectrosity.VectorLine.SetCamera3D(cameras[j]);
@@ -205,9 +215,9 @@ namespace BGE
                     GL.Vertex3(line.start.x, line.start.y, line.start.z);
                     GL.Vertex3(line.end.x, line.end.y, line.end.z);
                 }
-                GL.End();
-                lines.Clear();
+                GL.End();                
             }
+            lines.Clear();
         }
     }
 }

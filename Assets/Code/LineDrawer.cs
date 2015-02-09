@@ -96,6 +96,7 @@ namespace BGE
                     Vectrosity.VectorLine.Destroy(ref myLine);
                     vectrosityLines.RemoveAt(vectrosityLines.Count - 1);
                 }
+                lines.Clear();
             }
 		}
 

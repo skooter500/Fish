@@ -6,7 +6,7 @@ using BGE.Geom;
 
 namespace BGE
 {
-    public class Boid:MonoBehaviour
+    public class Boid : MonoBehaviour
     {
         // Variables required to implement the boid
         [Header("Boid Attributes")]
@@ -33,19 +33,19 @@ namespace BGE
         public bool drawForces;
         public bool drawVectors;
         public bool drawNeighbours;
-                
-        [Header("Seek")]        
+
+        [Header("Seek")]
         public bool seekEnabled;
         public Vector3 seekTargetPos;
         public float seekWeight;
-        
-        [Header("Flee")]        
+
+        [Header("Flee")]
         public bool fleeEnabled;
         public float fleeWeight;
         public GameObject fleeTarget;
         public float fleeRange;
 
-        [Header("Arrive")]        
+        [Header("Arrive")]
         public bool arriveEnabled;
         public Vector3 arriveTargetPos;
         public float arriveWeight;
@@ -53,7 +53,7 @@ namespace BGE
         [Range(0.0f, 1.0f)]
         public float arriveDeceleration;
 
-        [Header("Wander")]                
+        [Header("Wander")]
         public bool wanderEnabled;
         public float wanderRadius;
         public float wanderJitter;
@@ -66,11 +66,11 @@ namespace BGE
         [Header("Flocking")]
         public float neighbourDistance;
 
-        [Header("Separation")]                
+        [Header("Separation")]
         public bool separationEnabled;
         public float separationWeight;
 
-        [Header("Alignment")]                
+        [Header("Alignment")]
         public bool alignmentEnabled;
         public float alignmentWeight;
 
@@ -78,16 +78,16 @@ namespace BGE
         public bool cohesionEnabled;
         public float cohesionWeight;
 
-        [Header("Obstacle Avoidance")]                
+        [Header("Obstacle Avoidance")]
         public bool obstacleAvoidanceEnabled;
         public float minBoxLength;
         public float obstacleAvoidanceWeight;
 
-        [Header("Plane Avoidance")]                
+        [Header("Plane Avoidance")]
         public bool planeAvoidanceEnabled;
         public float planeAvoidanceWeight;
 
-        [Header("Follow Path")]                        
+        [Header("Follow Path")]
         public bool followPathEnabled;
         public float followPathWeight;
         public Path path = new Path();
@@ -97,28 +97,28 @@ namespace BGE
         public GameObject pursuitTarget;
         public float pursuitWeight;
 
-        [Header("Evade")]                        
+        [Header("Evade")]
         public bool evadeEnabled;
         public GameObject evadeTarget;
         public float evadeWeight;
 
-        [Header("Interpose")]                                
+        [Header("Interpose")]
         public bool interposeEnabled;
         public float interposeWeight;
 
-        [Header("Hide")]                                
+        [Header("Hide")]
         public bool hideEnabled;
         public float hideWeight;
 
-        [Header("Offset Pursuit")]                                
+        [Header("Offset Pursuit")]
         public bool offsetPursuitEnabled;
-        public GameObject offsetPursuitTarget;        
+        public GameObject offsetPursuitTarget;
         public float offsetPursuitWeight;
 
         [HideInInspector]
         public Vector3 offset;
 
-        [Header("Sphere Constrain")]                                
+        [Header("Sphere Constrain")]
         public bool sphereConstrainEnabled;
         public Vector3 sphereCentre;
         public float sphereRadius;
@@ -128,35 +128,41 @@ namespace BGE
         public bool randomWalkEnabled;
         public Vector3 randomWalkCenter;
         public float randomWalkWait;
-        
+
         public float randomWalkRadius;
         public bool randomWalkKeepY;
         public float randomWalkWeight;
         private Vector3 randomWalkForce;
-        
-        [HideInInspector]        
+
+        [Header("Avoid Scene")]
+        public bool avoidSceneEnabled;
+        public float avoidSceneWeight;
+
+        [HideInInspector]
         public Vector3 force;
-        
+
         [HideInInspector]
         public Vector3 velocity;
 
-        [HideInInspector]        
+        [HideInInspector]
         public Vector3 acceleration;
-                        
+
         List<GameObject> tagged = new List<GameObject>();
         List<Vector3> Feelers = new List<Vector3>();
 
-        private Vector3 wanderTargetPos;        
+        private Vector3 wanderTargetPos;
         private Vector3 randomWalkTarget;
-        
+
         Color debugLineColour = Color.cyan;
         float timeDelta;
 
         public void OnDrawGizmos()
         {
-            //Gizmos.color = Color.yellow;
+            Gizmos.color = Color.cyan;
             //Gizmos.DrawWireSphere(transform.position, radius);
         }
+
+
 
         public Boid()
         {
@@ -168,7 +174,7 @@ namespace BGE
             drawNeighbours = false;
             applyBanking = true;
             flock = null;
-        
+
             // Set default values
             force = Vector3.zero;
             velocity = Vector3.zero;
@@ -180,7 +186,7 @@ namespace BGE
             neighbourDistance = 10.0f;
 
             calculationMethod = CalculationMethods.WeightedTruncatedRunningSumWithPrioritisation;
-            
+
             seekTargetPos = Vector3.zero;
             seekWeight = 1.0f;
 
@@ -237,6 +243,9 @@ namespace BGE
 
             maxSpeed = 20;
             maxForce = 10;
+
+            avoidSceneEnabled = true;
+            avoidSceneWeight = 1.0f;
         }
 
         void Start()
@@ -258,29 +267,29 @@ namespace BGE
 
         public void TurnOffAll()
         {
-            seekEnabled= false;
-            fleeEnabled= false;
-            arriveEnabled= false;
-            wanderEnabled= false;
-            cohesionEnabled= false;
-            separationEnabled= false;
-            alignmentEnabled= false;
-            obstacleAvoidanceEnabled= false;
-            planeAvoidanceEnabled= false;
-            followPathEnabled= false;
-            pursuitEnabled= false;
-            evadeEnabled= false;
-            interposeEnabled= false;
-            hideEnabled= false;
-            offsetPursuitEnabled= false;
-            sphereConstrainEnabled= false;
-            randomWalkEnabled= false;
+            seekEnabled = false;
+            fleeEnabled = false;
+            arriveEnabled = false;
+            wanderEnabled = false;
+            cohesionEnabled = false;
+            separationEnabled = false;
+            alignmentEnabled = false;
+            obstacleAvoidanceEnabled = false;
+            planeAvoidanceEnabled = false;
+            followPathEnabled = false;
+            pursuitEnabled = false;
+            evadeEnabled = false;
+            interposeEnabled = false;
+            hideEnabled = false;
+            offsetPursuitEnabled = false;
+            sphereConstrainEnabled = false;
+            randomWalkEnabled = false;
         }
 
-        
-#endregion
 
-#region Utilities        
+        #endregion
+
+        #region Utilities
         private void makeFeelers()
         {
             Feelers.Clear();
@@ -310,8 +319,8 @@ namespace BGE
             newFeeler = transform.TransformPoint(newFeeler);
             Feelers.Add(newFeeler);
         }
-#endregion
-#region Integration
+        #endregion
+        #region Integration
 
         private bool accumulateForce(ref Vector3 runningTotal, Vector3 force)
         {
@@ -383,6 +392,16 @@ namespace BGE
             Vector3 force = Vector3.zero;
             Vector3 steeringForce = Vector3.zero;
 
+            if (avoidSceneEnabled)
+            {
+                force = AvoidScene() * avoidSceneWeight;
+                force *= forceMultiplier;
+                if (!accumulateForce(ref steeringForce, force))
+                {
+                    return steeringForce;
+                }
+            }
+
             if (obstacleAvoidanceEnabled)
             {
                 force = ObstacleAvoidance() * obstacleAvoidanceWeight;
@@ -431,10 +450,10 @@ namespace BGE
                 if (flock != null)
                 {
                     force = Vector3.zero;
-                    foreach(GameObject enemy in flock.enemies)
+                    foreach (GameObject enemy in flock.enemies)
                     {
                         force += Flee(enemy.transform.position) * fleeWeight;
-                        force *= forceMultiplier;                
+                        force *= forceMultiplier;
                     }
                 }
                 if (!accumulateForce(ref steeringForce, force))
@@ -562,10 +581,34 @@ namespace BGE
                 }
             }
 
+            
+
             return steeringForce;
         }
 
-        
+        Vector3 AvoidScene()
+        {
+            Vector3 force = Vector3.zero;
+            makeFeelers();
+            float distance = 10;
+
+            foreach (Vector3 feeler in Feelers)
+            {
+                RaycastHit info;
+                Vector3 direction = feeler - transform.position;
+                if (Physics.Raycast(transform.position, direction, out info, distance))
+                {
+                    force -= direction;
+                }
+                if (force.magnitude > 0)
+                {
+                    DrawFeelers();
+                }
+            }
+            return force;
+        }
+       
+
 
         void Update()
         {
@@ -590,7 +633,7 @@ namespace BGE
                 LineDrawer.DrawVectors(transform);
             }
 
-            
+
             if (timeDelta > 0.0f)
             {
                 smoothRate = Utilities.Clip(9.0f * timeDelta, 0.15f, 0.4f) / 2.0f;
@@ -627,18 +670,21 @@ namespace BGE
                 transform.forward.Normalize();
                 if (applyBanking)
                 {
-                    transform.LookAt(transform.position + transform.forward, tempUp);               
+                    transform.LookAt(transform.position + transform.forward, tempUp);
                 }
-                 // Apply damping
+                // Apply damping
                 velocity *= (1.0f - damping);
             }
 
-            path.Draw();
+            if (path != null)
+            {
+                path.Draw();
+            }
 
             if (enforceNonPenetrationConstraint)
             {
                 EnforceNonPenetrationConstraint();
-            }           
+            }
         }
 
         #endregion
@@ -695,7 +741,7 @@ namespace BGE
                 {
                     continue;
                 }
-                
+
                 Vector3 toCentre = transform.position - obstacle.transform.position;
                 float dist = toCentre.magnitude;
                 if (dist < boxLength)
@@ -750,7 +796,7 @@ namespace BGE
                             localPosOfClosestObstacle = localPos;
                         }
                     }
-                }                
+                }
             }
 
             if (closestIntersectingObstacle != null)
@@ -801,7 +847,7 @@ namespace BGE
         {
             Vector3 target = Vector3.zero;
             target = offsetPursuitTarget.transform.TransformPoint(offset);
-         
+
             float dist = (target - transform.position).magnitude;
 
             float lookAhead = (dist / maxSpeed);
@@ -854,7 +900,7 @@ namespace BGE
                 if (randomWalkKeepY)
                 {
                     randomWalkTarget.y = transform.position.y;
-                }                
+                }
             }
             return Arrive(randomWalkTarget);
         }
@@ -865,7 +911,7 @@ namespace BGE
             yield return new WaitForSeconds(randomWalkWait);
             randomWalkEnabled = true;
         }
-        
+
         Vector3 Wander()
         {
             float jitterTimeSlice = wanderJitter * timeDelta;
@@ -936,7 +982,7 @@ namespace BGE
         {
             makeFeelers();
 
-            Plane worldPlane = new Plane(new Vector3(0, 1, 0), 200);           
+            Plane worldPlane = new Plane(new Vector3(0, 1, 0), 0);
             Vector3 force = Vector3.zero;
             foreach (Vector3 feeler in Feelers)
             {
@@ -962,7 +1008,7 @@ namespace BGE
                 {
                     LineDrawer.DrawLine(transform.position, feeler, Color.green);
                 }
-            }            
+            }
         }
 
         public Vector3 Arrive(Vector3 target)
@@ -980,7 +1026,7 @@ namespace BGE
             if (distance < 1.0f)
             {
                 return Vector3.zero;
-            }            
+            }
             float desiredSpeed = 0;
             if (distance < arriveSlowingDistance)
             {
@@ -1060,7 +1106,7 @@ namespace BGE
                     LineDrawer.DrawCircle(neighbour.transform.position, 5, 10, color);
                 }
                 LineDrawer.DrawCircle(transform.position, 5, 10, Color.red);
-            }            
+            }
         }
 
         private int TagNeighboursPartitioned(float inRange)
@@ -1083,7 +1129,7 @@ namespace BGE
                 return 0;
             }
             Cell myCell = BoidManager.Instance.space.cells[myCellIndex];
-            
+
             foreach (Cell cell in myCell.adjacent)
             {
                 if (cell.Intersects(expanded))
@@ -1098,7 +1144,7 @@ namespace BGE
                     {
                         if (neighbour != gameObject && neighbour.tag == tag)
                         {
-                            
+
                             if (Vector3.SqrMagnitude(transform.position - neighbour.transform.position) < rangeSquared)
                             {
                                 tagged.Add(neighbour);
@@ -1186,6 +1232,6 @@ namespace BGE
         }
         #endregion Flocking
 
-        
+
     }
 }

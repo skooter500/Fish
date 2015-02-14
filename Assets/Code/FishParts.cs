@@ -56,7 +56,7 @@ namespace BGE
             {
                 segment = (GameObject) GameObject.Instantiate(prefab);
             }
-            segment.transform.parent = transform;
+            
             
             return segment;
         }
@@ -100,18 +100,24 @@ namespace BGE
             headSize = head.renderer.bounds.size;
             tailSize = tail.renderer.bounds.size;
 
-            body.transform.localPosition = Vector3.zero;
+            body.transform.position = transform.position;
+
             float headOffset = (bodySize.z / 2.0f) + gap + (headSize.z / 2.0f);
-            head.transform.localPosition = new Vector3(0, 0, headOffset);
+            head.transform.position = transform.position + new Vector3(0, 0, headOffset);
 
             float tailOffset = (bodySize.z / 2.0f) + gap + (tailSize.z / 2.0f);
-            tail.transform.localPosition = new Vector3(0, 0, - tailOffset);
+            tail.transform.position = transform.position + new Vector3(0, 0, -tailOffset);
 
-            headRotPoint = head.transform.position;
+            head.transform.parent = transform;
+            tail.transform.parent = transform;
+            body.transform.parent = transform;
+
+            headRotPoint = head.transform.localPosition;
             headRotPoint.z -= headSize.z / 2;
 
-            tailRotPoint = tail.transform.position;
+            tailRotPoint = tail.transform.localPosition;
             tailRotPoint.z += tailSize.z / 2;
+
         }
 
         float oldHeadRot = 0;
@@ -119,7 +125,6 @@ namespace BGE
 
         public void Update()
         {
-
             // Animate the head            
             float headRot = Mathf.Sin(theta) * headField;
             head.transform.RotateAround(transform.TransformPoint(headRotPoint), transform.up, headRot - oldHeadRot);            

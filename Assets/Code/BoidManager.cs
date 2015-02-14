@@ -28,6 +28,31 @@ namespace BGE
         // Use this for initialization
         GUIStyle style = new GUIStyle();
 
+
+        public static void PrintMessage(string message)
+        {
+            if (instance != null)
+            {
+                Instance.message.Append(message + "\n");
+            }
+        }
+
+        public static void PrintFloat(string message, float f)
+        {
+            if (instance != null)
+            {
+                Instance.message.Append(message + ": " + f + "\n");
+            }
+        }
+
+        public static void PrintVector(string message, Vector3 v)
+        {
+            if (instance != null)
+            {
+                Instance.message.Append(message + ": (" + v.x + ", " + v.y + ", " + v.z + ")\n");
+            }
+        }
+
         BoidManager()
         {
             spaceBounds = new Vector3(1000, 1000, 1000);
@@ -90,29 +115,7 @@ namespace BGE
             }
         }
 
-        public static void PrintMessage(string message)
-        {
-            if (instance != null)
-            {
-                Instance.message.Append(message + "\n");
-            }
-        }
-
-        public static void PrintFloat(string message, float f)
-        {
-            if (instance != null)
-            {
-                Instance.message.Append(message + ": " + f + "\n");
-            }
-        }
-
-        public static void PrintVector(string message, Vector3 v)
-        {
-            if (instance != null)
-            {
-                Instance.message.Append(message + ": (" + v.x + ", " + v.y + ", " + v.z + ")\n");
-            }
-        }
+        
 
 
         // Update is called once per frame

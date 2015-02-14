@@ -254,7 +254,6 @@ namespace BGE
         void Start()
         {
             wanderTargetPos = UnityEngine.Random.insideUnitSphere * wanderRadius;
-            wanderNoiseX = UnityEngine.Random.Range(-1000, 1000);
             randomWalkTarget = randomWalkCenter + UnityEngine.Random.insideUnitSphere * randomWalkRadius;
             if (randomWalkKeepY)
             {
@@ -1012,12 +1011,12 @@ namespace BGE
             yield return new WaitForSeconds(randomWalkWait);
             randomWalkEnabled = true;
         }
-        
+
         Vector3 Wander()
         {
             float jitterTimeSlice = wanderJitter * timeDelta;
-            Vector3 normal = UnityEngine.Random.insideUnitSphere;
-            Vector3 toAdd = normal * jitterTimeSlice;
+
+            Vector3 toAdd = UnityEngine.Random.insideUnitSphere * jitterTimeSlice;
             wanderTargetPos += toAdd;
             wanderTargetPos.Normalize();
             wanderTargetPos *= wanderRadius;
@@ -1030,6 +1029,7 @@ namespace BGE
             }
             return (worldTarget - transform.position);
         }
+        
         // Tested this and it doesnt work very well because noise is not uniformly distributed
         /*
          Vector3 Wander()

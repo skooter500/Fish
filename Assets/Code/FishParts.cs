@@ -26,8 +26,6 @@ namespace BGE
         
         // Animation stuff
         float theta;
-        float headField = 5;
-        float tailField = 50;
         float angularVelocity = 5.00f;
 
         private Vector3 headRotPoint;
@@ -40,12 +38,18 @@ namespace BGE
         public float speedMultiplier;
         public Color colour;
 
+        public float headField = 5;
+        public float tailField = 50;
+        
+
         public FishParts()
         {
             segments = new List<GameObject>();
 
             theta = 0;
             speedMultiplier = 1.0f;
+            headField = 5;
+            tailField = 50;        
             //colour = Color.white;
         }
 
@@ -149,7 +153,7 @@ namespace BGE
             tail.transform.RotateAround(transform.TransformPoint(tailRotPoint), transform.up, tailRot - oldTailRot);
             oldTailRot = tailRot;
 
-            float speed = 1.0f; // GetComponent<Boid>().acceleration.magnitude;
+            float speed = GetComponent<Boid>().acceleration.magnitude;
             theta += speed * angularVelocity * Time.deltaTime * speedMultiplier;            
             if (theta >= Math.PI * 2.0f)
             {

@@ -1,5 +1,5 @@
 fileFormatVersion: 2
-guid: 4963c4f95cb47ab41a3d4aae4c37a329
+guid: 6a8d4959abd556946be2ca154d050a2d
 ModelImporter:
   serializedVersion: 16
   fileIDToRecycleName:
@@ -7,7 +7,7 @@ ModelImporter:
     400000: //RootNode
     2300000: //RootNode
     3300000: //RootNode
-    4300000: transporter
+    4300000: Cube
     7400000: Default Take
     9500000: //RootNode
   materials:
@@ -18,6 +18,7 @@ ModelImporter:
     legacyGenerateAnimations: 4
     bakeSimulation: 0
     optimizeGameObjects: 0
+    motionNodeName: 
     animationCompression: 1
     animationRotationError: .5
     animationPositionError: .5

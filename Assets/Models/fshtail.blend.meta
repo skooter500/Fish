@@ -1,19 +1,13 @@
 fileFormatVersion: 2
-guid: c3a58eeece860214b922e2becae88905
+guid: af7b05752844de74989248b37d96d9e3
 ModelImporter:
   serializedVersion: 16
   fileIDToRecycleName:
-    100000: Camera
-    100002: //RootNode
-    100004: Lamp
-    100006: Ship_None
-    400000: Camera
-    400002: //RootNode
-    400004: Lamp
-    400006: Ship_None
-    2300000: Ship_None
-    3300000: Ship_None
-    4300000: Ship_None
+    100000: //RootNode
+    400000: //RootNode
+    2300000: //RootNode
+    3300000: //RootNode
+    4300000: Cube_002
     7400000: Default Take
     9500000: //RootNode
   materials:
@@ -24,6 +18,7 @@ ModelImporter:
     legacyGenerateAnimations: 4
     bakeSimulation: 0
     optimizeGameObjects: 0
+    motionNodeName: 
     animationCompression: 1
     animationRotationError: .5
     animationPositionError: .5
@@ -34,7 +29,7 @@ ModelImporter:
     isReadable: 1
   meshes:
     lODScreenPercentages: []
-    globalScale: 10
+    globalScale: 1
     meshCompression: 0
     addColliders: 0
     importBlendShapes: 1

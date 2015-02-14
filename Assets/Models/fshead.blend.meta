@@ -1,19 +1,13 @@
 fileFormatVersion: 2
-guid: 3c4196094f1f0704cb5ff43268dcad89
+guid: 83d50ca836c778b4aaa216fd49c18c6e
 ModelImporter:
   serializedVersion: 16
   fileIDToRecycleName:
-    100000: Camera
-    100002: Lamp
-    100004: //RootNode
-    100006: moray
-    400000: Camera
-    400002: Lamp
-    400004: //RootNode
-    400006: moray
-    2300000: moray
-    3300000: moray
-    4300000: moray
+    100000: //RootNode
+    400000: //RootNode
+    2300000: //RootNode
+    3300000: //RootNode
+    4300000: Cube
     7400000: Default Take
     9500000: //RootNode
   materials:
@@ -24,6 +18,7 @@ ModelImporter:
     legacyGenerateAnimations: 4
     bakeSimulation: 0
     optimizeGameObjects: 0
+    motionNodeName: 
     animationCompression: 1
     animationRotationError: .5
     animationPositionError: .5

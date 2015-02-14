@@ -57,6 +57,7 @@ namespace BGE
         {
             spaceBounds = new Vector3(1000, 1000, 1000);
             numCells = 50;
+            instance = this;
         }
                 
         void Awake()

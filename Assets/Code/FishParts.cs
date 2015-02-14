@@ -22,13 +22,13 @@ namespace BGE
         List<GameObject> segments;
 
         float segmentExtents = 3;
-        float gap = 1;
+        public float gap;
         
         // Animation stuff
         float theta;
         float headField = 5;
         float tailField = 50;
-        float angularVelocity = 0.15f;
+        float angularVelocity = 5.00f;
 
         private Vector3 headRotPoint;
         private Vector3 tailRotPoint;
@@ -37,9 +37,16 @@ namespace BGE
         private Vector3 bodySize;
         private Vector3 tailSize;
 
+        public float speedMultiplier;
+        public Color colour;
+
         public FishParts()
         {
             segments = new List<GameObject>();
+
+            theta = 0;
+            speedMultiplier = 1.0f;
+            //colour = Color.white;
         }
 
         public GameObject InstiantiateSegmentFromPrefab(GameObject prefab)
@@ -56,7 +63,10 @@ namespace BGE
             {
                 segment = (GameObject) GameObject.Instantiate(prefab);
             }
-            
+            if (segment.renderer != null)
+            {
+                segment.renderer.material.color = colour;
+            }
             
             return segment;
         }
@@ -65,33 +75,36 @@ namespace BGE
         {
             float radius = (1.5f * segmentExtents) + gap;
             Gizmos.color = Color.yellow;
-            Gizmos.DrawWireSphere(transform.position, radius);
+            //Gizmos.DrawWireSphere(transform.position, radius);
         }
 
 
         public void Start()
         {
-            head = InstiantiateSegmentFromPrefab(headPrefab);
-            body = InstiantiateSegmentFromPrefab(bodyPrefab);
-            tail = InstiantiateSegmentFromPrefab(tailPrefab);
+            if (head == null)
+            {
+                head = InstiantiateSegmentFromPrefab(headPrefab);
+                body = InstiantiateSegmentFromPrefab(bodyPrefab);
+                tail = InstiantiateSegmentFromPrefab(tailPrefab);
 
-            segments.Add(head);
-            segments.Add(body);
-            segments.Add(tail);
-            if (head.collider != null)
-            {
-                head.collider.enabled = false;
-            }
-            if (body.collider != null)
-            {
-                body.collider.enabled = false;
-            }
-            if (tail.collider != null)
-            {
-                tail.collider.enabled = false;
-            }
+                segments.Add(head);
+                segments.Add(body);
+                segments.Add(tail);
+                if (head.collider != null)
+                {
+                    head.collider.enabled = false;
+                }
+                if (body.collider != null)
+                {
+                    body.collider.enabled = false;
+                }
+                if (tail.collider != null)
+                {
+                    tail.collider.enabled = false;
+                }
 
-            LayoutSegments();
+                LayoutSegments();
+            }
         }
 
         private void LayoutSegments()
@@ -102,10 +115,10 @@ namespace BGE
 
             body.transform.position = transform.position;
 
-            float headOffset = (bodySize.z / 2.0f) + gap + (headSize.z / 2.0f);
+            float headOffset = (bodySize.z / 2.0f) + gap + (headSize.z / 2.0f) - 0.25f;
             head.transform.position = transform.position + new Vector3(0, 0, headOffset);
 
-            float tailOffset = (bodySize.z / 2.0f) + gap + (tailSize.z / 2.0f);
+            float tailOffset = (bodySize.z / 2.0f) + gap + (tailSize.z / 2.0f) + 0.19f;
             tail.transform.position = transform.position + new Vector3(0, 0, -tailOffset);
 
             head.transform.parent = transform;
@@ -136,10 +149,11 @@ namespace BGE
             tail.transform.RotateAround(transform.TransformPoint(tailRotPoint), transform.up, tailRot - oldTailRot);
             oldTailRot = tailRot;
 
-            theta += angularVelocity;
+            float speed = 1.0f; // GetComponent<Boid>().acceleration.magnitude;
+            theta += speed * angularVelocity * Time.deltaTime * speedMultiplier;            
             if (theta >= Math.PI * 2.0f)
             {
-                theta = 0;
+                theta -= (Mathf.PI * 2.0f);
             }
 
             /*

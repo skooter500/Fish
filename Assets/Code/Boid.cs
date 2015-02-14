@@ -1083,7 +1083,7 @@ namespace BGE
         {
             makeFeelers();
 
-            Plane worldPlane = new Plane(new Vector3(0, 1, 0), -transform.position.y);           
+            Plane worldPlane = new Plane(new Vector3(0, 1, 0), 0);           
             Vector3 force = Vector3.zero;
             foreach (Vector3 feeler in PlaneAvoidanceFeelers)
             {

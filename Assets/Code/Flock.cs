@@ -13,12 +13,14 @@ namespace BGE
         public GameObject boidPrefab;
         List<GameObject> boids;
         public List<GameObject> enemies;
+        public bool spawnInTopHemisphere;
 
         [Range(0, 2)]
         public float timeMultiplier;
 
         [Header("Debug")]
         public bool drawGizmos;
+
 
         void OnDrawGizmos()
         {
@@ -44,7 +46,12 @@ namespace BGE
                 bool inside = false;
                 do
                 {
-                    boid.transform.position = transform.position + UnityEngine.Random.insideUnitSphere * UnityEngine.Random.RandomRange(0, radius);
+                    Vector3 unit = UnityEngine.Random.insideUnitSphere;
+                    if (spawnInTopHemisphere)
+                    {
+                        unit.y = Mathf.Abs(unit.y);
+                    }
+                    boid.transform.position = transform.position + unit * UnityEngine.Random.RandomRange(0, radius);
                     inside = false;
                     foreach (Obstacle obstacle in BoidManager.Instance.obstacles)
                     {

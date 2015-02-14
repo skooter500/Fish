@@ -751,7 +751,7 @@ namespace BGE
             }
 
             float distToClosestIP = float.MaxValue;
-            GameObject closestIntersectingObstacle = null;
+            Obstacle closestIntersectingObstacle = null;
             Vector3 localPosOfClosestObstacle = Vector3.zero;
             Vector3 intersection = Vector3.zero;
 
@@ -792,7 +792,7 @@ namespace BGE
                         if (dist < distToClosestIP)
                         {
                             dist = distToClosestIP;
-                            closestIntersectingObstacle = o.gameObject;
+                            closestIntersectingObstacle = o;
                             localPosOfClosestObstacle = localPos;
                         }
                     }
@@ -805,7 +805,7 @@ namespace BGE
                 float multiplier = 1.0f + (boxLength - localPosOfClosestObstacle.z) / boxLength;
 
                 //calculate the lateral force
-                float obstacleRadius = closestIntersectingObstacle.transform.localScale.x / 2; // closestIntersectingObstacle.GetComponent<Renderer>().bounds.extents.magnitude;
+                float obstacleRadius = closestIntersectingObstacle.radius; // closestIntersectingObstacle.GetComponent<Renderer>().bounds.extents.magnitude;
                 float expandedRadius = radius + obstacleRadius;
                 force.x = (expandedRadius - Math.Abs(localPosOfClosestObstacle.x)) * multiplier;
                 force.y = (expandedRadius - Math.Abs(localPosOfClosestObstacle.y)) * multiplier;

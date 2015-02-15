@@ -1,4 +1,4 @@
-﻿using System;
+﻿
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
@@ -69,7 +69,7 @@ namespace BGE
             }
             if (segment.renderer != null)
             {
-                segment.renderer.material.color = colour;
+                segment.renderer.material.color = new Color(Random.Range(0.0f, 1.0f), Random.Range(0.0f, 1.0f), Random.Range(0.0f, 1.0f));
             }
             
             return segment;
@@ -155,7 +155,7 @@ namespace BGE
 
             float speed = GetComponent<Boid>().acceleration.magnitude;
             theta += speed * angularVelocity * Time.deltaTime * speedMultiplier;            
-            if (theta >= Math.PI * 2.0f)
+            if (theta >= Mathf.PI * 2.0f)
             {
                 theta -= (Mathf.PI * 2.0f);
             }

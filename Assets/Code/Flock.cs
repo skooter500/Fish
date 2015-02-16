@@ -93,7 +93,7 @@ namespace BGE
                     if (boid.GetComponent<AudioSource>() == null)
                     {
                         AudioSource audio = boid.AddComponent<AudioSource>();
-                        string resourceName = "Audio/fishtone3"; // +Random.Range(0, 3);
+                        string resourceName = "Audio/fishtone" + Random.Range(0, 2);
                         AudioClip clip = Resources.Load<AudioClip>(resourceName);
                         audio.loop = true;
                         audio.clip = clip;

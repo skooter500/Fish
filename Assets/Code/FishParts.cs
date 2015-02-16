@@ -153,7 +153,8 @@ namespace BGE
                 {
                     break;
                 }
-                foreach(GameObject segment in segments)
+                /*
+                 foreach(GameObject segment in segments)
                 {
                     segment.renderer.material.color = new Color(Random.Range(0.5f, 1.0f), Random.Range(0.0f, 0.0f), Random.Range(0.0f, 0.0f));
                 }
@@ -163,6 +164,7 @@ namespace BGE
                     segment.renderer.material.color = new Color(Random.Range(0.0f, 1.0f), Random.Range(0.0f, 1.0f), Random.Range(0.0f, 1.0f));
                 }
                 yield return new WaitForSeconds(fleeColourWait);
+                 */
             }
             fleeColourStarted = false;
         }

@@ -43,9 +43,27 @@ namespace BGE
             }
 
             //Now find each of the neighbours for each cell
+            float width = cellUnit.x;
+            float height = cellUnit.z;
             foreach (Cell cell in cells)
-            {
-            	Vector3 extra = new Vector3(10, 0, 10);
+            {                
+                // Add me
+                AddAdjacent(cell, new Vector3(0, 0, 0));
+
+                // Add the side
+                AddAdjacent(cell, new Vector3(-width, 0, 0));
+                AddAdjacent(cell, new Vector3(width, 0, 0));
+                // Add the top row of cells
+                AddAdjacent(cell, new Vector3(-width, 0, -height));
+                AddAdjacent(cell, new Vector3(0, 0, -height));
+                AddAdjacent(cell, new Vector3(width, 0, -height));
+                // Add the bottomo row of cells
+                AddAdjacent(cell, new Vector3(-width, 0, height));
+                AddAdjacent(cell, new Vector3(0, 0, height));
+                AddAdjacent(cell, new Vector3(width, 0, height));
+
+                /*
+                Vector3 extra = new Vector3(10, 0, 10);
                 Bounds expanded = cell.bounds;
                 expanded.min = expanded.min - extra;
                 expanded.max = expanded.max + extra;
@@ -55,7 +73,18 @@ namespace BGE
                     {
                         cell.adjacent.Add(neighbour);
                     }
-                }
+                } 
+                */
+            }
+        }
+
+        private void AddAdjacent(Cell cell, Vector3 cellOffset)
+        {
+            Vector3 point = cell.bounds.center + cellOffset;
+            int neighbour = FindCell(point);
+            if (neighbour != -1)
+            {
+                cell.adjacent.Add(cells[neighbour]);
             }
         }
 

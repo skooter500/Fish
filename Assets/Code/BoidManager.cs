@@ -28,6 +28,8 @@ namespace BGE
         // Use this for initialization
         GUIStyle style = new GUIStyle();
 
+        public GameObject cameraBoid;
+
 
         public static void PrintMessage(string message)
         {
@@ -116,8 +118,6 @@ namespace BGE
             }
         }
 
-        
-
 
         // Update is called once per frame
         void Update()
@@ -128,6 +128,13 @@ namespace BGE
             if (drawGizmos)
             {
                 space.Draw();
+            }
+
+            GameObject player = (GameObject) GameObject.FindGameObjectWithTag("Player");
+            if (player != null && cameraBoid != null)
+            {
+                //player.transform.position = cameraBoid.transform.position + Vector3.up * 5;
+                //player.transform.forward = cameraBoid.transform.forward;
             }
         }
 

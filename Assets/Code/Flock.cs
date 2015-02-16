@@ -1,4 +1,4 @@
-﻿using System;
+﻿
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
@@ -51,7 +51,7 @@ namespace BGE
                     {
                         unit.y = Mathf.Abs(unit.y);
                     }
-                    boid.transform.position = transform.position + unit * UnityEngine.Random.RandomRange(0, radius);
+                    boid.transform.position = transform.position + unit * UnityEngine.Random.Range(0, radius);
                     inside = false;
                     foreach (Obstacle obstacle in BoidManager.Instance.obstacles)
                     {
@@ -75,6 +75,33 @@ namespace BGE
                         boid.GetComponent<Boid>().drawNeighbours = true;
                     }
                 }
+            }
+            int camBoid = Random.Range(0, boidCount);
+            BoidManager.Instance.cameraBoid = boids[camBoid];
+            //boids[camBoid].GetComponent<FishParts>().enabled = false;
+            boids[camBoid].GetComponent<Boid>().fleeEnabled = false;
+            boids[camBoid].GetComponent<Boid>().timeMultiplier = 1.0f;
+
+            // Add sound to some of the boids
+            int soundBoids = boidCount / 20;
+            for (int i = 0 ; i < soundBoids ; i ++)
+            {
+
+                do
+                {
+                    GameObject boid = boids[Random.Range(0, boidCount)];
+                    if (boid.GetComponent<AudioSource>() == null)
+                    {
+                        AudioSource audio = boid.AddComponent<AudioSource>();
+                        string resourceName = "Audio/fishtone3"; // +Random.Range(0, 3);
+                        AudioClip clip = Resources.Load<AudioClip>(resourceName);
+                        audio.loop = true;
+                        audio.clip = clip;
+                        audio.Play();
+                        break;
+                    }
+                }
+                while (true);
             }
         }
 

@@ -44,6 +44,8 @@ namespace BGE
         public float fleeWeight;
         public GameObject fleeTarget;
         public float fleeRange;
+        [HideInInspector]
+        public Vector3 fleeForce;
 
         [Header("Arrive")]        
         public bool arriveEnabled;
@@ -454,6 +456,7 @@ namespace BGE
                 {
                     force = Flee(fleeTarget.transform.position) * fleeWeight;
                     force *= forceMultiplier;
+                    fleeForce = force;
                 }
                 if (flock != null)
                 {
@@ -479,12 +482,14 @@ namespace BGE
                 if (BoidManager.Instance.cellSpacePartitioning)
                 {
                     tagged = TagNeighboursPartitioned(neighbourDistance);
-                    //int testTagged = TagNeighboursSimple(Params.GetFloat("tag_range"));
-                    //Debug.Log(tagged + "\t" + testTagged); // These numbers should be the same
-                    //if (tagged != testTagged)
+                    /*
+                    int testTagged = TagNeighboursSimple(neighbourDistance);
+                    Debug.Log(tagged + "\t" + testTagged); // These numbers should be the same
+                    if (tagged != testTagged)
                     {
-                        //Debug.Log("Different!!"); // These numbers should be the same                                          
+                        Debug.Log("Different!!"); // These numbers should be the same                                          
                     }
+                     */
                 }
                 else
                 {

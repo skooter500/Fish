@@ -66,6 +66,7 @@ namespace BGE
             else
             {
                 segment = (GameObject) GameObject.Instantiate(prefab);
+                segments.Add(segment);
             }
             if (segment.renderer != null)
             {
@@ -140,8 +141,45 @@ namespace BGE
         float oldHeadRot = 0;
         float oldTailRot = 0;
 
-        public void Update()
+        private float fleeColourWait;
+        private bool fleeColourStarted;
+
+        System.Collections.IEnumerator FleeColourCycle()
         {
+            fleeColourStarted = true;
+            while(true)
+            {
+                if (GetComponent<Boid>().fleeForce.magnitude == 0)
+                {
+                    break;
+                }
+                foreach(GameObject segment in segments)
+                {
+                    segment.renderer.material.color = new Color(Random.Range(0.5f, 1.0f), Random.Range(0.0f, 0.0f), Random.Range(0.0f, 0.0f));
+                }
+                yield return new WaitForSeconds(fleeColourWait);
+                foreach (GameObject segment in segments)
+                {
+                    segment.renderer.material.color = new Color(Random.Range(0.0f, 1.0f), Random.Range(0.0f, 1.0f), Random.Range(0.0f, 1.0f));
+                }
+                yield return new WaitForSeconds(fleeColourWait);
+            }
+            fleeColourStarted = false;
+        }
+
+        public void Update()
+        {            
+            float fleeForce = GetComponent<Boid>().fleeForce.magnitude;            
+            if (fleeForce  > 0)
+            {
+                BoidManager.PrintFloat("Flee force: ", fleeForce);
+                fleeColourWait = 0.1f; // 100000.0f / fleeForce;
+                BoidManager.PrintFloat("Flee wait: ", fleeColourWait);
+                if (!fleeColourStarted)
+                {
+                    StartCoroutine("FleeColourCycle");
+                }
+            }
             // Animate the head            
             float headRot = Mathf.Sin(theta) * headField;
             head.transform.RotateAround(transform.TransformPoint(headRotPoint), transform.up, headRot - oldHeadRot);            
@@ -159,14 +197,6 @@ namespace BGE
             {
                 theta -= (Mathf.PI * 2.0f);
             }
-
-            /*
-            Vector3 pos = transform.position;
-            pos.x += Time.deltaTime * 5.0f;
-            pos.z += Time.deltaTime * 5.0f;
-            transform.position = pos;
-            //transform.Rotate(transform.forward, 30 * Time.deltaTime);             
-            */
         }
     }
 }

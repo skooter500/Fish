@@ -42,7 +42,7 @@ namespace BGE
         void Start()
         {
             instance = this;
-            Screen.showCursor = false;
+            Cursor.visible = false;
 
             style.fontSize = 18;
             style.normal.textColor = Color.white;

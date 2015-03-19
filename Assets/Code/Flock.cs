@@ -97,7 +97,7 @@ namespace BGE
                         AudioClip clip = Resources.Load<AudioClip>(resourceName);
                         audio.loop = true;
                         audio.clip = clip;
-                        audio.Play();
+                       // audio.Play();
                         break;
                     }
                 }

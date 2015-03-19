@@ -60,6 +60,7 @@ namespace BGE
 
         void LateUpdate()
         {
+            /*
             if (useVectocity)
             {
                 for (int j = 0; j < cameras.Length; j++)
@@ -98,6 +99,7 @@ namespace BGE
                 }
                 lines.Clear();
             }
+             */
 		}
 
         public static void DrawLine(Vector3 start, Vector3 end, Color colour)

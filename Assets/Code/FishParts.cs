@@ -68,9 +68,9 @@ namespace BGE
                 segment = (GameObject) GameObject.Instantiate(prefab);
                 segments.Add(segment);
             }
-            if (segment.renderer != null)
+            if (segment.GetComponent<Renderer>() != null)
             {
-                segment.renderer.material.color = new Color(Random.Range(0.0f, 1.0f), Random.Range(0.0f, 1.0f), Random.Range(0.0f, 1.0f));
+                segment.GetComponent<Renderer>().material.color = new Color(Random.Range(0.0f, 1.0f), Random.Range(0.0f, 1.0f), Random.Range(0.0f, 1.0f));
             }
             
             return segment;
@@ -95,17 +95,17 @@ namespace BGE
                 segments.Add(head);
                 segments.Add(body);
                 segments.Add(tail);
-                if (head.collider != null)
+                if (head.GetComponent<Collider>() != null)
                 {
-                    head.collider.enabled = false;
+                    head.GetComponent<Collider>().enabled = false;
                 }
-                if (body.collider != null)
+                if (body.GetComponent<Collider>() != null)
                 {
-                    body.collider.enabled = false;
+                    body.GetComponent<Collider>().enabled = false;
                 }
-                if (tail.collider != null)
+                if (tail.GetComponent<Collider>() != null)
                 {
-                    tail.collider.enabled = false;
+                    tail.GetComponent<Collider>().enabled = false;
                 }
 
                 LayoutSegments();
@@ -114,9 +114,9 @@ namespace BGE
 
         private void LayoutSegments()
         {
-            bodySize = body.renderer.bounds.size;
-            headSize = head.renderer.bounds.size;
-            tailSize = tail.renderer.bounds.size;
+            bodySize = body.GetComponent<Renderer>().bounds.size;
+            headSize = head.GetComponent<Renderer>().bounds.size;
+            tailSize = tail.GetComponent<Renderer>().bounds.size;
 
             body.transform.position = transform.position;
 
@@ -155,12 +155,12 @@ namespace BGE
                 }
                 foreach(GameObject segment in segments)
                 {
-                    segment.renderer.material.color = new Color(Random.Range(0.5f, 1.0f), Random.Range(0.0f, 0.0f), Random.Range(0.0f, 0.0f));
+                    segment.GetComponent<Renderer>().material.color = new Color(Random.Range(0.5f, 1.0f), Random.Range(0.0f, 0.0f), Random.Range(0.0f, 0.0f));
                 }
                 yield return new WaitForSeconds(fleeColourWait);
                 foreach (GameObject segment in segments)
                 {
-                    segment.renderer.material.color = new Color(Random.Range(0.0f, 1.0f), Random.Range(0.0f, 1.0f), Random.Range(0.0f, 1.0f));
+                    segment.GetComponent<Renderer>().material.color = new Color(Random.Range(0.0f, 1.0f), Random.Range(0.0f, 1.0f), Random.Range(0.0f, 1.0f));
                 }
                 yield return new WaitForSeconds(fleeColourWait);
             }

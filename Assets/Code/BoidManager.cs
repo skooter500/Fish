@@ -133,7 +133,7 @@ namespace BGE
             GameObject player = (GameObject) GameObject.FindGameObjectWithTag("Player");
             if (player != null && cameraBoid != null)
             {
-                //player.transform.position = cameraBoid.transform.position + Vector3.up * 5;
+                //player.transform.position = cameraBoid.transform.position;
                 //player.transform.forward = cameraBoid.transform.forward;
             }
         }

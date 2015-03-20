@@ -21,7 +21,9 @@ namespace BGE
         public enum CalculationMethods { WeightedTruncatedSum, WeightedTruncatedRunningSumWithPrioritisation, PrioritisedDithering };
         public CalculationMethods calculationMethod;
         public float radius;
+        public float maxTurnDegrees;
         public Boolean applyBanking;
+
 
         [HideInInspector]
         public Flock flock;
@@ -55,13 +57,17 @@ namespace BGE
         [Range(0.0f, 1.0f)]
         public float arriveDeceleration;
 
-        [Header("Wander")]                
+
+        public enum WanderMethod { Jitter, Noise };
+        [Header("Wander")]
         public bool wanderEnabled;
+        public WanderMethod wanderMethod;
         public float wanderRadius;
         public float wanderJitter;
         public float wanderDistance;
         public float wanderWeight;
-        public float wanderNoiseDelta;
+        public float wanderNoiseDeltaX;
+        public float wanderNoiseDeltaY;
         private float wanderNoiseX;
         private float wanderNoiseY;
 
@@ -203,12 +209,15 @@ namespace BGE
             arriveTargetPos = Vector3.zero;
             arriveWeight = 1.0f;
 
+            //wanderMethod = WanderMethod.Jitter;
             wanderRadius = 10.0f;
             wanderDistance = 15.0f;
             wanderJitter = 20.0f;
             wanderWeight = 1.0f;
-            wanderNoiseX = 0;
-            wanderNoiseDelta = 0.01f;
+            
+            
+            wanderNoiseDeltaX = 0.01f;
+            wanderNoiseDeltaY = 0.01f;
 
             cohesionWeight = 1.0f;
             separationWeight = 1.0f;
@@ -247,6 +256,7 @@ namespace BGE
 
             maxSpeed = 20;
             maxForce = 10;
+            maxTurnDegrees = 180.0f;
 
             sceneAvoidanceEnabled = true;
             sceneAvoidanceWeight = 1.0f;
@@ -265,6 +275,9 @@ namespace BGE
             {
                 offset = offsetPursuitTarget.transform.position - transform.position;
             }
+
+            wanderNoiseX = 0; // UnityEngine.Random.Range(0, 10000);
+            wanderNoiseY = UnityEngine.Random.Range(0, 10000);
         }
 
         #region Flags
@@ -549,7 +562,14 @@ namespace BGE
 
             if (wanderEnabled)
             {
-                force = Wander() * wanderWeight;
+                if (wanderMethod == WanderMethod.Jitter)
+                {
+                    force = Wander() * wanderWeight;
+                }
+                else
+                {
+                    force = NoiseWander() * wanderWeight;
+                }
                 force *= forceMultiplier;
                 if (!accumulateForce(ref steeringForce, force))
                 {
@@ -557,6 +577,7 @@ namespace BGE
                 }
             }
 
+            
             if (pursuitEnabled)
             {
                 force = Pursue() * pursuitWeight;
@@ -715,6 +736,9 @@ namespace BGE
             return force;
         }
         */
+
+        float maxAngle = float.MinValue;
+
         void Update()
         {
             float smoothRate;
@@ -769,10 +793,32 @@ namespace BGE
             Vector3 tempUp = transform.up;
             Utilities.BlendIntoAccumulator(smoothRate, bankUp, ref tempUp);
 
-            if (speed > 0.0001f)
+            if (speed > 0.01f)
             {
-                transform.forward = velocity;
-                transform.forward.Normalize();
+                float maxTurnFrame = maxTurnDegrees * Time.deltaTime;
+                float maxTurn = maxTurnFrame * Mathf.Deg2Rad; // Max turn in rads
+                float angle = Mathf.Acos(Vector3.Dot(transform.forward, velocity.normalized));
+                if (angle > maxTurn)
+                {
+                    // Clamp the turn
+                    Vector3 axis = Vector3.Cross(transform.forward, velocity.normalized);
+                    Quaternion q = Quaternion.AngleAxis(maxTurnFrame, axis);
+                    transform.forward = q * transform.forward;
+                    velocity = transform.forward * velocity.magnitude;
+                    BoidManager.PrintMessage("Clamping the forward vector");
+                }
+                else
+                {
+                    transform.forward = velocity;
+                    transform.forward.Normalize();                
+                }
+                if (angle > maxAngle)
+                {
+                    maxAngle = angle;
+                }
+
+                BoidManager.PrintFloat("Rotation angle: ", angle * Mathf.Rad2Deg);
+                BoidManager.PrintFloat("Max angle: ", maxAngle * Mathf.Rad2Deg);
                 if (applyBanking)
                 {
                     transform.LookAt(transform.position + transform.forward, tempUp);               
@@ -1017,6 +1063,13 @@ namespace BGE
             randomWalkEnabled = true;
         }
 
+        Vector3 TransformPointNoScale(Transform transform, Vector3 localPoint)
+        {
+            Vector3 p = transform.rotation * localPoint;
+            p += transform.position;
+            return p;
+        }
+
         Vector3 Wander()
         {
             float jitterTimeSlice = wanderJitter * timeDelta;
@@ -1034,32 +1087,38 @@ namespace BGE
             }
             return (worldTarget - transform.position);
         }
-        
-        // Tested this and it doesnt work very well because noise is not uniformly distributed
-        /*
-         Vector3 Wander()
+               
+        Vector3 NoiseWander()
         {
             float n = Mathf.PerlinNoise(wanderNoiseX, 0);
-            //Debug.Log(n);
-            float theta = Utilities.Map(n, 0.2f, 0.7f, 0, Mathf.PI * 2.0f);
+            float theta = Utilities.Map(n, 0.0f, 1.0f, 0, Mathf.PI * 2.0f);
             wanderTargetPos.x = Mathf.Sin(theta);
-            wanderTargetPos.y = -Mathf.Cos(theta);
-            wanderTargetPos.z = 0;
+            wanderTargetPos.z = -Mathf.Cos(theta);
+
+            n = Mathf.PerlinNoise(wanderNoiseY, 0);
+            theta = Utilities.Map(n, 0.0f, 1.0f, 0, Mathf.PI * 2.0f);
+           
+            wanderTargetPos.y = 0;
             wanderTargetPos *= wanderRadius;
             Vector3 localTarget = wanderTargetPos + (Vector3.forward * wanderDistance);
-            Vector3 worldTarget = transform.TransformPoint(localTarget);
+            Vector3 worldTarget = TransformPointNoScale(transform, localTarget);
 
             if (drawGizmos)
             {
                 LineDrawer.DrawTarget(worldTarget, Color.red);
-                Vector3 worldCenter = transform.TransformPoint(Vector3.forward * wanderDistance);
+                BoidManager.PrintVector("Target pos:", worldTarget);
+                Vector3 worldCenter = TransformPointNoScale(transform, Vector3.forward * wanderDistance);
                 LineDrawer.DrawSphere(worldCenter, wanderRadius, 10, Color.yellow);
             }
-            wanderNoiseX += wanderNoiseDelta;
-            return Vector3.zero;
-           //return (worldTarget - transform.position);
+            wanderNoiseX += wanderNoiseDeltaX;
+            wanderNoiseY += wanderNoiseDeltaY;
+            Vector3 desired = worldTarget - transform.position;
+            desired.Normalize();
+            desired *= maxSpeed;
+            //return Vector3.zero;
+            return desired - velocity;
         }
-         */
+         
 
         // Wander with quaternions
         /*
@@ -1172,6 +1231,10 @@ namespace BGE
             if (toTarget.magnitude > radius)
             {
                 steeringForce = Vector3.Normalize(toTarget) * (radius - toTarget.magnitude);
+            }
+            if (drawGizmos)
+            {
+                LineDrawer.DrawSphere(sphereCentre, radius, 20, Color.yellow);
             }
             return steeringForce;
         }

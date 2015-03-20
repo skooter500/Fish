@@ -6,16 +6,12 @@ using UnityEngine;
 
 namespace BGE
 {
-    public class FishParts:MonoBehaviour
+    public class FishParts : MonoBehaviour
     {
-        public GameObject headPrefab;
-        public GameObject bodyPrefab;
-        public GameObject tailPrefab;
-        
         [HideInInspector]
         public GameObject head;
         [HideInInspector]
-        public GameObject body;        
+        public GameObject body;
         [HideInInspector]
         public GameObject tail;
 
@@ -23,7 +19,7 @@ namespace BGE
 
         float segmentExtents = 3;
         public float gap;
-        
+
         // Animation stuff
         float theta;
         float angularVelocity = 5.00f;
@@ -38,10 +34,12 @@ namespace BGE
         public float speedMultiplier;
         public Color colour;
 
-        public float headField = 5;
-        public float tailField = 50;
-        
+        public float headField;
+        public float tailField;
 
+        public bool randomPartColours;
+
+       
         public FishParts()
         {
             segments = new List<GameObject>();
@@ -49,30 +47,18 @@ namespace BGE
             theta = 0;
             speedMultiplier = 1.0f;
             headField = 5;
-            tailField = 50;        
+            tailField = 50;
+            randomPartColours = false;
             //colour = Color.white;
         }
 
-        public GameObject InstiantiateSegmentFromPrefab(GameObject prefab)
+        public GameObject InstiantiateDefaultShape()
         {
-            
+
             GameObject segment = null;
-            if (prefab == null)
-            {
-                segment = GameObject.CreatePrimitive(PrimitiveType.Cube);
-                Vector3 scale = new Vector3(1, segmentExtents, segmentExtents);
-                segment.transform.localScale = scale;
-            }
-            else
-            {
-                segment = (GameObject) GameObject.Instantiate(prefab);
-                segments.Add(segment);
-            }
-            if (segment.renderer != null)
-            {
-                segment.renderer.material.color = new Color(Random.Range(0.0f, 1.0f), Random.Range(0.0f, 1.0f), Random.Range(0.0f, 1.0f));
-            }
-            
+            segment = GameObject.CreatePrimitive(PrimitiveType.Cube);
+            Vector3 scale = new Vector3(1, segmentExtents, segmentExtents);
+            segment.transform.localScale = scale;            
             return segment;
         }
 
@@ -86,29 +72,51 @@ namespace BGE
 
         public void Start()
         {
-            if (head == null)
+
+            if (transform.childCount != 3)
             {
-                head = InstiantiateSegmentFromPrefab(headPrefab);
-                body = InstiantiateSegmentFromPrefab(bodyPrefab);
-                tail = InstiantiateSegmentFromPrefab(tailPrefab);
-
-                segments.Add(head);
-                segments.Add(body);
-                segments.Add(tail);
-                if (head.collider != null)
-                {
-                    head.collider.enabled = false;
-                }
-                if (body.collider != null)
-                {
-                    body.collider.enabled = false;
-                }
-                if (tail.collider != null)
-                {
-                    tail.collider.enabled = false;
-                }
-
+                head = InstiantiateDefaultShape();
+                body = InstiantiateDefaultShape();
+                tail = InstiantiateDefaultShape();
                 LayoutSegments();
+            }
+            else
+            {
+                head = transform.GetChild(0).gameObject;
+                body = transform.GetChild(1).gameObject;
+                tail = transform.GetChild(2).gameObject;
+            }
+
+            segments.Add(head);
+            segments.Add(body);
+            segments.Add(tail);
+
+            foreach(GameObject segment in segments)
+            {
+                if (segment.renderer != null)
+                {
+                    if (randomPartColours)
+                    {
+                        segment.renderer.material.color = new Color(Random.Range(0.0f, 1.0f), Random.Range(0.0f, 1.0f), Random.Range(0.0f, 1.0f));
+                    }
+                    else
+                    {
+                        segment.renderer.material.color = colour;
+                    }
+                }
+            }
+            
+            if (head.collider != null)
+            {
+                head.collider.enabled = false;
+            }
+            if (body.collider != null)
+            {
+                body.collider.enabled = false;
+            }
+            if (tail.collider != null)
+            {
+                tail.collider.enabled = false;
             }
         }
 
@@ -120,10 +128,10 @@ namespace BGE
 
             body.transform.position = transform.position;
 
-            float headOffset = (bodySize.z / 2.0f) + gap + (headSize.z / 2.0f) - 0.25f;
+            float headOffset = (bodySize.z / 2.0f) + gap + (headSize.z / 2.0f);
             head.transform.position = transform.position + new Vector3(0, 0, headOffset);
 
-            float tailOffset = (bodySize.z / 2.0f) + gap + (tailSize.z / 2.0f) + 0.19f;
+            float tailOffset = (bodySize.z / 2.0f) + gap + (tailSize.z / 2.0f);
             tail.transform.position = transform.position + new Vector3(0, 0, -tailOffset);
 
             head.transform.parent = transform;
@@ -147,7 +155,7 @@ namespace BGE
         System.Collections.IEnumerator FleeColourCycle()
         {
             fleeColourStarted = true;
-            while(true)
+            while (true)
             {
                 if (GetComponent<Boid>().fleeForce.magnitude == 0)
                 {
@@ -161,8 +169,8 @@ namespace BGE
                 segments[0].renderer.material.color = new Color(Random.Range(0.0f, 1.0f), Random.Range(0.0f, 1.0f), Random.Range(0.0f, 1.0f));
                 yield return new WaitForSeconds(fleeColourWait);
                 */
-                
-                 foreach(GameObject segment in segments)
+
+                foreach (GameObject segment in segments)
                 {
                     segment.renderer.material.color = new Color(Random.Range(0.5f, 1.0f), Random.Range(0.0f, 0.0f), Random.Range(0.0f, 0.0f));
                 }
@@ -177,13 +185,11 @@ namespace BGE
         }
 
         public void Update()
-        {            
-            float fleeForce = GetComponent<Boid>().fleeForce.magnitude;            
-            if (fleeForce  > 0)
+        {
+            float fleeForce = GetComponent<Boid>().fleeForce.magnitude;
+            if (fleeForce > 0)
             {
-                BoidManager.PrintFloat("Flee force: ", fleeForce);
                 fleeColourWait = 0.1f; // 100000.0f / fleeForce;
-                BoidManager.PrintFloat("Flee wait: ", fleeColourWait);
                 if (!fleeColourStarted)
                 {
                     StartCoroutine("FleeColourCycle");
@@ -191,8 +197,8 @@ namespace BGE
             }
             // Animate the head            
             float headRot = Mathf.Sin(theta) * headField;
-            head.transform.RotateAround(transform.TransformPoint(headRotPoint), transform.up, headRot - oldHeadRot);            
-            
+            head.transform.RotateAround(transform.TransformPoint(headRotPoint), transform.up, headRot - oldHeadRot);
+
             oldHeadRot = headRot;
 
             // Animate the tail
@@ -201,7 +207,7 @@ namespace BGE
             oldTailRot = tailRot;
 
             float speed = GetComponent<Boid>().acceleration.magnitude;
-            theta += speed * angularVelocity * Time.deltaTime * speedMultiplier;            
+            theta += speed * angularVelocity * Time.deltaTime * speedMultiplier;
             if (theta >= Mathf.PI * 2.0f)
             {
                 theta -= (Mathf.PI * 2.0f);

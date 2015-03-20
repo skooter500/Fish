@@ -43,6 +43,7 @@ namespace BGE
             {
                 GameObject boid = (GameObject)GameObject.Instantiate(boidPrefab);
                 boids.Add(boid);
+                boid.transform.parent = transform;
                 bool inside = false;
                 do
                 {
@@ -83,7 +84,7 @@ namespace BGE
             boids[camBoid].GetComponent<Boid>().timeMultiplier = 1.0f;
 
             // Add sound to some of the boids
-            int soundBoids = boidCount / 20;
+            int soundBoids = 1; // boidCount / 100;
             for (int i = 0 ; i < soundBoids ; i ++)
             {
 

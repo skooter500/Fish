@@ -73,6 +73,7 @@ namespace BGE
 
         [Header("Flocking")]
         public float neighbourDistance;
+        public float neighbourTagDither;
 
         [Header("Separation")]                
         public bool separationEnabled;
@@ -194,6 +195,8 @@ namespace BGE
             forceMultiplier = 1.0f;
             timeMultiplier = 1.0f;
             neighbourDistance = 10.0f;
+
+            neighbourTagDither = 0.5f;
 
             calculationMethod = CalculationMethods.WeightedTruncatedRunningSumWithPrioritisation;
             
@@ -489,28 +492,31 @@ namespace BGE
                 }
             }
 
-            int tagged = 0;
             if (separationEnabled || cohesionEnabled || alignmentEnabled)
             {
-                if (BoidManager.Instance.cellSpacePartitioning)
+                float prob = UnityEngine.Random.Range(0.0f, 1.0f);
+                if (prob < neighbourTagDither)
                 {
-                    tagged = TagNeighboursPartitioned(neighbourDistance);
-                    /*
-                    int testTagged = TagNeighboursSimple(neighbourDistance);
-                    Debug.Log(tagged + "\t" + testTagged); // These numbers should be the same
-                    if (tagged != testTagged)
+                    if (BoidManager.Instance.cellSpacePartitioning)
                     {
-                        Debug.Log("Different!!"); // These numbers should be the same                                          
+                        TagNeighboursPartitioned(neighbourDistance);
+                        /*
+                        int testTagged = TagNeighboursSimple(neighbourDistance);
+                        Debug.Log(tagged + "\t" + testTagged); // These numbers should be the same
+                        if (tagged != testTagged)
+                        {
+                            Debug.Log("Different!!"); // These numbers should be the same                                          
+                        }
+                         */
                     }
-                     */
-                }
-                else
-                {
-                    tagged = TagNeighboursSimple(neighbourDistance);
+                    else
+                    {
+                        TagNeighboursSimple(neighbourDistance);
+                    }
                 }
             }
 
-            if (separationEnabled && (tagged > 0))
+            if (separationEnabled && (tagged.Count > 0))
             {
                 force = Separation() * separationWeight;
                 force *= forceMultiplier;
@@ -520,7 +526,7 @@ namespace BGE
                 }
             }
 
-            if (alignmentEnabled && (tagged > 0))
+            if (alignmentEnabled && (tagged.Count > 0))
             {
                 force = Alignment() * alignmentWeight;
                 force *= forceMultiplier;
@@ -530,7 +536,7 @@ namespace BGE
                 }
             }
 
-            if (cohesionEnabled && (tagged > 0))
+            if (cohesionEnabled && (tagged.Count > 0))
             {
                 force = Cohesion() * cohesionWeight;
                 force *= forceMultiplier;
@@ -805,7 +811,7 @@ namespace BGE
                     Quaternion q = Quaternion.AngleAxis(maxTurnFrame, axis);
                     transform.forward = q * transform.forward;
                     velocity = transform.forward * velocity.magnitude;
-                    BoidManager.PrintMessage("Clamping the forward vector");
+                    //BoidManager.PrintMessage("Clamping the forward vector");
                 }
                 else
                 {
@@ -817,8 +823,8 @@ namespace BGE
                     maxAngle = angle;
                 }
 
-                BoidManager.PrintFloat("Rotation angle: ", angle * Mathf.Rad2Deg);
-                BoidManager.PrintFloat("Max angle: ", maxAngle * Mathf.Rad2Deg);
+                //BoidManager.PrintFloat("Rotation angle: ", angle * Mathf.Rad2Deg);
+                //BoidManager.PrintFloat("Max angle: ", maxAngle * Mathf.Rad2Deg);
                 if (applyBanking)
                 {
                     transform.LookAt(transform.position + transform.forward, tempUp);               
@@ -1280,6 +1286,7 @@ namespace BGE
 
         private int TagNeighboursPartitioned(float inRange)
         {
+            
             Bounds expanded = new Bounds();
             expanded.min = new Vector3(transform.position.x - inRange, 0, transform.position.z - inRange);
             expanded.max = new Vector3(transform.position.x + inRange, 0, transform.position.z + inRange);

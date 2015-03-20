@@ -1,0 +1,27 @@
+<<<<<<< HEAD:Assets/Resources/Audio/spaceship.mp3.meta
+fileFormatVersion: 2
+guid: 43fe18b34e2ae174b94eead9847f5323
+AudioImporter:
+  serializedVersion: 4
+  format: 0
+  quality: -1
+  stream: 1
+  3D: 1
+  forceToMono: 0
+  useHardware: 0
+  loopable: 0
+  userData: 
+=======
+fileFormatVersion: 2
+guid: 1c0a27220f738b34e831d3a99a4af53c
+AudioImporter:
+  serializedVersion: 4
+  format: -1
+  quality: -1
+  stream: 1
+  3D: 1
+  forceToMono: 0
+  useHardware: 0
+  loopable: 0
+  userData: 
+>>>>>>> reflections:Assets/Resources/Audio/atmos1.wav.meta

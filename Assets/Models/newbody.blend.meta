@@ -1,19 +1,13 @@
 fileFormatVersion: 2
-guid: 87dff329ca735eb4fac71b7e7ca21519
+guid: 6a8d4959abd556946be2ca154d050a2d
 ModelImporter:
   serializedVersion: 16
   fileIDToRecycleName:
     100000: //RootNode
-    100002: adder
-    100004: Camera
-    100006: Lamp
     400000: //RootNode
-    400002: adder
-    400004: Camera
-    400006: Lamp
-    2300000: adder
-    3300000: adder
-    4300000: adder
+    2300000: //RootNode
+    3300000: //RootNode
+    4300000: Cube
     7400000: Default Take
     9500000: //RootNode
   materials:
@@ -35,7 +29,7 @@ ModelImporter:
     isReadable: 1
   meshes:
     lODScreenPercentages: []
-    globalScale: .00999999978
+    globalScale: 1
     meshCompression: 0
     addColliders: 0
     importBlendShapes: 1

@@ -28,10 +28,38 @@ namespace BGE
         // Use this for initialization
         GUIStyle style = new GUIStyle();
 
+        public GameObject cameraBoid;
+
+
+        public static void PrintMessage(string message)
+        {
+            if (instance != null)
+            {
+                Instance.message.Append(message + "\n");
+            }
+        }
+
+        public static void PrintFloat(string message, float f)
+        {
+            if (instance != null)
+            {
+                Instance.message.Append(message + ": " + f + "\n");
+            }
+        }
+
+        public static void PrintVector(string message, Vector3 v)
+        {
+            if (instance != null)
+            {
+                Instance.message.Append(message + ": (" + v.x + ", " + v.y + ", " + v.z + ")\n");
+            }
+        }
+
         BoidManager()
         {
             spaceBounds = new Vector3(1000, 1000, 1000);
             numCells = 50;
+            instance = this;
         }
                 
         void Awake()
@@ -90,30 +118,6 @@ namespace BGE
             }
         }
 
-        public static void PrintMessage(string message)
-        {
-            if (instance != null)
-            {
-                Instance.message.Append(message + "\n");
-            }
-        }
-
-        public static void PrintFloat(string message, float f)
-        {
-            if (instance != null)
-            {
-                Instance.message.Append(message + ": " + f + "\n");
-            }
-        }
-
-        public static void PrintVector(string message, Vector3 v)
-        {
-            if (instance != null)
-            {
-                Instance.message.Append(message + ": (" + v.x + ", " + v.y + ", " + v.z + ")\n");
-            }
-        }
-
 
         // Update is called once per frame
         void Update()
@@ -124,6 +128,13 @@ namespace BGE
             if (drawGizmos)
             {
                 space.Draw();
+            }
+
+            GameObject player = (GameObject) GameObject.FindGameObjectWithTag("Player");
+            if (player != null && cameraBoid != null)
+            {
+                //player.transform.position = cameraBoid.transform.position + Vector3.up * 5;
+                //player.transform.forward = cameraBoid.transform.forward;
             }
         }
 

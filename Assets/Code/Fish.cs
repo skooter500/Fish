@@ -110,7 +110,10 @@ namespace BGE
             {
                 Debug.Log("Renderer is null 2");
             }
-            renderer.material = material;
+            else
+            {
+                renderer.material = material;
+            }
         }
 
         Vector3 RotateAroundPoint(Vector3 toRotate, Quaternion q, Vector3 point)

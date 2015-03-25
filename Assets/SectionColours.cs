@@ -38,6 +38,21 @@ public class SectionColours : MonoBehaviour {
     private float fleeColourWait;
     private bool fleeColourStarted;
 
+    public void CycleColours()
+    {
+        for (int i = segments.Count - 1; i > 0; i--)
+        {
+            Renderer current = segments[i].GetComponent<Renderer>();
+            Renderer previous = segments[i - 1].GetComponent<Renderer>();
+
+            if (current != null && previous != null)
+            {
+                current.material.color = previous.material.color;
+            }
+        }
+        segments[0].GetComponent<Renderer>().material.color = new Color(Random.Range(0.0f, 1.0f), Random.Range(0.0f, 1.0f), Random.Range(0.0f, 1.0f));
+    }
+
     System.Collections.IEnumerator FleeColourCycle()
     {
         fleeColourStarted = true;
@@ -48,21 +63,7 @@ public class SectionColours : MonoBehaviour {
                 break;
             }
             
-            for(int i = segments.Count - 1 ; i > 0  ; i --)
-            {
-                Renderer current = segments[i].GetComponent<Renderer>();
-                Renderer previous = segments[i - 1].GetComponent<Renderer>();
-
-                if (current != null && previous != null)
-                {
-                    current.material.color = previous.material.color;
-                }                
-            }
-            segments[0].GetComponent<Renderer>().material.color = new Color(Random.Range(0.0f, 1.0f), Random.Range(0.0f, 1.0f), Random.Range(0.0f, 1.0f));
-            yield return new WaitForSeconds(fleeColourWait);
-            
-            
-            /*foreach (GameObject segment in segments)
+            foreach (GameObject segment in segments)
             {
                 segment.GetComponent<Renderer>().material.color = new Color(Random.Range(0.5f, 1.0f), Random.Range(0.0f, 0.0f), Random.Range(0.0f, 0.0f));
             }
@@ -72,7 +73,7 @@ public class SectionColours : MonoBehaviour {
                 segment.GetComponent<Renderer>().material.color = new Color(Random.Range(0.0f, 1.0f), Random.Range(0.0f, 1.0f), Random.Range(0.0f, 1.0f));
             }
             yield return new WaitForSeconds(fleeColourWait);
-            */ 
+             
         }
         fleeColourStarted = false;
     }

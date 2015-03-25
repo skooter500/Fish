@@ -69,6 +69,11 @@ namespace BGE
                 boid.GetComponent<Boid>().sphereRadius = radius;
                 boid.GetComponent<Boid>().sphereCentre = transform.position;
                 boid.GetComponent<Boid>().fleeTarget = GameObject.FindGameObjectWithTag("Player");
+                AudioSource audioSource = boid.GetComponent<AudioSource>();
+                if (audioSource != null)
+                {
+                    audioSource.enabled = false;
+                }               
                 if (i == boidCount / 2)
                 {
                     if (drawGizmos)
@@ -83,22 +88,18 @@ namespace BGE
             boids[camBoid].GetComponent<Boid>().fleeEnabled = false;
             boids[camBoid].GetComponent<Boid>().timeMultiplier = 1.0f;
 
-            // Add sound to some of the boids
-            int soundBoids = 1; // boidCount / 100;
+            // 
+            int soundBoids = 10;
             for (int i = 0 ; i < soundBoids ; i ++)
             {
-
                 do
                 {
                     GameObject boid = boids[Random.Range(0, boidCount)];
-                    if (boid.GetComponent<AudioSource>() == null)
+                    AudioSource audioSource = boid.GetComponent<AudioSource>();                    
+                    if (audioSource != null)
                     {
-                        AudioSource audio = boid.AddComponent<AudioSource>();
-                        string resourceName = "Audio/fishtone" + Random.Range(0, 2);
-                        AudioClip clip = Resources.Load<AudioClip>(resourceName);
-                        audio.loop = true;
-                        audio.clip = clip;
-                        //audio.Play();
+                        audioSource.enabled = true;
+                        audioSource.Play();
                         break;
                     }
                 }

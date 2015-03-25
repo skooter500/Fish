@@ -29,6 +29,11 @@ namespace BGE
         GUIStyle style = new GUIStyle();
 
         public GameObject cameraBoid;
+        
+        public void OnDrawGizmos()
+        {
+            Gizmos.DrawWireCube(Vector3.zero, new Vector3(1000, 0, 1000));
+        }
 
 
         public static void PrintMessage(string message)

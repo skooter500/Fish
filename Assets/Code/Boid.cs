@@ -127,8 +127,9 @@ namespace BGE
         [HideInInspector]
         public Vector3 offset;
 
-        [Header("Sphere Constrain")]                                
+        [Header("Sphere Constrain")]
         public bool sphereConstrainEnabled;
+        public bool centreOnPosition;
         public Vector3 sphereCentre;
         public float sphereRadius;
         public float sphereConstrainWeight;
@@ -248,6 +249,7 @@ namespace BGE
 
             sphereCentre = Vector3.zero;
             sphereConstrainWeight = 1.0f;
+            centreOnPosition = true;
             sphereRadius = 1000.0f;
 
             randomWalkWeight = 1.0f;
@@ -284,6 +286,11 @@ namespace BGE
             wanderNoiseY = UnityEngine.Random.Range(0, 10000);
 
             randomWalkWait = UnityEngine.Random.Range(0, randomWalkWaitMaxSeconds);
+
+            if (centreOnPosition)
+            {
+                sphereCentre = transform.position;
+            }
         }
 
         #region Flags
@@ -1119,7 +1126,6 @@ namespace BGE
             if (drawGizmos)
             {
                 LineDrawer.DrawTarget(worldTarget, Color.red);
-                BoidManager.PrintVector("Target pos:", worldTarget);
                 Vector3 worldCenter = TransformPointNoScale(transform, Vector3.forward * wanderDistance);
                 LineDrawer.DrawSphere(worldCenter, wanderRadius, 10, Color.yellow);
             }

@@ -276,7 +276,7 @@ namespace BGE
             }
             if (offsetPursuitTarget != null)
             {
-                offset = offsetPursuitTarget.transform.position - transform.position;
+                offset = transform.position - offsetPursuitTarget.transform.position;
             }
 
             wanderNoiseX = 0; // UnityEngine.Random.Range(0, 10000);
@@ -1003,7 +1003,8 @@ namespace BGE
         Vector3 OffsetPursuit(Vector3 offset)
         {
             Vector3 target = Vector3.zero;
-            target = offsetPursuitTarget.transform.TransformPoint(offset);
+
+            target = TransformPointNoScale(offsetPursuitTarget.transform, offset);
          
             float dist = (target - transform.position).magnitude;
 

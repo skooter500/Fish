@@ -14,7 +14,7 @@ namespace BGE
         void Start()
         {
             Cursor.visible = false;
-            Screen.lockCursor = true;
+            Cursor.lockState = CursorLockMode.Locked;
 
             ovrCamera = GameObject.FindGameObjectWithTag("ovrplayer");
         }

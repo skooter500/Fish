@@ -41,7 +41,7 @@ namespace BGE
         {
             for (int i = 0; i < boidCount; i++)
             {
-                GameObject boid = (GameObject)GameObject.Instantiate(boidPrefab);
+                GameObject boid = GameObject.Instantiate<GameObject>(boidPrefab);
                 boids.Add(boid);
                 boid.transform.parent = transform;
                 bool inside = false;
@@ -98,7 +98,7 @@ namespace BGE
                         AudioClip clip = Resources.Load<AudioClip>(resourceName);
                         audio.loop = true;
                         audio.clip = clip;
-                        audio.Play();
+                        //audio.Play();
                         break;
                     }
                 }

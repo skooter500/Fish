@@ -47,7 +47,7 @@ public class SectionColours : MonoBehaviour {
             {
                 break;
             }
-            /*
+            
             for(int i = segments.Count - 1 ; i > 0  ; i --)
             {
                 Renderer current = segments[i].GetComponent<Renderer>();
@@ -56,14 +56,13 @@ public class SectionColours : MonoBehaviour {
                 if (current != null && previous != null)
                 {
                     current.material.color = previous.material.color;
-                }
-                yield return new WaitForSeconds(fleeColourWait);
+                }                
             }
             segments[0].GetComponent<Renderer>().material.color = new Color(Random.Range(0.0f, 1.0f), Random.Range(0.0f, 1.0f), Random.Range(0.0f, 1.0f));
-            */
+            yield return new WaitForSeconds(fleeColourWait);
             
             
-            foreach (GameObject segment in segments)
+            /*foreach (GameObject segment in segments)
             {
                 segment.GetComponent<Renderer>().material.color = new Color(Random.Range(0.5f, 1.0f), Random.Range(0.0f, 0.0f), Random.Range(0.0f, 0.0f));
             }
@@ -73,7 +72,7 @@ public class SectionColours : MonoBehaviour {
                 segment.GetComponent<Renderer>().material.color = new Color(Random.Range(0.0f, 1.0f), Random.Range(0.0f, 1.0f), Random.Range(0.0f, 1.0f));
             }
             yield return new WaitForSeconds(fleeColourWait);
-             
+            */ 
         }
         fleeColourStarted = false;
     }
@@ -81,9 +80,9 @@ public class SectionColours : MonoBehaviour {
 	// Update is called once per frame
 	void Update () {
         float fleeForce = GetComponent<Boid>().fleeForce.magnitude;
-        if (fleeForce > 0)
+        //if (fleeForce > 0)
         {
-            fleeColourWait = 0.1f; 
+            fleeColourWait = 0.3f; 
             if (!fleeColourStarted)
             {
                 StartCoroutine("FleeColourCycle");

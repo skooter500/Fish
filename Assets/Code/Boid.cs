@@ -22,8 +22,8 @@ namespace BGE
         public CalculationMethods calculationMethod;
         public float radius;
         public float maxTurnDegrees;
-        public Boolean applyBanking;
-
+        public bool keepUpright;
+        public bool applyBanking;
 
         [HideInInspector]
         public Flock flock;
@@ -136,7 +136,8 @@ namespace BGE
         [Header("Random Walk")]
         public bool randomWalkEnabled;
         public Vector3 randomWalkCenter;
-        public float randomWalkWait;
+        public float randomWalkWaitMaxSeconds;
+        private float randomWalkWait; 
         
         public float randomWalkRadius;
         public bool randomWalkKeepY;
@@ -255,7 +256,7 @@ namespace BGE
             randomWalkKeepY = false;
 
             randomWalkForce = Vector3.zero;
-            randomWalkWait = 5.0f;
+            randomWalkWaitMaxSeconds = 5.0f;
 
             maxSpeed = 20;
             maxForce = 10;
@@ -279,8 +280,10 @@ namespace BGE
                 offset = transform.position - offsetPursuitTarget.transform.position;
             }
 
-            wanderNoiseX = 0; // UnityEngine.Random.Range(0, 10000);
+            wanderNoiseX = UnityEngine.Random.Range(0, 10000);
             wanderNoiseY = UnityEngine.Random.Range(0, 10000);
+
+            randomWalkWait = UnityEngine.Random.Range(0, randomWalkWaitMaxSeconds);
         }
 
         #region Flags
@@ -811,12 +814,14 @@ namespace BGE
                     Quaternion q = Quaternion.AngleAxis(maxTurnFrame, axis);
                     transform.forward = q * transform.forward;
                     velocity = transform.forward * velocity.magnitude;
-                    //BoidManager.PrintMessage("Clamping the forward vector");
                 }
                 else
                 {
-                    transform.forward = velocity;
-                    transform.forward.Normalize();                
+                    if (!keepUpright)
+                    {
+                        transform.forward = velocity;
+                        transform.forward.Normalize();
+                    }
                 }
                 if (angle > maxAngle)
                 {
@@ -1068,6 +1073,7 @@ namespace BGE
             randomWalkEnabled = false;
             yield return new WaitForSeconds(randomWalkWait);
             randomWalkEnabled = true;
+            randomWalkWait = UnityEngine.Random.Range(0, randomWalkWaitMaxSeconds);
         }
 
         Vector3 TransformPointNoScale(Transform transform, Vector3 localPoint)

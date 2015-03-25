@@ -7,8 +7,8 @@ public class AnimationSpeed : MonoBehaviour {
 
     public enum speedControllerType { force, acceleration, velocity };
 
-    speedControllerType speedController;
-
+    public speedControllerType speedController;
+    public GameObject boidObject;
 
 	// Use this for initialization
     AnimationSpeed()
@@ -18,7 +18,10 @@ public class AnimationSpeed : MonoBehaviour {
     }
 
 	void Start () {
-
+        if (boidObject == null)
+        {
+            boidObject = gameObject;
+        }
 	}
 	
 	// Update is called once per frame
@@ -29,13 +32,13 @@ public class AnimationSpeed : MonoBehaviour {
         switch (speedController)
         {
             case speedControllerType.force:
-                 speed = GetComponent<Boid>().force.magnitude;
+                speed = boidObject.GetComponent<Boid>().force.magnitude;
                 break;
             case speedControllerType.acceleration:
-                speed = GetComponent<Boid>().acceleration.magnitude;
+                speed = boidObject.GetComponent<Boid>().acceleration.magnitude;
                 break;
             case speedControllerType.velocity:
-                speed = GetComponent<Boid>().velocity.magnitude;
+                speed = boidObject.GetComponent<Boid>().velocity.magnitude;
                 break;
         }
 

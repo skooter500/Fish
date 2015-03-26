@@ -19,76 +19,94 @@ public class SliceForm : MonoBehaviour {
     
     public SliceForm()
     {
-        size = new Vector3(100, 100, 1);
+        size = new Vector3(100, 100, 100);
         sliceCount = new Vector3(10, 10);
         noiseStart = new Vector2(0, 0);
-        noiseDelta = new Vector2(0.01f, 0.01f);
+        noiseDelta = new Vector2(0.1f, 0.1f);
 
-        sliceSize = new Vector2(size.x / sliceCount.x, size.z / sliceCount.y);
+        
+
+        color = Color.green;
+
     }
 
-    
+    public void OnDrawGizmos()
+    {
+        Gizmos.DrawWireCube(transform.position, size);
+    }
 	
 	void Start () {
-        gameObject.AddComponent<MeshFilter>();
+
+        sliceSize = new Vector2(size.x / sliceCount.x, size.z / sliceCount.y);
+        
+
         MeshRenderer renderer = gameObject.AddComponent<MeshRenderer>();
+        renderer.shadowCastingMode = UnityEngine.Rendering.ShadowCastingMode.On;
+        renderer.receiveShadows = true;
         if (renderer == null)
         {
             Debug.Log("Renderer is null 1");
         }
-        Mesh mesh = GetComponent<MeshFilter>().mesh;
+        
+        Mesh mesh = gameObject.AddComponent<MeshFilter>().mesh;
         mesh.Clear();
 
 
-        initialVertices = new Vector3[12 * (int)sliceCount.x];
-        initialNormals = new Vector3[12 * (int)sliceCount.x];
-        meshUv = new Vector2[12 * (int)sliceCount.x];
-        meshTriangles = new int[12 * (int)sliceCount.x];
+        int verticesPerSegment = 12;
+        int verticesPerSlice = verticesPerSegment * (int) sliceCount.x; 
 
-        Vector3 bottomLeft = transform.position - (size / 2);
+        initialVertices = new Vector3[verticesPerSegment * (int)sliceCount.x * (int)sliceCount.y];
+        initialNormals = new Vector3[verticesPerSegment * (int)sliceCount.x * (int)sliceCount.y];
+        meshUv = new Vector2[verticesPerSegment * (int)sliceCount.x * (int)sliceCount.y];
+        meshTriangles = new int[verticesPerSegment * (int)sliceCount.x * (int)sliceCount.y];
+
         
 
+        Vector3 bottomLeft = transform.position - (size / 2);
 
+        Vector2 noiseXY = noiseStart;
         for (int y = 0; y < sliceCount.y; y++)
         {
+            noiseXY.x = noiseStart.x;
             for (int x = 0; x < sliceCount.x; x++)
             {
-                int triangle = 2 * x;
-                int startVertex = triangle * 12;
-                
-                // Calculate some stuff
-                Vector2 noiseXY = noiseStart + new Vector2(noiseDelta.x * x, noiseDelta.y * y);
-                Vector3 sliceBottomLeft = bottomLeft + new Vector3(x * sliceSize.x, 0, y * x * sliceSize.y);
-                Vector3 sliceTopLeft = sliceBottomLeft + new Vector3(0, Mathf.PerlinNoise(noiseXY.x, noiseXY.y));
-                noiseXY += noiseDelta;
-                Vector3 sliceTopRight = sliceBottomLeft + new Vector3(0, Mathf.PerlinNoise(noiseXY.x, noiseXY.y));
+               // Calculate some stuff
+                Vector3 sliceBottomLeft = bottomLeft + new Vector3(x * sliceSize.x, 0, y * sliceSize.y);
+                Vector3 sliceTopLeft = sliceBottomLeft + new Vector3(0, Mathf.PerlinNoise(noiseXY.x, noiseXY.y) * size.y);
+                noiseXY.x += noiseDelta.x;
+                Vector3 sliceTopRight = sliceBottomLeft + new Vector3(sliceSize.x, Mathf.PerlinNoise(noiseXY.x, noiseXY.y) * size.y);
                 Vector3 sliceBottomRight = sliceBottomLeft + new Vector3(sliceSize.x, 0, 0); 
                 
+                // Make the vertices
+                int startVertex = (y * verticesPerSlice) + x * verticesPerSegment;                
 
-                // Make the front face
                 int vertex = startVertex;
+                // Front face
                 initialVertices[vertex++] = sliceBottomLeft;
                 initialVertices[vertex++] = sliceTopLeft;
                 initialVertices[vertex++] = sliceTopRight;
-
                 initialVertices[vertex++] = sliceTopRight;
                 initialVertices[vertex++] = sliceBottomRight;
                 initialVertices[vertex++] = sliceBottomLeft;
 
-                int normal = startVertex;
-                initialNormals[normal++] = Vector3.forward;
-                initialNormals[normal++] = Vector3.forward;
-                initialNormals[normal++] = Vector3.forward;
+                // Back face
+                initialVertices[vertex++] = sliceTopRight;
+                initialVertices[vertex++] = sliceTopLeft;
+                initialVertices[vertex++] = sliceBottomLeft;
+                initialVertices[vertex++] = sliceBottomLeft;
+                initialVertices[vertex++] = sliceBottomRight;
+                initialVertices[vertex++] = sliceTopRight;
 
-                initialNormals[normal++] = Vector3.forward;
-                initialNormals[normal++] = Vector3.forward;
-                initialNormals[normal++] = Vector3.forward;
 
+                // Make the normals, UV's and triangles                
                 for (int i = 0; i < 12; i++)
                 {
-                    meshUv[i] = uvSeq[i % 3];
-                }
+                    initialNormals[startVertex + i] = (i < 6) ? -Vector3.forward : Vector3.forward;
+                    meshUv[startVertex + i] = uvSeq[i % 3];
+                    meshTriangles[startVertex + i] = startVertex + i;
+                }                                    
             }
+            noiseXY.y += noiseDelta.y;
         }
 
 
@@ -97,10 +115,10 @@ public class SliceForm : MonoBehaviour {
         mesh.normals = initialNormals;
         mesh.triangles = meshTriangles;
 
+        mesh.RecalculateNormals();
 
-
-        Shader shader = Shader.Find("Specular");
-        Material material = new Material(Shader.Find("Specular"));
+        Shader shader = Shader.Find("Diffuse");
+        Material material = new Material(shader);
         material.color = color;
         material.mainTexture = Resources.Load<Texture2D>("white512x512");
         if (renderer == null)
@@ -111,7 +129,7 @@ public class SliceForm : MonoBehaviour {
         {
             renderer.material = material;
         }
-	
+	    
 	}
 	
 	// Update is called once per frame

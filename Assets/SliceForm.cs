@@ -15,7 +15,8 @@ public class SliceForm : MonoBehaviour {
     Vector3[] initialNormals;
     Vector2[] meshUv;
     int[] meshTriangles;
-        
+    Vector2[] uvSeq = new Vector2[] { new Vector2(1, -1), new Vector2(0, 1), new Vector2(-1, -1) };
+    
     public SliceForm()
     {
         size = new Vector3(100, 100, 1);
@@ -46,18 +47,47 @@ public class SliceForm : MonoBehaviour {
 
         Vector3 bottomLeft = transform.position - (size / 2);
         
+
+
         for (int y = 0; y < sliceCount.y; y++)
         {
             for (int x = 0; x < sliceCount.x; x++)
             {
                 int triangle = 2 * x;
-                int vertex = triangle * 12;
-
-                Vector3 sliceBottonmLeft = bottomLeft + 
+                int startVertex = triangle * 12;
+                
+                // Calculate some stuff
+                Vector2 noiseXY = noiseStart + new Vector2(noiseDelta.x * x, noiseDelta.y * y);
+                Vector3 sliceBottomLeft = bottomLeft + new Vector3(x * sliceSize.x, 0, y * x * sliceSize.y);
+                Vector3 sliceTopLeft = sliceBottomLeft + new Vector3(0, Mathf.PerlinNoise(noiseXY.x, noiseXY.y));
+                noiseXY += noiseDelta;
+                Vector3 sliceTopRight = sliceBottomLeft + new Vector3(0, Mathf.PerlinNoise(noiseXY.x, noiseXY.y));
+                Vector3 sliceBottomRight = sliceBottomLeft + new Vector3(sliceSize.x, 0, 0); 
                 
 
                 // Make the front face
-                initialVertices[vertex] = new Vector3();
+                int vertex = startVertex;
+                initialVertices[vertex++] = sliceBottomLeft;
+                initialVertices[vertex++] = sliceTopLeft;
+                initialVertices[vertex++] = sliceTopRight;
+
+                initialVertices[vertex++] = sliceTopRight;
+                initialVertices[vertex++] = sliceBottomRight;
+                initialVertices[vertex++] = sliceBottomLeft;
+
+                int normal = startVertex;
+                initialNormals[normal++] = Vector3.forward;
+                initialNormals[normal++] = Vector3.forward;
+                initialNormals[normal++] = Vector3.forward;
+
+                initialNormals[normal++] = Vector3.forward;
+                initialNormals[normal++] = Vector3.forward;
+                initialNormals[normal++] = Vector3.forward;
+
+                for (int i = 0; i < 12; i++)
+                {
+                    meshUv[i] = uvSeq[i % 3];
+                }
             }
         }
 

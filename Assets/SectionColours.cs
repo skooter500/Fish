@@ -6,6 +6,8 @@ using BGE;
 public class SectionColours : MonoBehaviour {
     List<GameObject> segments; // The list of children objects in order of Z
 
+    Boid boid;
+
     SectionColours()
     {
         segments = new List<GameObject>();
@@ -13,6 +15,9 @@ public class SectionColours : MonoBehaviour {
 
 	// Use this for initialization
 	void Start () {
+
+        boid = GetComponent<Boid>();
+
         int count = transform.childCount;
         for(int i = 0 ; i < count ; i ++)
         {
@@ -58,7 +63,7 @@ public class SectionColours : MonoBehaviour {
         fleeColourStarted = true;
         while (true)
         {
-            if (GetComponent<Boid>().fleeForce.magnitude == 0)
+            if (boid == null || boid.fleeForce.magnitude == 0)
             {
                 break;
             }
@@ -80,13 +85,16 @@ public class SectionColours : MonoBehaviour {
 	
 	// Update is called once per frame
 	void Update () {
-        float fleeForce = GetComponent<Boid>().fleeForce.magnitude;
-        //if (fleeForce > 0)
+        if (boid != null)
         {
-            fleeColourWait = 0.3f; 
-            if (!fleeColourStarted)
+            float fleeForce = boid.fleeForce.magnitude;
+            if (fleeForce > 0)
             {
-                StartCoroutine("FleeColourCycle");
+                fleeColourWait = 0.3f;
+                if (!fleeColourStarted)
+                {
+                    StartCoroutine("FleeColourCycle");
+                }
             }
         }
 	}

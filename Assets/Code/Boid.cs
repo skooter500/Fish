@@ -1063,7 +1063,7 @@ namespace BGE
         Vector3 RandomWalk()
         {
             float dist = (transform.position - randomWalkTarget).magnitude;
-            if (dist < 1)
+            if (dist < 10)
             {
                 StartCoroutine("RandomWalkWait");
                 randomWalkTarget = randomWalkCenter + UnityEngine.Random.insideUnitSphere * randomWalkRadius;
@@ -1110,7 +1110,7 @@ namespace BGE
                
         Vector3 NoiseWander()
         {
-            float n = Mathf.PerlinNoise(wanderNoiseX, 0);
+            float n = Mathf.PerlinNoise(wanderNoiseX, wanderNoiseY);
             float theta = Utilities.Map(n, 0.0f, 1.0f, 0, Mathf.PI * 2.0f);
             wanderTargetPos.x = Mathf.Sin(theta);
             wanderTargetPos.z = -Mathf.Cos(theta);

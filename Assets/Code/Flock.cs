@@ -72,7 +72,10 @@ namespace BGE
                 AudioSource audioSource = boid.GetComponent<AudioSource>();
                 if (audioSource != null)
                 {
-                    audioSource.enabled = false;
+                    if (Random.Range(0, 1) > 0.1)
+                    {
+                        audioSource.enabled = false;
+                    }
                 }               
                 if (i == boidCount / 2)
                 {
@@ -89,22 +92,6 @@ namespace BGE
             boids[camBoid].GetComponent<Boid>().timeMultiplier = 1.0f;
 
             // 
-            int soundBoids = 10;
-            for (int i = 0 ; i < soundBoids ; i ++)
-            {
-                do
-                {
-                    GameObject boid = boids[Random.Range(0, boidCount)];
-                    AudioSource audioSource = boid.GetComponent<AudioSource>();                    
-                    if (audioSource != null)
-                    {
-                        audioSource.enabled = true;
-                        audioSource.Play();
-                        break;
-                    }
-                }
-                while (true);
-            }
         }
 
         public void Update()

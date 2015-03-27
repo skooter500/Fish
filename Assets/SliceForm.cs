@@ -24,8 +24,6 @@ public class SliceForm : MonoBehaviour {
         noiseStart = new Vector2(0, 0);
         noiseDelta = new Vector2(0.1f, 0.1f);
 
-        
-
         color = Color.green;
 
     }
@@ -52,7 +50,7 @@ public class SliceForm : MonoBehaviour {
         mesh.Clear();
 
 
-        int verticesPerSegment = 12;
+        int verticesPerSegment = 24;
         int verticesPerSlice = verticesPerSegment * (int) sliceCount.x; 
 
         initialVertices = new Vector3[verticesPerSegment * (int)sliceCount.x * (int)sliceCount.y];
@@ -60,7 +58,6 @@ public class SliceForm : MonoBehaviour {
         meshUv = new Vector2[verticesPerSegment * (int)sliceCount.x * (int)sliceCount.y];
         meshTriangles = new int[verticesPerSegment * (int)sliceCount.x * (int)sliceCount.y];
 
-        
 
         Vector3 bottomLeft = transform.position - (size / 2);
 
@@ -72,11 +69,11 @@ public class SliceForm : MonoBehaviour {
             {
                // Calculate some stuff
                 Vector3 sliceBottomLeft = bottomLeft + new Vector3(x * sliceSize.x, 0, y * sliceSize.y);
-                Vector3 sliceTopLeft = sliceBottomLeft + new Vector3(0, Mathf.PerlinNoise(noiseXY.x, noiseXY.y) * size.y);
-                noiseXY.x += noiseDelta.x;
-                Vector3 sliceTopRight = sliceBottomLeft + new Vector3(sliceSize.x, Mathf.PerlinNoise(noiseXY.x, noiseXY.y) * size.y);
+                Vector3 sliceTopLeft = sliceBottomLeft + new Vector3(0, Mathf.PerlinNoise(noiseXY.x, noiseXY.y) * size.y);                
+                Vector3 sliceTopRight = sliceBottomLeft + new Vector3(sliceSize.x, Mathf.PerlinNoise(noiseXY.x + noiseDelta.x, noiseXY.y) * size.y);
                 Vector3 sliceBottomRight = sliceBottomLeft + new Vector3(sliceSize.x, 0, 0); 
-                
+             
+                // Make the horizontal slice
                 // Make the vertices
                 int startVertex = (y * verticesPerSlice) + x * verticesPerSegment;                
 
@@ -97,14 +94,45 @@ public class SliceForm : MonoBehaviour {
                 initialVertices[vertex++] = sliceBottomRight;
                 initialVertices[vertex++] = sliceTopRight;
 
-
                 // Make the normals, UV's and triangles                
                 for (int i = 0; i < 12; i++)
                 {
                     initialNormals[startVertex + i] = (i < 6) ? -Vector3.forward : Vector3.forward;
                     meshUv[startVertex + i] = uvSeq[i % 3];
                     meshTriangles[startVertex + i] = startVertex + i;
-                }                                    
+                }           
+
+                // Make the vertical slice
+                Vector3 sliceBottomForward = sliceBottomLeft + new Vector3(0, 0, sliceSize.y);
+                Vector3 sliceTopForward = sliceBottomLeft + new Vector3(0, Mathf.PerlinNoise(noiseXY.x, noiseXY.y + noiseDelta.y) * size.y, sliceSize.y);
+
+                initialVertices[vertex++] = sliceBottomLeft;
+                initialVertices[vertex++] = sliceTopLeft;
+                initialVertices[vertex++] = sliceTopForward;
+
+                initialVertices[vertex++] = sliceTopForward;
+                initialVertices[vertex++] = sliceBottomForward;
+                initialVertices[vertex++] = sliceBottomLeft;
+
+                // Back face
+                initialVertices[vertex++] = sliceTopForward;
+                initialVertices[vertex++] = sliceTopLeft;
+                initialVertices[vertex++] = sliceBottomLeft;
+
+                initialVertices[vertex++] = sliceBottomLeft;
+                initialVertices[vertex++] = sliceBottomForward;
+                initialVertices[vertex++] = sliceTopForward;
+
+                // Make the normals, UV's and triangles                
+                for (int i = 0; i < 12; i++)
+                {
+                    initialNormals[startVertex + 12 + i] = (i < 6) ? Vector3.right: -Vector3.right;
+                    meshUv[startVertex + 12 + i] = uvSeq[i % 3];
+                    meshTriangles[startVertex + 12 + i] = startVertex + 12 + i;
+                }     
+
+                noiseXY.x += noiseDelta.x;
+         
             }
             noiseXY.y += noiseDelta.y;
         }

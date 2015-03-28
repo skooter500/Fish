@@ -14,8 +14,15 @@ public class SliceForm : MonoBehaviour {
     Vector3[] initialVertices;
     Vector3[] initialNormals;
     Vector2[] meshUv;
+    Color[] colours;
     int[] meshTriangles;
-    Vector2[] uvSeq = new Vector2[] { new Vector2(1, -1), new Vector2(0, 1), new Vector2(-1, -1) };
+    //Vector2[] uvSeq = new Vector2[] { new Vector2(1, -1), new Vector2(0, 1), new Vector2(-1, -1) };
+    Vector2[] uvSeqHoriz = new Vector2[] { new Vector2(0, 0), new Vector2(0, 1), new Vector2(0.5f, 1)
+                                       , new Vector2(0.5f, 1), new Vector2(0.5f, 0), new Vector2(0, 0)
+                                };
+    Vector2[] uvSeqVert = new Vector2[] { new Vector2(0.5f, 0), new Vector2(0.5f, 1), new Vector2(1, 1)
+                                       , new Vector2(1, 1), new Vector2(1, 0), new Vector2(0.5f, 0)
+                                };
     
     public SliceForm()
     {
@@ -31,6 +38,36 @@ public class SliceForm : MonoBehaviour {
     public void OnDrawGizmos()
     {
         Gizmos.DrawWireCube(transform.position, size);
+    }
+
+    public Texture2D CreateTexture()
+    {
+        int width = 10;
+        int height = 10;
+
+        Texture2D texture = new Texture2D(width, height, TextureFormat.ARGB32, false);
+        texture.filterMode = FilterMode.Point;
+
+        //texture.SetPixel(0, 0, Color.red);
+        //texture.SetPixel(1, 0, Color.green);
+
+        for (int i = 0; i < width; i++)
+        {
+            for (int j = 0; j < height; j++)
+            {
+                if (j < width / 2)
+                {
+                    texture.SetPixel(i, j, Color.red);
+                }
+                else
+                {
+                    texture.SetPixel(i, j, Color.green);
+                }
+
+            }
+        }
+        texture.Apply();
+        return texture;
     }
 	
 	void Start () {
@@ -57,8 +94,8 @@ public class SliceForm : MonoBehaviour {
         initialNormals = new Vector3[verticesPerSegment * (int)sliceCount.x * (int)sliceCount.y];
         meshUv = new Vector2[verticesPerSegment * (int)sliceCount.x * (int)sliceCount.y];
         meshTriangles = new int[verticesPerSegment * (int)sliceCount.x * (int)sliceCount.y];
-
-
+        colours = new Color[verticesPerSegment * (int)sliceCount.x * (int)sliceCount.y];
+    
         Vector3 bottomLeft = transform.position - (size / 2);
 
         Vector2 noiseXY = noiseStart;
@@ -98,8 +135,9 @@ public class SliceForm : MonoBehaviour {
                 for (int i = 0; i < 12; i++)
                 {
                     initialNormals[startVertex + i] = (i < 6) ? -Vector3.forward : Vector3.forward;
-                    meshUv[startVertex + i] = uvSeq[i % 3];
+                    meshUv[startVertex + i] = uvSeqHoriz[i % 6];
                     meshTriangles[startVertex + i] = startVertex + i;
+                    colours[startVertex + i] = Color.green;
                 }           
 
                 // Make the vertical slice
@@ -127,8 +165,9 @@ public class SliceForm : MonoBehaviour {
                 for (int i = 0; i < 12; i++)
                 {
                     initialNormals[startVertex + 12 + i] = (i < 6) ? Vector3.right: -Vector3.right;
-                    meshUv[startVertex + 12 + i] = uvSeq[i % 3];
+                    meshUv[startVertex + 12 + i] = uvSeqVert[i % 6];
                     meshTriangles[startVertex + 12 + i] = startVertex + 12 + i;
+                    colours[startVertex + 12 + i] = Color.red;
                 }     
 
                 noiseXY.x += noiseDelta.x;
@@ -139,16 +178,18 @@ public class SliceForm : MonoBehaviour {
 
 
         mesh.vertices = initialVertices;
-        mesh.uv = meshUv;
+        //mesh.uv = meshUv;
         mesh.normals = initialNormals;
         mesh.triangles = meshTriangles;
+        mesh.colors = colours;
 
-        mesh.RecalculateNormals();
+        //mesh.RecalculateNormals();
 
+        
         Shader shader = Shader.Find("Diffuse");
         Material material = new Material(shader);
-        material.color = color;
-        material.mainTexture = Resources.Load<Texture2D>("white512x512");
+        //material.color = color;
+        material.mainTexture = CreateTexture(); //Resources.Load<Texture2D>("white512x512");
         if (renderer == null)
         {
             Debug.Log("Renderer is null 2");

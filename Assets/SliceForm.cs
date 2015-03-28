@@ -57,7 +57,7 @@ public class SliceForm : MonoBehaviour {
             {
                 if (j < width / 2)
                 {
-                    texture.SetPixel(i, j, Color.red);
+                    texture.SetPixel(i, j, Color.green);
                 }
                 else
                 {

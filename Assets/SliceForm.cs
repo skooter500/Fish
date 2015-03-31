@@ -9,6 +9,8 @@ public class SliceForm : MonoBehaviour {
     public Vector2 noiseDelta;
     public Color color;
 
+    public bool closed;
+
     Vector2 sliceSize; // The size of each slice
 
     Vector3[] initialVertices;
@@ -32,7 +34,7 @@ public class SliceForm : MonoBehaviour {
         noiseDelta = new Vector2(0.1f, 0.1f);
 
         color = Color.green;
-
+        closed = true;
     }
 
     public void OnDrawGizmos()
@@ -57,11 +59,11 @@ public class SliceForm : MonoBehaviour {
             {
                 if (j < width / 2)
                 {
-                    texture.SetPixel(i, j, Color.green);
+                    texture.SetPixel(i, j, color);
                 }
                 else
                 {
-                    texture.SetPixel(i, j, Color.green);
+                    texture.SetPixel(i, j, color);
                 }
 
             }
@@ -88,17 +90,39 @@ public class SliceForm : MonoBehaviour {
 
 
         int verticesPerSegment = 24;
-        int verticesPerSlice = verticesPerSegment * (int) sliceCount.x; 
 
-        initialVertices = new Vector3[verticesPerSegment * (int)sliceCount.x * (int)sliceCount.y];
-        initialNormals = new Vector3[verticesPerSegment * (int)sliceCount.x * (int)sliceCount.y];
-        meshUv = new Vector2[verticesPerSegment * (int)sliceCount.x * (int)sliceCount.y];
-        meshTriangles = new int[verticesPerSegment * (int)sliceCount.x * (int)sliceCount.y];
-        colours = new Color[verticesPerSegment * (int)sliceCount.x * (int)sliceCount.y];
+        int verticesPerHorizontalSlice = verticesPerSegment * (int) sliceCount.x; 
+        int vertexCount = 0; 
+        if (closed)
+        {
+            // Go one extra slice horizontally and vertically
+            sliceCount.x++;
+            sliceCount.y++;
+            vertexCount = verticesPerSegment * ((int)sliceCount.x) * ((int)sliceCount.y);
+            // Reduce by one vertical slice and one horizontal slice
+            vertexCount -= (verticesPerSegment / 2) * (int)sliceCount.x;
+            vertexCount -= (verticesPerSegment / 2) * (int)sliceCount.y;
+        }
+        else
+        {
+            vertexCount = verticesPerSegment * ((int)sliceCount.x) * ((int)sliceCount.y);
+            // Reduce by one vertical slice and one horizontal slice
+            vertexCount -= (verticesPerSegment / 2) * (int)sliceCount.x;
+            vertexCount -= (verticesPerSegment / 2) * (int)sliceCount.y;
+        }
+
+        initialVertices = new Vector3[vertexCount];
+        initialNormals = new Vector3[vertexCount];
+        meshUv = new Vector2[vertexCount];
+        meshTriangles = new int[vertexCount];
+        colours = new Color[vertexCount];
     
-        Vector3 bottomLeft = transform.position - (size / 2);
+        Vector3 bottomLeft = - (size / 2);
 
         Vector2 noiseXY = noiseStart;
+        int vertex = 0;
+        
+
         for (int y = 0; y < sliceCount.y; y++)
         {
             noiseXY.x = noiseStart.x;
@@ -108,70 +132,83 @@ public class SliceForm : MonoBehaviour {
                 Vector3 sliceBottomLeft = bottomLeft + new Vector3(x * sliceSize.x, 0, y * sliceSize.y);
                 Vector3 sliceTopLeft = sliceBottomLeft + new Vector3(0, Mathf.PerlinNoise(noiseXY.x, noiseXY.y) * size.y);                
                 Vector3 sliceTopRight = sliceBottomLeft + new Vector3(sliceSize.x, Mathf.PerlinNoise(noiseXY.x + noiseDelta.x, noiseXY.y) * size.y);
-                Vector3 sliceBottomRight = sliceBottomLeft + new Vector3(sliceSize.x, 0, 0); 
-             
-                // Make the horizontal slice
+                Vector3 sliceBottomRight = sliceBottomLeft + new Vector3(sliceSize.x, 0, 0);
+
                 // Make the vertices
-                int startVertex = (y * verticesPerSlice) + x * verticesPerSegment;                
+                //int startVertex = (y * verticesPerHorizontalSlice) + x * verticesPerSegment;
 
-                int vertex = startVertex;
+                int startVertex = vertex;                    
                 // Front face
-                initialVertices[vertex++] = sliceBottomLeft;
-                initialVertices[vertex++] = sliceTopLeft;
-                initialVertices[vertex++] = sliceTopRight;
-                initialVertices[vertex++] = sliceTopRight;
-                initialVertices[vertex++] = sliceBottomRight;
-                initialVertices[vertex++] = sliceBottomLeft;
-
-                // Back face
-                initialVertices[vertex++] = sliceTopRight;
-                initialVertices[vertex++] = sliceTopLeft;
-                initialVertices[vertex++] = sliceBottomLeft;
-                initialVertices[vertex++] = sliceBottomLeft;
-                initialVertices[vertex++] = sliceBottomRight;
-                initialVertices[vertex++] = sliceTopRight;
-
-                // Make the normals, UV's and triangles                
-                for (int i = 0; i < 12; i++)
+                // Make the horizontal slice
+                if ((!closed && y == 0) || (closed && x == sliceCount.x - 1))
                 {
-                    initialNormals[startVertex + i] = (i < 6) ? -Vector3.forward : Vector3.forward;
-                    meshUv[startVertex + i] = uvSeqHoriz[i % 6];
-                    meshTriangles[startVertex + i] = startVertex + i;
-                    colours[startVertex + i] = Color.green;
-                }           
 
-                // Make the vertical slice
-                Vector3 sliceBottomForward = sliceBottomLeft + new Vector3(0, 0, sliceSize.y);
-                Vector3 sliceTopForward = sliceBottomLeft + new Vector3(0, Mathf.PerlinNoise(noiseXY.x, noiseXY.y + noiseDelta.y) * size.y, sliceSize.y);
-
-                initialVertices[vertex++] = sliceBottomLeft;
-                initialVertices[vertex++] = sliceTopLeft;
-                initialVertices[vertex++] = sliceTopForward;
-
-                initialVertices[vertex++] = sliceTopForward;
-                initialVertices[vertex++] = sliceBottomForward;
-                initialVertices[vertex++] = sliceBottomLeft;
-
-                // Back face
-                initialVertices[vertex++] = sliceTopForward;
-                initialVertices[vertex++] = sliceTopLeft;
-                initialVertices[vertex++] = sliceBottomLeft;
-
-                initialVertices[vertex++] = sliceBottomLeft;
-                initialVertices[vertex++] = sliceBottomForward;
-                initialVertices[vertex++] = sliceTopForward;
-
-                // Make the normals, UV's and triangles                
-                for (int i = 0; i < 12; i++)
+                }
+                else
                 {
-                    initialNormals[startVertex + 12 + i] = (i < 6) ? Vector3.right: -Vector3.right;
-                    meshUv[startVertex + 12 + i] = uvSeqVert[i % 6];
-                    meshTriangles[startVertex + 12 + i] = startVertex + 12 + i;
-                    colours[startVertex + 12 + i] = Color.red;
-                }     
+                    initialVertices[vertex++] = sliceBottomLeft;
+                    initialVertices[vertex++] = sliceTopLeft;
+                    initialVertices[vertex++] = sliceTopRight;
+                    initialVertices[vertex++] = sliceTopRight;
+                    initialVertices[vertex++] = sliceBottomRight;
+                    initialVertices[vertex++] = sliceBottomLeft;
 
-                noiseXY.x += noiseDelta.x;
-         
+                    // Back face
+                    initialVertices[vertex++] = sliceTopRight;
+                    initialVertices[vertex++] = sliceTopLeft;
+                    initialVertices[vertex++] = sliceBottomLeft;
+                    initialVertices[vertex++] = sliceBottomLeft;
+                    initialVertices[vertex++] = sliceBottomRight;
+                    initialVertices[vertex++] = sliceTopRight;
+
+                    // Make the normals, UV's and triangles                
+                    for (int i = 0; i < 12; i++)
+                    {
+                        initialNormals[startVertex + i] = (i < 6) ? -Vector3.forward : Vector3.forward;
+                        meshUv[startVertex + i] = uvSeqHoriz[i % 6];
+                        meshTriangles[startVertex + i] = startVertex + i;
+                        colours[startVertex + i] = Color.green;
+                    }
+                }
+
+                if ((!closed && x == 0) || (closed && y == sliceCount.y - 1))
+                {
+                    // Dont do a vertical slice
+                }
+                else
+                {
+                    startVertex = vertex;
+                    // Make the vertical slice
+                    Vector3 sliceBottomForward = sliceBottomLeft + new Vector3(0, 0, sliceSize.y);
+                    Vector3 sliceTopForward = sliceBottomLeft + new Vector3(0, Mathf.PerlinNoise(noiseXY.x, noiseXY.y + noiseDelta.y) * size.y, sliceSize.y);
+
+                    initialVertices[vertex++] = sliceBottomLeft;
+                    initialVertices[vertex++] = sliceTopLeft;
+                    initialVertices[vertex++] = sliceTopForward;
+
+                    initialVertices[vertex++] = sliceTopForward;
+                    initialVertices[vertex++] = sliceBottomForward;
+                    initialVertices[vertex++] = sliceBottomLeft;
+
+                    // Back face
+                    initialVertices[vertex++] = sliceTopForward;
+                    initialVertices[vertex++] = sliceTopLeft;
+                    initialVertices[vertex++] = sliceBottomLeft;
+
+                    initialVertices[vertex++] = sliceBottomLeft;
+                    initialVertices[vertex++] = sliceBottomForward;
+                    initialVertices[vertex++] = sliceTopForward;
+
+                    // Make the normals, UV's and triangles                
+                    for (int i = 0; i < 12; i++)
+                    {
+                        initialNormals[startVertex + i] = (i < 6) ? Vector3.right : -Vector3.right;
+                        meshUv[startVertex + i] = uvSeqVert[i % 6];
+                        meshTriangles[startVertex + i] = startVertex + i;
+                        colours[startVertex + i] = Color.red;
+                    }
+                }
+                noiseXY.x += noiseDelta.x;         
             }
             noiseXY.y += noiseDelta.y;
         }

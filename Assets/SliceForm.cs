@@ -7,7 +7,8 @@ public class SliceForm : MonoBehaviour {
     public Vector2 sliceCount; // The number of slices on each axis
     public Vector2 noiseStart;
     public Vector2 noiseDelta;
-    public Color color;
+    public Color horizontalColour;
+    public Color verticalColour;
 
     public bool closed;
 
@@ -33,7 +34,8 @@ public class SliceForm : MonoBehaviour {
         noiseStart = new Vector2(0, 0);
         noiseDelta = new Vector2(0.1f, 0.1f);
 
-        color = Color.green;
+        horizontalColour = Color.green;
+        verticalColour = Color.red;
         closed = true;
     }
 
@@ -44,32 +46,21 @@ public class SliceForm : MonoBehaviour {
 
     public Texture2D CreateTexture()
     {
-        int width = 10;
-        int height = 10;
+        int width = 2;
+        int height = 1;
 
-        Texture2D texture = new Texture2D(width, height, TextureFormat.ARGB32, false);
+        return Resources.Load<Texture2D>("halfred");
+
+        /*
+        Texture2D texture = new Texture2D(width, height, TextureFormat.RGBAFloat, false);
         texture.filterMode = FilterMode.Point;
 
-        //texture.SetPixel(0, 0, Color.red);
-        //texture.SetPixel(1, 0, Color.green);
+        texture.SetPixel(0, 0, Color.red);
+        texture.SetPixel(1, 0, Color.green);
 
-        for (int i = 0; i < width; i++)
-        {
-            for (int j = 0; j < height; j++)
-            {
-                if (j < width / 2)
-                {
-                    texture.SetPixel(i, j, color);
-                }
-                else
-                {
-                    texture.SetPixel(i, j, color);
-                }
-
-            }
-        }
         texture.Apply();
         return texture;
+         */
     }
 	
 	void Start () {
@@ -92,25 +83,18 @@ public class SliceForm : MonoBehaviour {
         int verticesPerSegment = 24;
 
         int verticesPerHorizontalSlice = verticesPerSegment * (int) sliceCount.x; 
-        int vertexCount = 0; 
+        int vertexCount = 0;
         if (closed)
         {
             // Go one extra slice horizontally and vertically
             sliceCount.x++;
             sliceCount.y++;
-            vertexCount = verticesPerSegment * ((int)sliceCount.x) * ((int)sliceCount.y);
-            // Reduce by one vertical slice and one horizontal slice
-            vertexCount -= (verticesPerSegment / 2) * (int)sliceCount.x;
-            vertexCount -= (verticesPerSegment / 2) * (int)sliceCount.y;
         }
-        else
-        {
-            vertexCount = verticesPerSegment * ((int)sliceCount.x) * ((int)sliceCount.y);
-            // Reduce by one vertical slice and one horizontal slice
-            vertexCount -= (verticesPerSegment / 2) * (int)sliceCount.x;
-            vertexCount -= (verticesPerSegment / 2) * (int)sliceCount.y;
-        }
-
+        vertexCount = verticesPerSegment * ((int)sliceCount.x) * ((int)sliceCount.y);
+        // Reduce by one vertical slice and one horizontal slice
+        vertexCount -= (verticesPerSegment / 2) * (int)sliceCount.x;
+        vertexCount -= (verticesPerSegment / 2) * (int)sliceCount.y;
+        
         initialVertices = new Vector3[vertexCount];
         initialNormals = new Vector3[vertexCount];
         meshUv = new Vector2[vertexCount];
@@ -120,8 +104,7 @@ public class SliceForm : MonoBehaviour {
         Vector3 bottomLeft = - (size / 2);
 
         Vector2 noiseXY = noiseStart;
-        int vertex = 0;
-        
+        int vertex = 0;        
 
         for (int y = 0; y < sliceCount.y; y++)
         {
@@ -134,18 +117,15 @@ public class SliceForm : MonoBehaviour {
                 Vector3 sliceTopRight = sliceBottomLeft + new Vector3(sliceSize.x, Mathf.PerlinNoise(noiseXY.x + noiseDelta.x, noiseXY.y) * size.y);
                 Vector3 sliceBottomRight = sliceBottomLeft + new Vector3(sliceSize.x, 0, 0);
 
-                // Make the vertices
-                //int startVertex = (y * verticesPerHorizontalSlice) + x * verticesPerSegment;
-
                 int startVertex = vertex;                    
-                // Front face
                 // Make the horizontal slice
                 if ((!closed && y == 0) || (closed && x == sliceCount.x - 1))
                 {
-
+                    // Skip a slice
                 }
                 else
                 {
+                    // Make the vertices
                     initialVertices[vertex++] = sliceBottomLeft;
                     initialVertices[vertex++] = sliceTopLeft;
                     initialVertices[vertex++] = sliceTopRight;
@@ -164,7 +144,7 @@ public class SliceForm : MonoBehaviour {
                     // Make the normals, UV's and triangles                
                     for (int i = 0; i < 12; i++)
                     {
-                        initialNormals[startVertex + i] = (i < 6) ? -Vector3.forward : Vector3.forward;
+                        initialNormals[startVertex + i] = (i < 6) ? Vector3.forward : -Vector3.forward;
                         meshUv[startVertex + i] = uvSeqHoriz[i % 6];
                         meshTriangles[startVertex + i] = startVertex + i;
                         colours[startVertex + i] = Color.green;
@@ -226,7 +206,7 @@ public class SliceForm : MonoBehaviour {
         Shader shader = Shader.Find("Diffuse");
         Material material = new Material(shader);
         //material.color = color;
-        material.mainTexture = CreateTexture(); //Resources.Load<Texture2D>("white512x512");
+        material.mainTexture = CreateTexture(); 
         if (renderer == null)
         {
             Debug.Log("Renderer is null 2");

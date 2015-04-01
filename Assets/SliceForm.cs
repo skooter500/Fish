@@ -19,11 +19,10 @@ public class SliceForm : MonoBehaviour {
     Vector2[] meshUv;
     Color[] colours;
     int[] meshTriangles;
-    //Vector2[] uvSeq = new Vector2[] { new Vector2(1, -1), new Vector2(0, 1), new Vector2(-1, -1) };
     Vector2[] uvSeqHoriz = new Vector2[] { new Vector2(0, 0), new Vector2(0, 1), new Vector2(0.5f, 1)
-                                       , new Vector2(0.5f, 1), new Vector2(0.5f, 0), new Vector2(0, 0)
+                                      , new Vector2(0.5f, 1), new Vector2(0.5f, 0), new Vector2(0, 0)
                                 };
-    Vector2[] uvSeqVert = new Vector2[] { new Vector2(0.5f, 0), new Vector2(0.5f, 1), new Vector2(1, 1)
+    Vector2[] uvSeqVert = new Vector2[] { new Vector2(0.5f, 0), new Vector2(1, 1), new Vector2(1, 1)
                                        , new Vector2(1, 1), new Vector2(1, 0), new Vector2(0.5f, 0)
                                 };
     
@@ -46,21 +45,29 @@ public class SliceForm : MonoBehaviour {
 
     public Texture2D CreateTexture()
     {
-        int width = 2;
-        int height = 1;
-
-        return Resources.Load<Texture2D>("halfred");
-
         /*
-        Texture2D texture = new Texture2D(width, height, TextureFormat.RGBAFloat, false);
+        Texture2D texture = new Texture2D(2, 1, TextureFormat.RGBAFloat, false);
         texture.filterMode = FilterMode.Point;
 
         texture.SetPixel(0, 0, Color.red);
         texture.SetPixel(1, 0, Color.green);
+        */
+        
+        int width = 512;
+        int height = 512;
 
+        Texture2D texture = new Texture2D(width, height, TextureFormat.RGBAFloat, false);
+        texture.filterMode = FilterMode.Point;
+        for (int y = 0 ; y < height ; y ++)
+        {
+            for (int x = 0 ; x < width ; x ++)
+            {
+                texture.SetPixel(x, y, (x < width / 2) ? horizontalColour : verticalColour);                
+            }
+        }
+        
         texture.Apply();
         return texture;
-         */
     }
 	
 	void Start () {
@@ -195,7 +202,7 @@ public class SliceForm : MonoBehaviour {
 
 
         mesh.vertices = initialVertices;
-        //mesh.uv = meshUv;
+        mesh.uv = meshUv;
         mesh.normals = initialNormals;
         mesh.triangles = meshTriangles;
         mesh.colors = colours;

@@ -9,7 +9,7 @@ public class SliceForm : MonoBehaviour {
     public Vector2 noiseDelta;
     public Color horizontalColour;
     public Color verticalColour;
-
+    public Vector3 seam;
     public bool closed;
 
     Vector2 sliceSize; // The size of each slice
@@ -36,6 +36,7 @@ public class SliceForm : MonoBehaviour {
         horizontalColour = Color.green;
         verticalColour = Color.red;
         closed = true;
+        seam = new Vector3(0, 0, 0.1f);
     }
 
     public void OnDrawGizmos()
@@ -132,21 +133,31 @@ public class SliceForm : MonoBehaviour {
                 }
                 else
                 {
+
+                    Vector3 horizSeam;
+                    if (closed && (y == 0 || y == sliceCount.y - 1))
+                    {
+                        horizSeam = seam;
+                    }
+                    else
+                    {
+                        horizSeam = Vector3.zero;
+                    }
                     // Make the vertices
-                    initialVertices[vertex++] = sliceBottomLeft;
-                    initialVertices[vertex++] = sliceTopLeft;
-                    initialVertices[vertex++] = sliceTopRight;
-                    initialVertices[vertex++] = sliceTopRight;
-                    initialVertices[vertex++] = sliceBottomRight;
-                    initialVertices[vertex++] = sliceBottomLeft;
+                    initialVertices[vertex++] = sliceBottomLeft + horizSeam;
+                    initialVertices[vertex++] = sliceTopLeft + horizSeam;
+                    initialVertices[vertex++] = sliceTopRight - horizSeam;
+                    initialVertices[vertex++] = sliceTopRight - horizSeam;
+                    initialVertices[vertex++] = sliceBottomRight - horizSeam;
+                    initialVertices[vertex++] = sliceBottomLeft + horizSeam;
 
                     // Back face
-                    initialVertices[vertex++] = sliceTopRight;
-                    initialVertices[vertex++] = sliceTopLeft;
-                    initialVertices[vertex++] = sliceBottomLeft;
-                    initialVertices[vertex++] = sliceBottomLeft;
-                    initialVertices[vertex++] = sliceBottomRight;
-                    initialVertices[vertex++] = sliceTopRight;
+                    initialVertices[vertex++] = sliceTopRight - horizSeam;
+                    initialVertices[vertex++] = sliceTopLeft + horizSeam;
+                    initialVertices[vertex++] = sliceBottomLeft + horizSeam;
+                    initialVertices[vertex++] = sliceBottomLeft + horizSeam;
+                    initialVertices[vertex++] = sliceBottomRight - horizSeam;
+                    initialVertices[vertex++] = sliceTopRight - horizSeam;
 
                     // Make the normals, UV's and triangles                
                     for (int i = 0; i < 12; i++)
@@ -165,26 +176,35 @@ public class SliceForm : MonoBehaviour {
                 else
                 {
                     startVertex = vertex;
+                    Vector3 vertSeam;
+                    if (closed && (x == 0 || x == sliceCount.x - 1))
+                    {
+                        vertSeam = Vector3.zero;
+                    }
+                    else
+                    {
+                        vertSeam = seam;
+                    }
                     // Make the vertical slice
                     Vector3 sliceBottomForward = sliceBottomLeft + new Vector3(0, 0, sliceSize.y);
                     Vector3 sliceTopForward = sliceBottomLeft + new Vector3(0, Mathf.PerlinNoise(noiseXY.x, noiseXY.y + noiseDelta.y) * size.y, sliceSize.y);
 
-                    initialVertices[vertex++] = sliceBottomLeft;
-                    initialVertices[vertex++] = sliceTopLeft;
-                    initialVertices[vertex++] = sliceTopForward;
+                    initialVertices[vertex++] = sliceBottomLeft + vertSeam;
+                    initialVertices[vertex++] = sliceTopLeft + vertSeam;
+                    initialVertices[vertex++] = sliceTopForward - vertSeam;
 
-                    initialVertices[vertex++] = sliceTopForward;
-                    initialVertices[vertex++] = sliceBottomForward;
-                    initialVertices[vertex++] = sliceBottomLeft;
+                    initialVertices[vertex++] = sliceTopForward - vertSeam;
+                    initialVertices[vertex++] = sliceBottomForward - vertSeam;
+                    initialVertices[vertex++] = sliceBottomLeft + vertSeam;
 
                     // Back face
-                    initialVertices[vertex++] = sliceTopForward;
-                    initialVertices[vertex++] = sliceTopLeft;
-                    initialVertices[vertex++] = sliceBottomLeft;
+                    initialVertices[vertex++] = sliceTopForward - vertSeam;
+                    initialVertices[vertex++] = sliceTopLeft + vertSeam;
+                    initialVertices[vertex++] = sliceBottomLeft + vertSeam;
 
-                    initialVertices[vertex++] = sliceBottomLeft;
-                    initialVertices[vertex++] = sliceBottomForward;
-                    initialVertices[vertex++] = sliceTopForward;
+                    initialVertices[vertex++] = sliceBottomLeft + vertSeam;
+                    initialVertices[vertex++] = sliceBottomForward - vertSeam;
+                    initialVertices[vertex++] = sliceTopForward + vertSeam;
 
                     // Make the normals, UV's and triangles                
                     for (int i = 0; i < 12; i++)

@@ -9,7 +9,6 @@ public class SliceForm : MonoBehaviour {
     public Vector2 noiseDelta;
     public Color horizontalColour;
     public Color verticalColour;
-    public Vector3 seam;
     public bool closed;
 
     Vector2 sliceSize; // The size of each slice
@@ -19,12 +18,28 @@ public class SliceForm : MonoBehaviour {
     Vector2[] meshUv;
     Color[] colours;
     int[] meshTriangles;
-    Vector2[] uvSeqHoriz = new Vector2[] { new Vector2(0, 0), new Vector2(0, 1), new Vector2(0.5f, 1)
-                                      , new Vector2(0.5f, 1), new Vector2(0.5f, 0), new Vector2(0, 0)
+    Vector2[] uvSeqHoriz = new Vector2[] { new Vector2(0, 0), new Vector2(0, 1), new Vector2(0.1f, 1)
+                                      , new Vector2(0.1f, 1), new Vector2(0.1f, 0), new Vector2(0, 0)
                                 };
-    Vector2[] uvSeqVert = new Vector2[] { new Vector2(0.5f, 0), new Vector2(1, 1), new Vector2(1, 1)
-                                       , new Vector2(1, 1), new Vector2(1, 0), new Vector2(0.5f, 0)
+    Vector2[] uvSeqVert = new Vector2[] { new Vector2(0.9f, 0), new Vector2(1, 1), new Vector2(1, 1)
+                                       , new Vector2(1, 1), new Vector2(1, 0), new Vector2(0.9f, 0)
                                 };
+
+    public static Color HexToColor(string hex)
+    {
+        hex = hex.Replace("0x", "");//in case the string is formatted 0xFFFFFF
+        hex = hex.Replace("#", "");//in case the string is formatted #FFFFFF
+        byte a = 255;//assume fully visible unless specified in hex
+        byte r = byte.Parse(hex.Substring(0, 2), System.Globalization.NumberStyles.HexNumber);
+        byte g = byte.Parse(hex.Substring(2, 2), System.Globalization.NumberStyles.HexNumber);
+        byte b = byte.Parse(hex.Substring(4, 2), System.Globalization.NumberStyles.HexNumber);
+        //Only use alpha if the string has enough characters
+        if (hex.Length == 8)
+        {
+            a = byte.Parse(hex.Substring(4, 2), System.Globalization.NumberStyles.HexNumber);
+        }
+        return new Color32(r, g, b, a);
+    }
     
     public SliceForm()
     {
@@ -33,10 +48,10 @@ public class SliceForm : MonoBehaviour {
         noiseStart = new Vector2(0, 0);
         noiseDelta = new Vector2(0.1f, 0.1f);
 
-        horizontalColour = Color.green;
-        verticalColour = Color.red;
+        horizontalColour = HexToColor("0x2A59AD");
+        verticalColour = HexToColor("0xFFB429");
+
         closed = true;
-        seam = new Vector3(0, 0, 0.1f);
     }
 
     public void OnDrawGizmos()
@@ -54,8 +69,8 @@ public class SliceForm : MonoBehaviour {
         texture.SetPixel(1, 0, Color.green);
         */
         
-        int width = 512;
-        int height = 512;
+        int width = 128;
+        int height = 128;
 
         Texture2D texture = new Texture2D(width, height, TextureFormat.RGBAFloat, false);
         texture.filterMode = FilterMode.Point;
@@ -74,6 +89,8 @@ public class SliceForm : MonoBehaviour {
 	void Start () {
 
         sliceSize = new Vector2(size.x / sliceCount.x, size.z / sliceCount.y);
+
+        
         
 
         MeshRenderer renderer = gameObject.AddComponent<MeshRenderer>();
@@ -112,19 +129,15 @@ public class SliceForm : MonoBehaviour {
         Vector3 bottomLeft = - (size / 2);
 
         Vector2 noiseXY = noiseStart;
-        int vertex = 0;        
+        int vertex = 0;
+        float seam = 0.1f;
 
         for (int y = 0; y < sliceCount.y; y++)
         {
             noiseXY.x = noiseStart.x;
             for (int x = 0; x < sliceCount.x; x++)
             {
-               // Calculate some stuff
-                Vector3 sliceBottomLeft = bottomLeft + new Vector3(x * sliceSize.x, 0, y * sliceSize.y);
-                Vector3 sliceTopLeft = sliceBottomLeft + new Vector3(0, Mathf.PerlinNoise(noiseXY.x, noiseXY.y) * size.y);                
-                Vector3 sliceTopRight = sliceBottomLeft + new Vector3(sliceSize.x, Mathf.PerlinNoise(noiseXY.x + noiseDelta.x, noiseXY.y) * size.y);
-                Vector3 sliceBottomRight = sliceBottomLeft + new Vector3(sliceSize.x, 0, 0);
-
+               
                 int startVertex = vertex;                    
                 // Make the horizontal slice
                 if ((!closed && y == 0) || (closed && x == sliceCount.x - 1))
@@ -133,31 +146,36 @@ public class SliceForm : MonoBehaviour {
                 }
                 else
                 {
-
-                    Vector3 horizSeam;
-                    if (closed && (y == 0 || y == sliceCount.y - 1))
+                    // Calculate some stuff
+                    Vector3 sliceBottomLeft = bottomLeft + new Vector3(x * sliceSize.x, 0, y * sliceSize.y);
+                    Vector3 sliceTopLeft = sliceBottomLeft + new Vector3(0, Mathf.PerlinNoise(noiseXY.x, noiseXY.y) * size.y);
+                    Vector3 sliceTopRight = sliceBottomLeft + new Vector3(sliceSize.x, Mathf.PerlinNoise(noiseXY.x + noiseDelta.x, noiseXY.y) * size.y);
+                    Vector3 sliceBottomRight = sliceBottomLeft + new Vector3(sliceSize.x, 0, 0);
+                    if (x == 0)
                     {
-                        horizSeam = seam;
+                        sliceBottomLeft.x += seam;
+                        sliceTopLeft.x += seam;
                     }
-                    else
+                    if (x == sliceCount.x - 2)
                     {
-                        horizSeam = Vector3.zero;
+                        sliceBottomRight.x -= seam;
+                        sliceTopRight.x -= seam;
                     }
                     // Make the vertices
-                    initialVertices[vertex++] = sliceBottomLeft + horizSeam;
-                    initialVertices[vertex++] = sliceTopLeft + horizSeam;
-                    initialVertices[vertex++] = sliceTopRight - horizSeam;
-                    initialVertices[vertex++] = sliceTopRight - horizSeam;
-                    initialVertices[vertex++] = sliceBottomRight - horizSeam;
-                    initialVertices[vertex++] = sliceBottomLeft + horizSeam;
+                    initialVertices[vertex++] = sliceBottomLeft;
+                    initialVertices[vertex++] = sliceTopLeft;
+                    initialVertices[vertex++] = sliceTopRight;
+                    initialVertices[vertex++] = sliceTopRight;
+                    initialVertices[vertex++] = sliceBottomRight;
+                    initialVertices[vertex++] = sliceBottomLeft;
 
                     // Back face
-                    initialVertices[vertex++] = sliceTopRight - horizSeam;
-                    initialVertices[vertex++] = sliceTopLeft + horizSeam;
-                    initialVertices[vertex++] = sliceBottomLeft + horizSeam;
-                    initialVertices[vertex++] = sliceBottomLeft + horizSeam;
-                    initialVertices[vertex++] = sliceBottomRight - horizSeam;
-                    initialVertices[vertex++] = sliceTopRight - horizSeam;
+                    initialVertices[vertex++] = sliceTopRight;
+                    initialVertices[vertex++] = sliceTopLeft;
+                    initialVertices[vertex++] = sliceBottomLeft;
+                    initialVertices[vertex++] = sliceBottomLeft;
+                    initialVertices[vertex++] = sliceBottomRight;
+                    initialVertices[vertex++] = sliceTopRight;
 
                     // Make the normals, UV's and triangles                
                     for (int i = 0; i < 12; i++)
@@ -175,36 +193,40 @@ public class SliceForm : MonoBehaviour {
                 }
                 else
                 {
-                    startVertex = vertex;
-                    Vector3 vertSeam;
-                    if (closed && (x == 0 || x == sliceCount.x - 1))
-                    {
-                        vertSeam = Vector3.zero;
-                    }
-                    else
-                    {
-                        vertSeam = seam;
-                    }
+                    startVertex = vertex;                    
                     // Make the vertical slice
+                    Vector3 sliceBottomLeft = bottomLeft + new Vector3(x * sliceSize.x, 0, y * sliceSize.y);
+                    Vector3 sliceTopLeft = sliceBottomLeft + new Vector3(0, Mathf.PerlinNoise(noiseXY.x, noiseXY.y) * size.y);
                     Vector3 sliceBottomForward = sliceBottomLeft + new Vector3(0, 0, sliceSize.y);
                     Vector3 sliceTopForward = sliceBottomLeft + new Vector3(0, Mathf.PerlinNoise(noiseXY.x, noiseXY.y + noiseDelta.y) * size.y, sliceSize.y);
 
-                    initialVertices[vertex++] = sliceBottomLeft + vertSeam;
-                    initialVertices[vertex++] = sliceTopLeft + vertSeam;
-                    initialVertices[vertex++] = sliceTopForward - vertSeam;
+                    if (y == 0)
+                    {
+                        sliceBottomLeft.z += seam;
+                        sliceTopLeft.z += seam;
+                    }
+                    if (y == sliceCount.y - 2)
+                    {
+                        sliceBottomForward.z -= seam;
+                        sliceTopForward.z -= seam;
+                    }
 
-                    initialVertices[vertex++] = sliceTopForward - vertSeam;
-                    initialVertices[vertex++] = sliceBottomForward - vertSeam;
-                    initialVertices[vertex++] = sliceBottomLeft + vertSeam;
+                    initialVertices[vertex++] = sliceBottomLeft;
+                    initialVertices[vertex++] = sliceTopLeft;
+                    initialVertices[vertex++] = sliceTopForward;
+
+                    initialVertices[vertex++] = sliceTopForward;
+                    initialVertices[vertex++] = sliceBottomForward;
+                    initialVertices[vertex++] = sliceBottomLeft;
 
                     // Back face
-                    initialVertices[vertex++] = sliceTopForward - vertSeam;
-                    initialVertices[vertex++] = sliceTopLeft + vertSeam;
-                    initialVertices[vertex++] = sliceBottomLeft + vertSeam;
+                    initialVertices[vertex++] = sliceTopForward;
+                    initialVertices[vertex++] = sliceTopLeft;
+                    initialVertices[vertex++] = sliceBottomLeft;
 
-                    initialVertices[vertex++] = sliceBottomLeft + vertSeam;
-                    initialVertices[vertex++] = sliceBottomForward - vertSeam;
-                    initialVertices[vertex++] = sliceTopForward + vertSeam;
+                    initialVertices[vertex++] = sliceBottomLeft;
+                    initialVertices[vertex++] = sliceBottomForward;
+                    initialVertices[vertex++] = sliceTopForward;
 
                     // Make the normals, UV's and triangles                
                     for (int i = 0; i < 12; i++)

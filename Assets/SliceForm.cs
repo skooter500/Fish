@@ -16,7 +16,6 @@ public class SliceForm : MonoBehaviour {
     Vector3[] initialVertices;
     Vector3[] initialNormals;
     Vector2[] meshUv;
-    Color[] colours;
     int[] meshTriangles;
     Vector2[] uvSeqHoriz = new Vector2[] { new Vector2(0, 0), new Vector2(0, 1), new Vector2(0.1f, 1)
                                       , new Vector2(0.1f, 1), new Vector2(0.1f, 0), new Vector2(0, 0)
@@ -24,6 +23,10 @@ public class SliceForm : MonoBehaviour {
     Vector2[] uvSeqVert = new Vector2[] { new Vector2(0.9f, 0), new Vector2(1, 1), new Vector2(1, 1)
                                        , new Vector2(1, 1), new Vector2(1, 0), new Vector2(0.9f, 0)
                                 };
+
+    float[,] samples;
+
+    Mesh mesh;
 
     public static Color HexToColor(string hex)
     {
@@ -59,6 +62,25 @@ public class SliceForm : MonoBehaviour {
         Gizmos.DrawWireCube(transform.position, size);
     }
 
+    float[,] originalSamples;
+    void GenerateSamples()
+    {
+        
+        Vector2 noiseXY = noiseStart;
+        for (int y = 0; y <= sliceCount.y; y++)
+        {
+            noiseXY.x = noiseStart.x;
+            for (int x = 0; x <= sliceCount.x; x++)
+            {
+                noiseXY.x += noiseDelta.x;
+                samples[y, x] = Mathf.PerlinNoise(noiseXY.x, noiseXY.y);
+            }
+            noiseXY.y += noiseDelta.y;
+        }
+
+        originalSamples = samples;
+    }
+
     public Texture2D CreateTexture()
     {
         /*
@@ -85,29 +107,10 @@ public class SliceForm : MonoBehaviour {
         texture.Apply();
         return texture;
     }
-	
-	void Start () {
 
-        sliceSize = new Vector2(size.x / sliceCount.x, size.z / sliceCount.y);
-
-        
-        
-
-        MeshRenderer renderer = gameObject.AddComponent<MeshRenderer>();
-        renderer.shadowCastingMode = UnityEngine.Rendering.ShadowCastingMode.On;
-        renderer.receiveShadows = true;
-        if (renderer == null)
-        {
-            Debug.Log("Renderer is null 1");
-        }
-        
-        Mesh mesh = gameObject.AddComponent<MeshFilter>().mesh;
-        mesh.Clear();
-
-
+    void SetupMesh()
+    {
         int verticesPerSegment = 24;
-
-        int verticesPerHorizontalSlice = verticesPerSegment * (int) sliceCount.x; 
         int vertexCount = 0;
         if (closed)
         {
@@ -119,26 +122,39 @@ public class SliceForm : MonoBehaviour {
         // Reduce by one vertical slice and one horizontal slice
         vertexCount -= (verticesPerSegment / 2) * (int)sliceCount.x;
         vertexCount -= (verticesPerSegment / 2) * (int)sliceCount.y;
-        
+
         initialVertices = new Vector3[vertexCount];
         initialNormals = new Vector3[vertexCount];
         meshUv = new Vector2[vertexCount];
         meshTriangles = new int[vertexCount];
-        colours = new Color[vertexCount];
-    
-        Vector3 bottomLeft = - (size / 2);
+
+        mesh.vertices = initialVertices;
+        mesh.uv = meshUv;
+        mesh.normals = initialNormals;
+        mesh.triangles = meshTriangles;
+    }
+
+    void UpdateMesh()
+    {
+
+        initialVertices = mesh.vertices;
+        initialNormals = mesh.normals;
+        meshUv = mesh.uv;
+        meshTriangles = mesh.triangles;
+
+        Vector3 bottomLeft = -(size / 2);
 
         Vector2 noiseXY = noiseStart;
         int vertex = 0;
-        float seam = 0.1f;
+        float seam = 0.0f;
 
         for (int y = 0; y < sliceCount.y; y++)
         {
             noiseXY.x = noiseStart.x;
             for (int x = 0; x < sliceCount.x; x++)
             {
-               
-                int startVertex = vertex;                    
+
+                int startVertex = vertex;
                 // Make the horizontal slice
                 if ((!closed && y == 0) || (closed && x == sliceCount.x - 1))
                 {
@@ -148,8 +164,8 @@ public class SliceForm : MonoBehaviour {
                 {
                     // Calculate some stuff
                     Vector3 sliceBottomLeft = bottomLeft + new Vector3(x * sliceSize.x, 0, y * sliceSize.y);
-                    Vector3 sliceTopLeft = sliceBottomLeft + new Vector3(0, Mathf.PerlinNoise(noiseXY.x, noiseXY.y) * size.y);
-                    Vector3 sliceTopRight = sliceBottomLeft + new Vector3(sliceSize.x, Mathf.PerlinNoise(noiseXY.x + noiseDelta.x, noiseXY.y) * size.y);
+                    Vector3 sliceTopLeft = sliceBottomLeft + new Vector3(0, samples[y, x] * size.y);
+                    Vector3 sliceTopRight = sliceBottomLeft + new Vector3(sliceSize.x, samples[y, x + 1] * size.y);
                     Vector3 sliceBottomRight = sliceBottomLeft + new Vector3(sliceSize.x, 0, 0);
                     if (x == 0)
                     {
@@ -183,7 +199,7 @@ public class SliceForm : MonoBehaviour {
                         initialNormals[startVertex + i] = (i < 6) ? Vector3.forward : -Vector3.forward;
                         meshUv[startVertex + i] = uvSeqHoriz[i % 6];
                         meshTriangles[startVertex + i] = startVertex + i;
-                        colours[startVertex + i] = Color.green;
+
                     }
                 }
 
@@ -193,12 +209,12 @@ public class SliceForm : MonoBehaviour {
                 }
                 else
                 {
-                    startVertex = vertex;                    
+                    startVertex = vertex;
                     // Make the vertical slice
                     Vector3 sliceBottomLeft = bottomLeft + new Vector3(x * sliceSize.x, 0, y * sliceSize.y);
-                    Vector3 sliceTopLeft = sliceBottomLeft + new Vector3(0, Mathf.PerlinNoise(noiseXY.x, noiseXY.y) * size.y);
+                    Vector3 sliceTopLeft = sliceBottomLeft + new Vector3(0, samples[y, x] * size.y);
                     Vector3 sliceBottomForward = sliceBottomLeft + new Vector3(0, 0, sliceSize.y);
-                    Vector3 sliceTopForward = sliceBottomLeft + new Vector3(0, Mathf.PerlinNoise(noiseXY.x, noiseXY.y + noiseDelta.y) * size.y, sliceSize.y);
+                    Vector3 sliceTopForward = sliceBottomLeft + new Vector3(0, samples[y + 1, x] * size.y, sliceSize.y);
 
                     if (y == 0)
                     {
@@ -234,22 +250,56 @@ public class SliceForm : MonoBehaviour {
                         initialNormals[startVertex + i] = (i < 6) ? Vector3.right : -Vector3.right;
                         meshUv[startVertex + i] = uvSeqVert[i % 6];
                         meshTriangles[startVertex + i] = startVertex + i;
-                        colours[startVertex + i] = Color.red;
+
                     }
                 }
-                noiseXY.x += noiseDelta.x;         
+                noiseXY.x += noiseDelta.x;
             }
             noiseXY.y += noiseDelta.y;
         }
-
 
         mesh.vertices = initialVertices;
         mesh.uv = meshUv;
         mesh.normals = initialNormals;
         mesh.triangles = meshTriangles;
-        mesh.colors = colours;
 
-        //mesh.RecalculateNormals();
+        mesh.RecalculateNormals();
+    }
+    float theta = 0;
+    void SinSamples()
+    {
+        Vector2 noiseXY = noiseStart;
+        for (int y = 0; y < sliceCount.y; y++)
+        {
+            noiseXY.x = noiseStart.x;
+            for (int x = 0; x < sliceCount.x; x++)
+            {
+                noiseXY.x += noiseDelta.x;
+                samples[y, x] = originalSamples[y, x] + Mathf.Abs(Mathf.Sin(theta)) / 2.0f;
+            }
+            noiseXY.y += noiseDelta.y;
+        }
+        theta += Time.deltaTime;
+    }
+	
+	void Start () {
+
+        sliceSize = new Vector2(size.x / sliceCount.x, size.z / sliceCount.y);
+        samples = new float[(int)sliceCount.y + 1, (int)sliceCount.x + 1];
+
+        MeshRenderer renderer = gameObject.AddComponent<MeshRenderer>();
+        renderer.shadowCastingMode = UnityEngine.Rendering.ShadowCastingMode.On;
+        renderer.receiveShadows = true;
+        if (renderer == null)
+        {
+            Debug.Log("Renderer is null 1");
+        }
+        
+        mesh = gameObject.AddComponent<MeshFilter>().mesh;
+        mesh.Clear();
+        GenerateSamples();
+        SetupMesh();
+        UpdateMesh();
 
         
         Shader shader = Shader.Find("Diffuse");
@@ -263,12 +313,12 @@ public class SliceForm : MonoBehaviour {
         else
         {
             renderer.material = material;
-        }
-	    
+        }	    
 	}
 	
 	// Update is called once per frame
 	void Update () {
-	
+        //SinSamples();
+        //UpdateMesh();
 	}
 }

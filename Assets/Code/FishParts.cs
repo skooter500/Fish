@@ -32,13 +32,9 @@ namespace BGE
         private Vector3 tailSize;
 
         public float speedMultiplier;
-        public Color colour;
 
         public float headField;
         public float tailField;
-
-        public bool randomPartColours;
-
        
         public FishParts()
         {
@@ -48,8 +44,7 @@ namespace BGE
             speedMultiplier = 1.0f;
             headField = 5;
             tailField = 50;
-            randomPartColours = false;
-            //colour = Color.white;
+           //colour = Color.white;
         }
 
         public GameObject InstiantiateDefaultShape()
@@ -91,21 +86,6 @@ namespace BGE
             segments.Add(body);
             segments.Add(tail);
 
-            foreach(GameObject segment in segments)
-            {
-                if (segment.GetComponent<Renderer>() != null)
-                {
-                    if (randomPartColours)
-                    {
-                        segment.GetComponent<Renderer>().material.color = new Color(Random.Range(0.0f, 1.0f), Random.Range(0.0f, 1.0f), Random.Range(0.0f, 1.0f));
-                    }
-                    else
-                    {
-                        segment.GetComponent<Renderer>().material.color = colour;
-                    }
-                }
-            }
-            
             if (head.GetComponent<Collider>() != null)
             {
                 head.GetComponent<Collider>().enabled = false;

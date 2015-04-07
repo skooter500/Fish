@@ -37,6 +37,8 @@ namespace BGE
         [Header("Debug")]
         public bool drawGizmos;
 
+        [HideInInspector]
+        public bool doNeighbourCount;
         
 
         void OnDrawGizmos()
@@ -66,6 +68,13 @@ namespace BGE
             {
                 GameObject boid = GameObject.Instantiate<GameObject>(boidPrefab);
                 boids.Add(boid);
+                Color color = new Color(Random.Range(0.0f, 1.0f), Random.Range(0.0f, 1.0f), Random.Range(0.0f, 1.0f));
+                SetIfNotNull(boid, color);
+                for (int j = 0; j < boid.transform.childCount; j ++)
+                {
+                    SetIfNotNull(boid.transform.GetChild(j).gameObject, color);
+                }
+                   
                 boid.transform.parent = transform;
                 bool inside = false;
                 do
@@ -109,15 +118,29 @@ namespace BGE
                     }
                 }
             }
-            int camBoid = Random.Range(0, boidCount);
-            BoidManager.Instance.cameraBoid = boids[camBoid];
+            //int camBoid = Random.Range(0, boidCount);
+            //BoidManager.Instance.cameraBoid = boids[camBoid];
             //boids[camBoid].GetComponent<FishParts>().enabled = false;
-            boids[camBoid].GetComponent<Boid>().fleeEnabled = false;
-            boids[camBoid].GetComponent<Boid>().timeMultiplier = 1.0f;
+            //boids[camBoid].GetComponent<Boid>().fleeEnabled = false;
+            //boids[camBoid].GetComponent<Boid>().timeMultiplier = 1.0f;
 
             // Allow 3x the radius in case boids go outside of the sphere...
-            numCells = (radius * 3) / neighbourDistance;
+            numCells = 40; //(radius * 3) / neighbourDistance;
             space = new Space(transform.position, radius * 3, radius * 3, radius * 3, numCells, boids);
+
+            doNeighbourCount = true;
+        }
+
+        private void SetIfNotNull(GameObject gameObject, Color color)
+        {
+            if (gameObject != null)
+            {
+                Renderer renderer = GetComponent<Renderer>();
+                if (renderer != null)
+                {
+                    renderer.material.color = color;
+                }
+            }            
         }
 
         public void Update()
@@ -139,7 +162,17 @@ namespace BGE
             {
                 // In case the flock center moves
                 space.bounds.center = transform.position;
-                //space.Draw();
+                space.Draw();
+            }
+
+            float prob = Random.Range(0.0f, 1.0f);
+            if (prob <= neighbourTagDither)
+            {
+                doNeighbourCount = true;
+            }
+            else
+            {
+                doNeighbourCount = false;
             }
         }
 

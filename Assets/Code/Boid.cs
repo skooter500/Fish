@@ -492,9 +492,9 @@ namespace BGE
             if (separationEnabled || cohesionEnabled || alignmentEnabled)
             {
                 float prob = UnityEngine.Random.Range(0.0f, 1.0f);
-                if (prob < flock.neighbourTagDither)
+                if (flock != null && flock.doNeighbourCount)
                 {
-                    if (flock != null && flock.UseCellSpacePartitioning)
+                    if (flock.UseCellSpacePartitioning)
                     {
                         TagNeighboursPartitioned(flock.neighbourDistance);
                         /*
@@ -1311,8 +1311,8 @@ namespace BGE
                 }
             }
             Cell myCell = flock.space.cells[myCellIndex];
-            
-            foreach (Cell cell in myCell.adjacent)
+
+            foreach (Cell cell in flock.space.cells)
             {
                 if (cell.Intersects(expanded))
                 {

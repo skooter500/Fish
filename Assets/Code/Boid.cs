@@ -70,10 +70,7 @@ namespace BGE
         public float wanderNoiseDeltaY;
         private float wanderNoiseX;
         private float wanderNoiseY;
-
-        [Header("Flocking")]
-        public float neighbourDistance;
-        public float neighbourTagDither;
+       
 
         [Header("Separation")]                
         public bool separationEnabled;
@@ -196,10 +193,7 @@ namespace BGE
             radius = 5.0f;
             forceMultiplier = 1.0f;
             timeMultiplier = 1.0f;
-            neighbourDistance = 10.0f;
-
-            neighbourTagDither = 0.5f;
-
+           
             calculationMethod = CalculationMethods.WeightedTruncatedRunningSumWithPrioritisation;
             
             seekTargetPos = Vector3.zero;
@@ -383,16 +377,9 @@ namespace BGE
 
         private void EnforceNonPenetrationConstraint()
         {
-            GameObject[] boids;
+            List<GameObject> boids;
             // Just use the tagged boids if we are flocking, otherwise get all the boids
-            if (tagged != null)
-            {
-                boids = tagged.ToArray();
-            }
-            else
-            {
-                boids = GameObject.FindGameObjectsWithTag(gameObject.tag);
-            }
+            boids = flock.boids;
             foreach (GameObject boid in boids)
             {
                 if (boid == gameObject)
@@ -505,11 +492,11 @@ namespace BGE
             if (separationEnabled || cohesionEnabled || alignmentEnabled)
             {
                 float prob = UnityEngine.Random.Range(0.0f, 1.0f);
-                if (prob < neighbourTagDither)
+                if (prob < flock.neighbourTagDither)
                 {
-                    if (BoidManager.Instance.cellSpacePartitioning)
+                    if (flock != null && flock.UseCellSpacePartitioning)
                     {
-                        TagNeighboursPartitioned(neighbourDistance);
+                        TagNeighboursPartitioned(flock.neighbourDistance);
                         /*
                         int testTagged = TagNeighboursSimple(neighbourDistance);
                         Debug.Log(tagged + "\t" + testTagged); // These numbers should be the same
@@ -521,7 +508,7 @@ namespace BGE
                     }
                     else
                     {
-                        TagNeighboursSimple(neighbourDistance);
+                        TagNeighboursSimple(flock.neighbourDistance);
                     }
                 }
             }
@@ -1265,9 +1252,7 @@ namespace BGE
         {
             tagged.Clear();
 
-            GameObject[] allBoids = GameObject.FindGameObjectsWithTag(tag);
-
-            foreach (GameObject boid in allBoids)
+            foreach (GameObject boid in flock.boids)
             {
                 if (boid != gameObject)
                 {
@@ -1309,15 +1294,23 @@ namespace BGE
                 LineDrawer.DrawSquare(expanded.min, expanded.max, Color.yellow);
             }
 
-            List<Cell> cells = BoidManager.Instance.space.cells;
+            List<Cell> cells = flock.space.cells;
             tagged.Clear();
-            int myCellIndex = BoidManager.Instance.space.FindCell(transform.position);
+            int myCellIndex = flock.space.FindCell(transform.position);
             if (myCellIndex == -1)
             {
+                //Debug.Log("Not found in space");
                 // Im outside the cells so return
                 return 0;
             }
-            Cell myCell = BoidManager.Instance.space.cells[myCellIndex];
+            else
+            {
+                if (drawGizmos)
+                {
+                    LineDrawer.DrawSquare(cells[myCellIndex].bounds.min, cells[myCellIndex].bounds.max, Color.green);
+                }
+            }
+            Cell myCell = flock.space.cells[myCellIndex];
             
             foreach (Cell cell in myCell.adjacent)
             {
@@ -1327,9 +1320,9 @@ namespace BGE
                     {
                         LineDrawer.DrawSquare(cell.bounds.min, cell.bounds.max, Color.magenta);
                     }
-                    List<GameObject> entities = cell.contained;
+                    List<GameObject> cellNeighbourBoids = cell.contained;
                     float rangeSquared = inRange * inRange;
-                    foreach (GameObject neighbour in entities)
+                    foreach (GameObject neighbour in cellNeighbourBoids)
                     {
                         if (neighbour != gameObject && neighbour.tag == tag)
                         {

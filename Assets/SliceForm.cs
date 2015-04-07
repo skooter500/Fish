@@ -10,6 +10,8 @@ public class SliceForm : MonoBehaviour {
     public Color horizontalColour;
     public Color verticalColour;
     public bool closed;
+    [Range(0, 1)]
+    public float noiseToBase;
 
     Vector2 sliceSize; // The size of each slice
 
@@ -24,6 +26,8 @@ public class SliceForm : MonoBehaviour {
     Vector2[] uvSeqVert = new Vector2[] { new Vector2(0.9f, 0), new Vector2(1, 1), new Vector2(1, 1)
                                        , new Vector2(1, 1), new Vector2(1, 0), new Vector2(0.9f, 0)
                                 };
+    
+    float baseHeight, noiseHeight;
 
     public static Color HexToColor(string hex)
     {
@@ -52,6 +56,7 @@ public class SliceForm : MonoBehaviour {
         verticalColour = HexToColor("0xFFB429");
 
         closed = true;
+        noiseToBase = 0.2f;
     }
 
     public void OnDrawGizmos()
@@ -90,9 +95,9 @@ public class SliceForm : MonoBehaviour {
 
         sliceSize = new Vector2(size.x / sliceCount.x, size.z / sliceCount.y);
 
+        noiseHeight = size.y * noiseToBase;
+        baseHeight = size.y - noiseHeight;
         
-        
-
         MeshRenderer renderer = gameObject.AddComponent<MeshRenderer>();
         renderer.shadowCastingMode = UnityEngine.Rendering.ShadowCastingMode.On;
         renderer.receiveShadows = true;
@@ -148,8 +153,8 @@ public class SliceForm : MonoBehaviour {
                 {
                     // Calculate some stuff
                     Vector3 sliceBottomLeft = bottomLeft + new Vector3(x * sliceSize.x, 0, y * sliceSize.y);
-                    Vector3 sliceTopLeft = sliceBottomLeft + new Vector3(0, Mathf.PerlinNoise(noiseXY.x, noiseXY.y) * size.y);
-                    Vector3 sliceTopRight = sliceBottomLeft + new Vector3(sliceSize.x, Mathf.PerlinNoise(noiseXY.x + noiseDelta.x, noiseXY.y) * size.y);
+                    Vector3 sliceTopLeft = sliceBottomLeft + new Vector3(0, baseHeight + (Mathf.PerlinNoise(noiseXY.x, noiseXY.y) * noiseHeight));
+                    Vector3 sliceTopRight = sliceBottomLeft + new Vector3(sliceSize.x, baseHeight + (Mathf.PerlinNoise(noiseXY.x + noiseDelta.x, noiseXY.y) * noiseHeight));
                     Vector3 sliceBottomRight = sliceBottomLeft + new Vector3(sliceSize.x, 0, 0);
                     if (x == 0)
                     {
@@ -196,9 +201,9 @@ public class SliceForm : MonoBehaviour {
                     startVertex = vertex;                    
                     // Make the vertical slice
                     Vector3 sliceBottomLeft = bottomLeft + new Vector3(x * sliceSize.x, 0, y * sliceSize.y);
-                    Vector3 sliceTopLeft = sliceBottomLeft + new Vector3(0, Mathf.PerlinNoise(noiseXY.x, noiseXY.y) * size.y);
+                    Vector3 sliceTopLeft = sliceBottomLeft + new Vector3(0, baseHeight + (Mathf.PerlinNoise(noiseXY.x, noiseXY.y) * noiseHeight));
                     Vector3 sliceBottomForward = sliceBottomLeft + new Vector3(0, 0, sliceSize.y);
-                    Vector3 sliceTopForward = sliceBottomLeft + new Vector3(0, Mathf.PerlinNoise(noiseXY.x, noiseXY.y + noiseDelta.y) * size.y, sliceSize.y);
+                    Vector3 sliceTopForward = sliceBottomLeft + new Vector3(0, baseHeight + (Mathf.PerlinNoise(noiseXY.x, noiseXY.y + noiseDelta.y) * noiseHeight), sliceSize.y);
 
                     if (y == 0)
                     {

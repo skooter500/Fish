@@ -8,19 +8,36 @@ namespace BGE
 {
     public class Flock: MonoBehaviour
     {
+
+        [Header("Cell Space Partitioning")]
+        public bool UseCellSpacePartitioning;
+        [HideInInspector]
+        public Space space;
+        [HideInInspector]
+        public float numCells;
+        
+        public float neighbourDistance;
+        public float neighbourTagDither;
+
         public float radius;
         public int boidCount;
         public GameObject boidPrefab;
-        List<GameObject> boids;
+
+        [HideInInspector]
+        public List<GameObject> boids;
         public List<GameObject> enemies;
+        
         public bool spawnInTopHemisphere;
 
         [Range(0, 2)]
         public float timeMultiplier;
+        [Range(0, 1)]
+        public float spread;
 
         [Header("Debug")]
         public bool drawGizmos;
 
+        
 
         void OnDrawGizmos()
         {
@@ -34,7 +51,13 @@ namespace BGE
             boidCount = 200;
             timeMultiplier = 1.0f;
             boids = new List<GameObject>();
-            enemies = new List<GameObject>();
+            enemies = new List<GameObject>();           
+            numCells = 50;
+            neighbourDistance = 50;
+            neighbourTagDither = 1.0f;
+
+            spread = 1.0f;
+            
         }
 
         void Start()
@@ -52,7 +75,7 @@ namespace BGE
                     {
                         unit.y = Mathf.Abs(unit.y);
                     }
-                    boid.transform.position = transform.position + unit * UnityEngine.Random.Range(0, radius);
+                    boid.transform.position = transform.position + unit * UnityEngine.Random.Range(0, radius * spread);
                     inside = false;
                     foreach (Obstacle obstacle in BoidManager.Instance.obstacles)
                     {
@@ -72,7 +95,7 @@ namespace BGE
                 AudioSource audioSource = boid.GetComponent<AudioSource>();
                 if (audioSource != null)
                 {
-                    if (Random.Range(0, 1) > 0.1)
+                    //if (Random.Range(0, 1) > 0.1)
                     {
                         audioSource.enabled = false;
                     }
@@ -81,6 +104,7 @@ namespace BGE
                 {
                     if (drawGizmos)
                     {
+                        boid.GetComponent<Boid>().drawGizmos = drawGizmos;
                         boid.GetComponent<Boid>().drawNeighbours = true;
                     }
                 }
@@ -91,7 +115,9 @@ namespace BGE
             boids[camBoid].GetComponent<Boid>().fleeEnabled = false;
             boids[camBoid].GetComponent<Boid>().timeMultiplier = 1.0f;
 
-            // 
+            // Allow 3x the radius in case boids go outside of the sphere...
+            numCells = (radius * 3) / neighbourDistance;
+            space = new Space(transform.position, radius * 3, radius * 3, radius * 3, numCells, boids);
         }
 
         public void Update()
@@ -107,6 +133,21 @@ namespace BGE
                 {
                     o.GetComponent<Boid>().sphereCentre = transform.position;
                 }
+            }
+
+            if (drawGizmos)
+            {
+                // In case the flock center moves
+                space.bounds.center = transform.position;
+                //space.Draw();
+            }
+        }
+
+        void LateUpdate()
+        {
+            if (UseCellSpacePartitioning)
+            {
+                space.Partition();
             }
         }
     }

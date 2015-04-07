@@ -20,6 +20,7 @@ namespace BGE
 
         public bool Intersects(Bounds b)
         {
+            //return this.bounds.Intersects(b);
             if ((b.min.x > bounds.max.x) || (b.max.x < bounds.min.x)
                 || (b.min.z > bounds.max.z) || (b.max.z < bounds.min.z))
             {
@@ -37,7 +38,7 @@ namespace BGE
             Vector3 max = box.max;
             max.y = 0;
             box.max = max;
-            return this.box.Intersects(box);
+            
              * */
         }
     }

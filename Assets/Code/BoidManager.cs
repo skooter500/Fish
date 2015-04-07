@@ -9,17 +9,12 @@ namespace BGE
     public class BoidManager : MonoBehaviour
     {
         StringBuilder message = new StringBuilder();
-
-        [Header("Cell Space Partitioning")]
-        public bool cellSpacePartitioning;
-        public float numCells;
-        public Vector3 spaceBounds;
-        
+       
         [Header("Debugging")]
         public bool showMessages;
         public bool drawGizmos;
 
-        public Space space;
+        
         static BoidManager instance;
 
         [HideInInspector]
@@ -61,9 +56,7 @@ namespace BGE
         }
 
         BoidManager()
-        {
-            spaceBounds = new Vector3(1000, 1000, 1000);
-            numCells = 50;
+        {           
             instance = this;
         }
                 
@@ -80,7 +73,6 @@ namespace BGE
             style.fontSize = 18;
             style.normal.textColor = Color.white;
 
-            space = new Space(spaceBounds.x, spaceBounds.y, spaceBounds.z, numCells);
             obstacles = GameObject.FindObjectsOfType(typeof(Obstacle)) as Obstacle[];
         }
 
@@ -111,11 +103,6 @@ namespace BGE
                     showMessages = ! showMessages;
                 }
             
-                if (Event.current.keyCode == KeyCode.F8)
-                {
-                    cellSpacePartitioning = !cellSpacePartitioning;
-                }
-                                
                 if (Event.current.keyCode == KeyCode.Escape)
                 {
                     Application.Quit();
@@ -130,10 +117,7 @@ namespace BGE
             int fps = (int)(1.0f / Time.deltaTime);
             PrintFloat("FPS: ", fps);      
 
-            if (drawGizmos)
-            {
-                space.Draw();
-            }
+            
 
             GameObject player = (GameObject) GameObject.FindGameObjectWithTag("Player");
             if (player != null && cameraBoid != null)
@@ -143,12 +127,6 @@ namespace BGE
             }
         }
 
-        void LateUpdate()
-        {
-            if (cellSpacePartitioning)
-            {
-                space.Partition();
-            }
-        }
+        
     }
 }

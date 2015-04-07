@@ -8,34 +8,33 @@ namespace BGE
 {
     public class Space
     {
-        public Bounds spaceBounds;        
+        public Bounds bounds;        
         public List<Cell> cells = new List<Cell>();
-        Vector3 spaceCells = new Vector3();
-        Vector3 cellUnit = new Vector3();
-        Boid[] boids; 
+        Vector3 numCells = new Vector3();
+        Vector3 celSize = new Vector3();
+        
+        public List<GameObject> boids;
 
-        public Space(float w, float h, float d, float numCells)
+        public Space(Vector3 center, float w, float h, float d, float numCells1, List<GameObject> boids)
         {
-            // Default bounds for the space in world space
-            //float w = 1000;
-            //float s = 50;
-            spaceBounds = new Bounds(Vector3.zero, new Vector3(w, h, d));
-            spaceCells = new Vector3(numCells, numCells, numCells); // The number of cells in each axis
-            cellUnit.x = spaceBounds.size.x / spaceCells.x;
-            cellUnit.y = spaceBounds.size.y / spaceCells.y;
-            cellUnit.z = spaceBounds.size.z / spaceCells.z;
+            this.boids = boids;
+            bounds = new Bounds(center, new Vector3(w, h, d));
+            numCells = new Vector3(numCells1, numCells1, numCells1); // The number of cells in each axis
+            celSize.x = bounds.size.x / numCells.x;
+            celSize.y = bounds.size.y / numCells.y;
+            celSize.z = bounds.size.z / numCells.z;
 
             int num = 0;
 
             float y = 0;
             {
-                for (float z = spaceBounds.min.z; z < spaceBounds.max.z; z += cellUnit.z)
+                for (float z = bounds.min.z; z < bounds.max.z; z += celSize.z)
                 {
-                    for (float x = spaceBounds.min.x; x < spaceBounds.max.z; x += cellUnit.x)
+                    for (float x = bounds.min.x; x < bounds.max.x; x += celSize.x)
                     {
                         Cell cell = new Cell();
                         cell.bounds.min = new Vector3(x, y, z);
-                        cell.bounds.max = new Vector3(x + cellUnit.x, y, z + cellUnit.z);
+                        cell.bounds.max = new Vector3(x + celSize.x, y, z + celSize.z);
                         cell.number = num++;
                         cells.Add(cell);
                     }
@@ -43,8 +42,8 @@ namespace BGE
             }
 
             //Now find each of the neighbours for each cell
-            float width = cellUnit.x;
-            float height = cellUnit.z;
+            float width = celSize.x;
+            float height = celSize.z;
             foreach (Cell cell in cells)
             {                
                 // Add me
@@ -89,13 +88,11 @@ namespace BGE
         }
 
         public int FindCell(Vector3 pos)
-        {          
-
-            pos.y = 0;            
-			pos.x += (spaceBounds.size.x / 2);
-            pos.z += (spaceBounds.size.z / 2); ;
-			int cellNumber = ((int)(pos.x / cellUnit.x))
-                + ((int)(pos.z / cellUnit.x)) * (int) spaceCells.x;
+        {
+            Vector3 transPos = pos - bounds.min;
+            transPos.y = 0;
+            int cellNumber = ((int)(transPos.x / celSize.x))
+                + ((int)(transPos.z / celSize.z)) * (int)numCells.x;
 
             if ((cellNumber >= cells.Count) || (cellNumber < 0))
             {
@@ -110,18 +107,18 @@ namespace BGE
         public void Draw()
         {
             float y = 0;
-            for (float x = spaceBounds.min.x; x <= spaceBounds.max.z; x += cellUnit.x)
+            for (float x = bounds.min.x; x <= bounds.max.x; x += celSize.x)
             {
                 Vector3 start, end;
-                start = new Vector3(x, y, spaceBounds.min.z);
-                end = new Vector3(x, y, spaceBounds.max.z);
+                start = new Vector3(x, y, bounds.min.z);
+                end = new Vector3(x, y, bounds.max.z);
                 LineDrawer.DrawLine(start, end, Color.cyan);
             }
-            for (float z = spaceBounds.min.z; z <= spaceBounds.max.z; z += cellUnit.z)
+            for (float z = bounds.min.z; z <= bounds.max.z; z += celSize.z)
             {
                 Vector3 start, end;
-                start = new Vector3(spaceBounds.min.x, y, z);
-                end = new Vector3(spaceBounds.max.x, y, z);
+                start = new Vector3(bounds.min.x, y, z);
+                end = new Vector3(bounds.max.x, y, z);
                 LineDrawer.DrawLine(start, end, Color.cyan);
             } 
             /*foreach (Cell cell in cells)
@@ -132,16 +129,12 @@ namespace BGE
         }
 
         public void Partition()
-        {
-            if (boids == null)
-            {
-                boids = GameObject.FindObjectsOfType(typeof(Boid)) as Boid[];                        
-            }
+        { 
             foreach (Cell cell in cells)
             {
                 cell.contained.Clear();
             }
-            foreach (Boid boid in boids)
+            foreach (GameObject boid in boids)
             {
                 int cell = FindCell(boid.transform.position);
                 if (cell != -1)

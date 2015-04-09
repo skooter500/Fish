@@ -20,12 +20,19 @@ public class RandomAudioPlayer : MonoBehaviour {
             audioSource.Play();
             if (cycleColoursOnPlay)
             {
+                ColorLerper lerper = GetComponent<ColorLerper>();
+                lerper.gameObjects.Clear();
+                lerper.gameObjects.Add(gameObject);
+                lerper.to.Clear();
+                lerper.to.Add(Pallette.Random());
+                lerper.StartLerping();
                 SectionColours sectionColours = GetComponent<SectionColours>();
                 if (sectionColours == null)
                 {
                     Renderer renderer = GetComponentInChildren<Renderer>();
                     if (renderer != null)
                     {
+
                         renderer.material.color = Pallette.Random();
                     }
                 }

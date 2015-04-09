@@ -28,20 +28,28 @@ public class AnimationSpeed : MonoBehaviour {
 	void Update () {
 
         float speed = 0;
-        
-        switch (speedController)
-        {
-            case speedControllerType.force:
-                speed = boidObject.GetComponent<Boid>().force.magnitude;
-                break;
-            case speedControllerType.acceleration:
-                speed = boidObject.GetComponent<Boid>().acceleration.magnitude;
-                break;
-            case speedControllerType.velocity:
-                speed = boidObject.GetComponent<Boid>().velocity.magnitude;
-                break;
-        }
 
+        Boid boid = boidObject.GetComponent<Boid>();
+
+        if (boid != null)
+        {
+            switch (speedController)
+            {
+                case speedControllerType.force:
+                    speed = boidObject.GetComponent<Boid>().force.magnitude;
+                    break;
+                case speedControllerType.acceleration:
+                    speed = boidObject.GetComponent<Boid>().acceleration.magnitude;
+                    break;
+                case speedControllerType.velocity:
+                    speed = boidObject.GetComponent<Boid>().velocity.magnitude;
+                    break;
+            }
+        }
+        else
+        {
+            speed = 1.0f;
+        }
         Animator anim = gameObject.GetComponent<Animator>();
         //BoidManager.PrintFloat("Speed: ", speed);
         if (anim != null)

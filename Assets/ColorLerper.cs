@@ -7,11 +7,10 @@ public class ColorLerper : MonoBehaviour {
     public List<GameObject> gameObjects;
     public List<Color> from;
     public List<Color> to;
-    public float t;
+    public float t = 1.0f;
     public float speed;
 	// Use this for initialization
 	void Start () {
-        t = 1.0f;
         speed = 0.2f;
 	}
 	
@@ -31,7 +30,16 @@ public class ColorLerper : MonoBehaviour {
             myColor.g = Mathf.Lerp(fromColor.g, toColor.g, t);
             myColor.b = Mathf.Lerp(fromColor.b, toColor.b, t);
             t += Time.deltaTime * speed;
-            gameObject.GetComponent<Renderer>().material.color = myColor;
+            Renderer renderer = gameObject.GetComponentInChildren<Renderer>();
+            if (renderer != null)
+            {
+                renderer.material.color = myColor;
+            }
+            else
+            {
+                Debug.Log("No renderer in lerper");
+            }
+            
         }
 	}
 
@@ -41,7 +49,7 @@ public class ColorLerper : MonoBehaviour {
         from.Clear();
         foreach(GameObject gameObject in gameObjects)
         {
-            from.Add(gameObject.GetComponent<Renderer>().material.color);
+            from.Add(gameObject.GetComponentInChildren<Renderer>().material.color);
         }
     }
 }

@@ -755,7 +755,7 @@ namespace BGE
 
         void Update()
         {
-            bool calculateThisFrame = false;
+            bool calculateThisFrame = true;
             float smoothRate;
 
             timeDelta = Time.deltaTime * timeMultiplier;
@@ -767,9 +767,9 @@ namespace BGE
             if (flock != null)
             {
                 float prob = UnityEngine.Random.Range(0.0f, 1.0f);
-                if (prob < flock.updateDither)
+                if (prob > flock.updateDither)
                 {
-                    calculateThisFrame = true;                    
+                    calculateThisFrame = false;                    
                 }
             }
 

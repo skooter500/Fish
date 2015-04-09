@@ -48,9 +48,19 @@ public class ColorBomb : MonoBehaviour {
                 {
                     if (Vector3.Distance(center, boid.transform.position) < radius)
                     {
-                        BGE.Utilities.RecursiveSetColor(boid.transform.GetChild(0).gameObject, color);
-                        BGE.Utilities.RecursiveSetColor(boid.transform.GetChild(1).gameObject, color1);
-                        BGE.Utilities.RecursiveSetColor(boid.transform.GetChild(2).gameObject, color2);
+                        ColorLerper lerper = boid.GetComponent<ColorLerper>();
+                        lerper.to.Clear();
+                        lerper.to.Add(color);
+                        lerper.to.Add(color1);
+                        lerper.to.Add(color2);
+                        lerper.gameObjects.Clear();
+                        lerper.gameObjects.Add(boid.transform.GetChild(0).gameObject);
+                        lerper.gameObjects.Add(boid.transform.GetChild(1).gameObject);
+                        lerper.gameObjects.Add(boid.transform.GetChild(2).gameObject);
+                        lerper.StartLerping();
+                        //BGE.Utilities.RecursiveSetColor(boid.transform.GetChild(0).gameObject, color);
+                        //BGE.Utilities.RecursiveSetColor(boid.transform.GetChild(1).gameObject, color1);
+                        //BGE.Utilities.RecursiveSetColor(boid.transform.GetChild(2).gameObject, color2);
                         boidsTagged++;
                     }
                 }

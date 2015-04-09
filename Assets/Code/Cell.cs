@@ -10,6 +10,8 @@ namespace BGE
     {
         public Bounds bounds = new Bounds();
         public int number;
+        public int row;
+        public int col;
         public List<GameObject> contained = new List<GameObject>(500);
         public List<Cell> adjacent = new List<Cell>();
 

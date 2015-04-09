@@ -25,19 +25,25 @@ namespace BGE
             celSize.z = bounds.size.z / numCells.z;
 
             int num = 0;
-
+            int row = 0; int col = 0;
             float y = 0;
             {
                 for (float z = bounds.min.z; z < bounds.max.z; z += celSize.z)
                 {
+                    col = 0;
                     for (float x = bounds.min.x; x < bounds.max.x; x += celSize.x)
                     {
                         Cell cell = new Cell();
                         cell.bounds.min = new Vector3(x, y, z);
                         cell.bounds.max = new Vector3(x + celSize.x, y, z + celSize.z);
                         cell.number = num++;
+                        cell.row = row;
+                        cell.col = col;
+                        col++;
                         cells.Add(cell);
                     }
+                    row++;
+                    
                 }
             }
 
@@ -85,6 +91,13 @@ namespace BGE
             {
                 cell.adjacent.Add(cells[neighbour]);
             }
+        }
+
+        public Cell GetCell(int row, int col)
+        {
+            int cellNumber = col + (row * (int) numCells.x);
+
+            return (cellNumber >= cells.Count) || (cellNumber < 0) ? null : cells[cellNumber];
         }
 
         public int FindCell(Vector3 pos)

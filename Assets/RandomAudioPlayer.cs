@@ -26,7 +26,7 @@ public class RandomAudioPlayer : MonoBehaviour {
                     Renderer renderer = GetComponentInChildren<Renderer>();
                     if (renderer != null)
                     {
-                        renderer.material.color = new Color(Random.Range(0.0f, 1.0f), Random.Range(0.0f, 1.0f), Random.Range(0.0f, 1.0f));
+                        renderer.material.color = Pallette.Random();
                     }
                 }
                 else

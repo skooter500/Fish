@@ -110,13 +110,30 @@ namespace BGE
             }
         }
 
-
+        float minFPS = float.MaxValue;
+        float maxFPS = float.MinValue;
+        float avgFPS = 0;
+        float sumFPS = 0;
+        int frameCount = 0;
         // Update is called once per frame
         void Update()
         {
-            int fps = (int)(1.0f / Time.deltaTime);
-            PrintFloat("FPS: ", fps);      
-
+            frameCount++;
+            float fps = (1.0f / Time.deltaTime);
+            if (fps < minFPS)
+            {
+                minFPS = fps;
+            }
+            if (fps > maxFPS)
+            {
+                maxFPS = fps;
+            }
+            sumFPS += fps;
+            avgFPS = sumFPS / frameCount;
+            PrintFloat("FPS: ", (int)fps);
+            PrintFloat("Avg FPS: ", (int)avgFPS);
+            PrintFloat("Min FPS: ", (int)minFPS);
+            PrintFloat("Max FPS: ", (int)maxFPS);      
             
 
             GameObject player = (GameObject) GameObject.FindGameObjectWithTag("Player");

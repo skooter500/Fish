@@ -39,7 +39,7 @@ public class SliceWorld : MonoBehaviour {
                 sliceForm.noiseStart = new Vector2(Random.Range(0.0f, 1000.0f), Random.Range(0.0f, 1000.0f));
                 sliceForm.noiseToBase = 0.8f;
                 sliceForm.closed = false;
-                sliceForm.horizontalColour = sliceForm.verticalColour = new Color(Random.Range(0.0f, 1.0f), Random.Range(0.0f, 1.0f), Random.Range(0.0f, 1.0f));
+                sliceForm.horizontalColour = sliceForm.verticalColour = Pallette.Random();
                 theta += thetaInc;
             }
         }

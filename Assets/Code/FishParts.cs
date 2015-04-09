@@ -44,7 +44,6 @@ namespace BGE
             speedMultiplier = 1.0f;
             headField = 5;
             tailField = 50;
-           //colour = Color.white;
         }
 
         public GameObject InstiantiateDefaultShape()
@@ -146,7 +145,7 @@ namespace BGE
                 {
                     segments[i] = segments[i - 1];
                 }
-                segments[0].renderer.material.color = new Color(Random.Range(0.0f, 1.0f), Random.Range(0.0f, 1.0f), Random.Range(0.0f, 1.0f));
+                segments[0].renderer.material.color = Pallette.Random();
                 yield return new WaitForSeconds(fleeColourWait);
                 */
 
@@ -157,7 +156,7 @@ namespace BGE
                 yield return new WaitForSeconds(fleeColourWait);
                 foreach (GameObject segment in segments)
                 {
-                    segment.GetComponent<Renderer>().material.color = new Color(Random.Range(0.0f, 1.0f), Random.Range(0.0f, 1.0f), Random.Range(0.0f, 1.0f));
+                    segment.GetComponent<Renderer>().material.color = Pallette.Random();
                 }
                 yield return new WaitForSeconds(fleeColourWait);
             }

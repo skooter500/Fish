@@ -35,7 +35,7 @@ public class SectionColours : MonoBehaviour {
             Renderer render = segment.GetComponent<Renderer>();
             if (render != null)
             {
-                render.material.color = new Color(Random.Range(0.0f, 1.0f), Random.Range(0.0f, 1.0f), Random.Range(0.0f, 1.0f));
+                render.material.color = Pallette.Random();
             }
         }
 	}
@@ -55,7 +55,7 @@ public class SectionColours : MonoBehaviour {
                 current.material.color = previous.material.color;
             }
         }
-        segments[0].GetComponent<Renderer>().material.color = new Color(Random.Range(0.0f, 1.0f), Random.Range(0.0f, 1.0f), Random.Range(0.0f, 1.0f));
+        segments[0].GetComponent<Renderer>().material.color = Pallette.Random();
     }
 
     System.Collections.IEnumerator FleeColourCycle()
@@ -75,7 +75,7 @@ public class SectionColours : MonoBehaviour {
             yield return new WaitForSeconds(fleeColourWait);
             foreach (GameObject segment in segments)
             {
-                segment.GetComponent<Renderer>().material.color = new Color(Random.Range(0.0f, 1.0f), Random.Range(0.0f, 1.0f), Random.Range(0.0f, 1.0f));
+                segment.GetComponent<Renderer>().material.color = Pallette.Random();
             }
             yield return new WaitForSeconds(fleeColourWait);
              

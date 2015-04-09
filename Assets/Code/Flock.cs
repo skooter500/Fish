@@ -17,8 +17,7 @@ namespace BGE
         public float numCells;
         
         public float neighbourDistance;
-        public float neighbourTagDither;
-
+     
         public float radius;
         public int boidCount;
         public GameObject boidPrefab;
@@ -39,6 +38,9 @@ namespace BGE
 
         [HideInInspector]
         public bool doNeighbourCount;
+
+        public float suspendDistance;
+        public float updateDither;
         
 
         void OnDrawGizmos()
@@ -56,24 +58,21 @@ namespace BGE
             enemies = new List<GameObject>();           
             numCells = 50;
             neighbourDistance = 50;
-            neighbourTagDither = 1.0f;
 
             spread = 1.0f;
-            
+            suspendDistance = 2000;
+            updateDither = 1.0f;
         }
 
         void Start()
         {
+            Color color = Pallette.Random();
             for (int i = 0; i < boidCount; i++)
             {
                 GameObject boid = GameObject.Instantiate<GameObject>(boidPrefab);
-                boids.Add(boid);
-                Color color = new Color(Random.Range(0.0f, 1.0f), Random.Range(0.0f, 1.0f), Random.Range(0.0f, 1.0f));
-                SetIfNotNull(boid, color);
-                for (int j = 0; j < boid.transform.childCount; j ++)
-                {
-                    SetIfNotNull(boid.transform.GetChild(j).gameObject, color);
-                }
+                boids.Add(boid);                
+                //BGE.Utilities.RecursiveSetColor(boid, color);
+                
                    
                 boid.transform.parent = transform;
                 bool inside = false;
@@ -129,19 +128,22 @@ namespace BGE
             space = new Space(transform.position, radius * 3, radius * 3, radius * 3, numCells, boids);
 
             doNeighbourCount = true;
+            
         }
 
-        private void SetIfNotNull(GameObject gameObject, Color color)
+        public bool suspended = false;
+
+        public void Activate(bool activate)
         {
-            if (gameObject != null)
+            suspended = !activate;
+            foreach(GameObject boid in boids)
             {
-                Renderer renderer = GetComponent<Renderer>();
-                if (renderer != null)
-                {
-                    renderer.material.color = color;
-                }
+                boid.GetComponent<Boid>().enabled = activate;
+                boid.GetComponent<FishParts>().enabled = activate;
+                
             }            
         }
+
 
         public void Update()
         {
@@ -165,14 +167,21 @@ namespace BGE
                 space.Draw();
             }
 
-            float prob = Random.Range(0.0f, 1.0f);
-            if (prob <= neighbourTagDither)
+            float distToPlayer = Vector3.Distance(Player.Instance.transform.position, transform.position);
+            BoidManager.PrintFloat("Dist: ", distToPlayer);
+            if (suspended)
             {
-                doNeighbourCount = true;
+                if (distToPlayer < suspendDistance)
+                {
+                    Activate(true);
+                }
             }
             else
             {
-                doNeighbourCount = false;
+                if (distToPlayer > suspendDistance)
+                {
+                    Activate(false);
+                }
             }
         }
 

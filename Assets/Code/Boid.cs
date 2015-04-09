@@ -377,10 +377,9 @@ namespace BGE
 
         private void EnforceNonPenetrationConstraint()
         {
-            List<GameObject> boids;
-            // Just use the tagged boids if we are flocking, otherwise get all the boids
-            boids = flock.boids;
-            foreach (GameObject boid in boids)
+            Profiler.BeginSample("Non penetration");
+            
+            foreach (GameObject boid in tagged)
             {
                 if (boid == gameObject)
                 {
@@ -395,6 +394,7 @@ namespace BGE
                      overlap);
                 }
             }
+            Profiler.EndSample();
         }
 
         public Vector3 Calculate()
@@ -491,9 +491,9 @@ namespace BGE
 
             if (separationEnabled || cohesionEnabled || alignmentEnabled)
             {
-                float prob = UnityEngine.Random.Range(0.0f, 1.0f);
-                if (flock != null && flock.doNeighbourCount)
+                if (flock != null)
                 {
+                    Profiler.BeginSample("Tagging neighbours");   
                     if (flock.UseCellSpacePartitioning)
                     {
                         TagNeighboursPartitioned(flock.neighbourDistance);
@@ -510,23 +510,31 @@ namespace BGE
                     {
                         TagNeighboursSimple(flock.neighbourDistance);
                     }
+                    Profiler.EndSample();   
+                    
                 }
             }
 
             if (separationEnabled && (tagged.Count > 0))
             {
+                Profiler.BeginSample("Separation");
                 force = Separation() * separationWeight;
                 force *= forceMultiplier;
+                Profiler.EndSample();
+                
                 if (!accumulateForce(ref steeringForce, force))
                 {
                     return steeringForce;
                 }
+
             }
 
             if (alignmentEnabled && (tagged.Count > 0))
             {
+                Profiler.BeginSample("ALignment");                
                 force = Alignment() * alignmentWeight;
                 force *= forceMultiplier;
+                Profiler.EndSample();
                 if (!accumulateForce(ref steeringForce, force))
                 {
                     return steeringForce;
@@ -535,8 +543,11 @@ namespace BGE
 
             if (cohesionEnabled && (tagged.Count > 0))
             {
+                Profiler.BeginSample("Cohesion");
+                
                 force = Cohesion() * cohesionWeight;
                 force *= forceMultiplier;
+                Profiler.EndSample();
                 if (!accumulateForce(ref steeringForce, force))
                 {
                     return steeringForce;
@@ -744,6 +755,7 @@ namespace BGE
 
         void Update()
         {
+            bool calculateThisFrame = false;
             float smoothRate;
 
             timeDelta = Time.deltaTime * timeMultiplier;
@@ -752,7 +764,20 @@ namespace BGE
                 timeDelta *= flock.timeMultiplier;
             }
 
-            force = Calculate();
+            if (flock != null)
+            {
+                float prob = UnityEngine.Random.Range(0.0f, 1.0f);
+                if (prob < flock.updateDither)
+                {
+                    calculateThisFrame = true;                    
+                }
+            }
+
+            if (calculateThisFrame)
+            {
+                force = Calculate();
+            } // Otherwise use the value from the previous calculation
+            
             if (drawForces)
             {
                 Quaternion q = Quaternion.FromToRotation(Vector3.forward, force);
@@ -836,11 +861,12 @@ namespace BGE
             {
                 path.Draw();
             }
-            
-            if (enforceNonPenetrationConstraint)
+
+            if (calculateThisFrame && enforceNonPenetrationConstraint)
             {
                 EnforceNonPenetrationConstraint();
-            }           
+            }
+
         }
 
         #endregion
@@ -1312,27 +1338,34 @@ namespace BGE
             }
             Cell myCell = flock.space.cells[myCellIndex];
 
-            foreach (Cell cell in flock.space.cells)
+            //foreach (Cell cell in flock.space.cells)
+            int border = 2;
+            for (int row = myCell.row - border; row < myCell.row + border; row++)
             {
-                if (cell.Intersects(expanded))
+                for (int col = myCell.col - border; col < myCell.col + border; col++)
                 {
-                    if (drawNeighbours)
+                    Cell cell = flock.space.GetCell(row, col);
+                    if (cell != null && cell.Intersects(expanded))
                     {
-                        LineDrawer.DrawSquare(cell.bounds.min, cell.bounds.max, Color.magenta);
-                    }
-                    List<GameObject> cellNeighbourBoids = cell.contained;
-                    float rangeSquared = inRange * inRange;
-                    foreach (GameObject neighbour in cellNeighbourBoids)
-                    {
-                        if (neighbour != gameObject && neighbour.tag == tag)
+                        if (drawNeighbours)
                         {
-                            
-                            if (Vector3.SqrMagnitude(transform.position - neighbour.transform.position) < rangeSquared)
+                            LineDrawer.DrawSquare(cell.bounds.min, cell.bounds.max, Color.magenta);
+                        }
+                        List<GameObject> cellNeighbourBoids = cell.contained;
+                        float rangeSquared = inRange * inRange;
+                        foreach (GameObject neighbour in cellNeighbourBoids)
+                        {
+                            if (neighbour != gameObject)
                             {
-                                tagged.Add(neighbour);
+
                                 if (drawNeighbours)
                                 {
-                                    LineDrawer.DrawLine(transform.position, neighbour.transform.position, Color.yellow);
+                                    LineDrawer.DrawLine(transform.position, neighbour.transform.position, Color.blue);
+                                }
+                                if (Vector3.SqrMagnitude(transform.position - neighbour.transform.position) < rangeSquared)
+                                {
+                                    tagged.Add(neighbour);
+                                    
                                 }
                             }
                         }
@@ -1346,12 +1379,11 @@ namespace BGE
         }
 
         public Vector3 Separation()
-        {
+        {            
             Vector3 steeringForce = Vector3.zero;
-            for (int i = 0; i < tagged.Count; i++)
+            foreach (GameObject entity in tagged)
             {
-                GameObject entity = tagged[i];
-                if (entity != null)
+                if (entity != gameObject)
                 {
                     Vector3 toEntity = transform.position - entity.transform.position;
                     steeringForce += (Vector3.Normalize(toEntity) / toEntity.magnitude);
@@ -1412,8 +1444,6 @@ namespace BGE
             return steeringForce;
 
         }
-        #endregion Flocking
-
-        
+        #endregion Flocking        
     }
 }

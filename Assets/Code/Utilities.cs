@@ -17,6 +17,23 @@ namespace BGE
     public class Utilities
     {
 
+        public static void RecursiveSetColor(GameObject boid, Color color)
+        {
+            if (boid != null)
+            {
+                Renderer renderer = boid.GetComponent<Renderer>();
+                if (renderer != null)
+                {
+                    renderer.material.color = color;
+                }
+
+                for (int j = 0; j < boid.transform.childCount; j++)
+                {
+                    RecursiveSetColor(boid.transform.GetChild(j).gameObject, color);
+                }
+            }            
+        }
+
         public static float Map(float value, float r1, float r2, float m1, float m2)
         {
             float range1 = r2 - r1;
@@ -176,6 +193,23 @@ namespace BGE
                 return true;
             }
             return false;
+        }
+
+        public static Color ColorFromRGB(String rgb)
+        {
+            if (rgb[0] == '#')
+            {
+                rgb = rgb.Substring(1);
+            }
+            Color color = new Color();
+
+            int i = int.Parse(rgb.Substring(2, 4), System.Globalization.NumberStyles.HexNumber);
+
+            color.r = (float) Convert.ToInt32(rgb.Substring(0, 2), 16) / 255.0f;
+            color.g = (float) Convert.ToInt32(rgb.Substring(2, 4), 16) / 255.0f;
+            color.b = (float) Convert.ToInt32(rgb.Substring(4), 16) / 255.0f;
+            color.a = 1;
+            return color;
         }
     }
 }

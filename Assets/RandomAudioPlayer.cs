@@ -26,20 +26,7 @@ public class RandomAudioPlayer : MonoBehaviour {
                 lerper.to.Clear();
                 lerper.to.Add(Pallette.Random());
                 lerper.StartLerping();
-                SectionColours sectionColours = GetComponent<SectionColours>();
-                if (sectionColours == null)
-                {
-                    Renderer renderer = GetComponentInChildren<Renderer>();
-                    if (renderer != null)
-                    {
-
-                        renderer.material.color = Pallette.Random();
-                    }
-                }
-                else
-                {
-                    sectionColours.CycleColours();
-                }
+                
             }
         }
     }

@@ -74,7 +74,7 @@ namespace BGE
                 //BGE.Utilities.RecursiveSetColor(boid, color);
                 
                    
-                boid.transform.parent = transform;
+                
                 bool inside = false;
                 do
                 {
@@ -95,6 +95,7 @@ namespace BGE
                     }                    
                 }
                 while (inside);
+                boid.transform.parent = transform;
                 boid.GetComponent<Boid>().flock = this;
                 boid.GetComponent<Boid>().sphereConstrainEnabled = true;
                 boid.GetComponent<Boid>().sphereRadius = radius;

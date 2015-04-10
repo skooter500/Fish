@@ -67,6 +67,8 @@ namespace BGE
         void Start()
         {
             Color color = Pallette.Random();
+
+                
             for (int i = 0; i < boidCount; i++)
             {
                 GameObject boid = GameObject.Instantiate<GameObject>(boidPrefab);
@@ -167,7 +169,7 @@ namespace BGE
                 space.bounds.center = transform.position;
                 space.Draw();
             }
-
+            /*
             float distToPlayer = Vector3.Distance(Player.Instance.transform.position, transform.position);
             BoidManager.PrintFloat("Dist: ", distToPlayer);
             if (suspended)
@@ -184,6 +186,7 @@ namespace BGE
                     Activate(false);
                 }
             }
+             */
         }
 
         void LateUpdate()

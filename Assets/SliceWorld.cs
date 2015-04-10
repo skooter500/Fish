@@ -30,7 +30,7 @@ public class SliceWorld : MonoBehaviour {
                 Vector3 position = new Vector3();
                 position.x = transform.position.x + Mathf.Sin(theta) * radius * ring;
                 position.z = transform.position.z + Mathf.Cos(theta) * radius * ring;
-                position.y = position.y + Random.Range(-1500, 500);
+                position.y = position.y + Random.Range(-1000, 500);
                 gameObject.transform.position = position;
                 gameObject.transform.rotation = Quaternion.AngleAxis(Mathf.Rad2Deg * theta, Vector3.up);
                 sliceForm.size = new Vector3(1000, 2000, 1000);
@@ -41,6 +41,7 @@ public class SliceWorld : MonoBehaviour {
                 sliceForm.closed = false;
                 sliceForm.horizontalColour = sliceForm.verticalColour = Pallette.Random();
                 theta += thetaInc;
+                gameObject.transform.parent = transform;
             }
         }
 	}

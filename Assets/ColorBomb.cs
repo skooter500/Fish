@@ -32,7 +32,8 @@ public class ColorBomb : MonoBehaviour {
     }
 
     System.Collections.IEnumerator ColourCycle()
-    {        
+    {
+        running = true;
         while (true)
         {
             Vector3 center = CenterOfMass();
@@ -75,11 +76,15 @@ public class ColorBomb : MonoBehaviour {
 	void Start () {
         flock = GetComponent<BGE.Flock>();
 
-        StartCoroutine("ColourCycle");
 	}
-	
+
+    bool running = false;
+
 	// Update is called once per frame
 	void Update () {
-	
+        if (!running)
+        {
+            StartCoroutine("ColourCycle");
+        }
 	}
 }

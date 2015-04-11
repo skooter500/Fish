@@ -17,6 +17,6 @@ public class Player : MonoBehaviour {
 	
 	// Update is called once per frame
 	void Update () {
-	
+        BGE.BoidManager.PrintVector("Player: ", transform.position);
 	}
 }

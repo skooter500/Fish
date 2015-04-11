@@ -21,7 +21,7 @@ public class SliceWorld : MonoBehaviour {
         {
             int petalsInRing = (int) petals * ring;
             float thetaInc = (Mathf.PI * 2.0f) / petalsInRing;
-            float theta = 0;  Random.Range(0, 2.0f * Mathf.PI);
+            float theta = Random.Range(0, 2.0f * Mathf.PI);
             for (int i = 0; i < petalsInRing; i++)
             {
                 GameObject gameObject = new GameObject();

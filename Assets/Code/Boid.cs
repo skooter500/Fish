@@ -266,11 +266,11 @@ namespace BGE
         void Start()
         {
             wanderTargetPos = UnityEngine.Random.insideUnitSphere * wanderRadius;
-            randomWalkTarget = randomWalkCenter + UnityEngine.Random.insideUnitSphere * randomWalkRadius;
-            if (randomWalkKeepY)
-            {
-                randomWalkTarget.y = transform.position.y;
-            }
+            randomWalkTarget = transform.position; // randomWalkCenter + UnityEngine.Random.insideUnitSphere * randomWalkRadius;
+            //if (randomWalkKeepY)
+            //{
+            //    randomWalkTarget.y = transform.position.y;
+            //}
             if (offsetPursuitTarget != null)
             {
                 offset = transform.position - offsetPursuitTarget.transform.position;
@@ -805,6 +805,7 @@ namespace BGE
                 velocity.Normalize();
                 velocity *= maxSpeed;
             }
+            Utilities.checkNaN(velocity);
             transform.position += velocity * timeDelta;
 
 
@@ -857,8 +858,9 @@ namespace BGE
                 velocity *= (1.0f - damping);
             }
 
-            if (path != null)
+            if (path != null && drawGizmos)
             {
+                path.draw = true;
                 path.Draw();
             }
 
@@ -1070,6 +1072,7 @@ namespace BGE
             }
             desiredVelocity.Normalize();
             desiredVelocity *= maxSpeed;
+            Utilities.checkNaN(desiredVelocity);
             return (desiredVelocity - velocity);
         }
 
@@ -1078,8 +1081,10 @@ namespace BGE
             float dist = (transform.position - randomWalkTarget).magnitude;
             if (dist < 10)
             {
-                StartCoroutine("RandomWalkWait");
-                randomWalkTarget = randomWalkCenter + UnityEngine.Random.insideUnitSphere * randomWalkRadius;
+                StartCoroutine("RandomWalkWait");                
+                randomWalkTarget = 
+                    ((flock != null) ? flock.flockCenter : sphereCentre)
+                    + UnityEngine.Random.insideUnitSphere * randomWalkRadius;
                 if (randomWalkKeepY)
                 {
                     randomWalkTarget.y = transform.position.y;
@@ -1258,7 +1263,8 @@ namespace BGE
 
         public Vector3 SphereConstrain(float radius)
         {
-            Vector3 toTarget = transform.position - sphereCentre;
+            Vector3 toTarget = transform.position -
+                ((flock != null) ? flock.flockCenter : sphereCentre);
             Vector3 steeringForce = Vector3.zero;
             if (toTarget.magnitude > radius)
             {
@@ -1266,7 +1272,7 @@ namespace BGE
             }
             if (drawGizmos)
             {
-                LineDrawer.DrawSphere(sphereCentre, radius, 20, Color.yellow);
+                LineDrawer.DrawSphere((flock != null) ? flock.flockCenter : sphereCentre, radius, 20, Color.yellow);
             }
             return steeringForce;
         }

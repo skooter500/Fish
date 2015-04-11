@@ -1,22 +1,26 @@
 ﻿using UnityEngine;
 using System.Collections;
+using BGE;
 
-public class JellyFlock : MonoBehaviour {
+public class JellyFactory : MonoBehaviour {
     public float height;
     public float width;
     public float numJellies;
 
+    BGE.Flock flock;
+
     public GameObject jellyPrefab;
 
-    public JellyFlock()
+    public JellyFactory()
     {
         height = 2000;
         width = 500;
         numJellies = 10;
+        
     }
 
 	void Start () {
-
+        flock = GetComponent<Flock>();
         float gap = height / numJellies;
         float halfHeight = height / 2.0f;
         for(float y = - halfHeight ; y < halfHeight ; y += gap)
@@ -38,7 +42,10 @@ public class JellyFlock : MonoBehaviour {
             boid.randomWalkKeepY = true;
             boid.applyBanking = false;
             boid.keepUpright = true;
-            boid.randomWalkCenter = boidGameObject.transform.position;
+            boid.drawGizmos = true;
+            boid.drawVectors = true;
+            boid.sphereConstrainEnabled = true;
+            boid.flock = flock;
             GameObject jelly = GameObject.Instantiate<GameObject>(jellyPrefab);
             Vector3 offset = Random.insideUnitSphere* width;
             offset.y = y;

@@ -1,10 +1,12 @@
 ﻿using UnityEngine;
 using System.Collections.Generic;
+using BGE;
 
 public class Mother : MonoBehaviour {
     public List<GameObject> formPrefabs;
     [HideInInspector]
     public List<GameObject> forms;
+    public List<GameObject> formControlers; // These control the forms...
 
     public float radius;
     public float gap;
@@ -25,6 +27,8 @@ public class Mother : MonoBehaviour {
     }
 	// Use this for initialization
 	void Start () {
+        GameObject lastBigFlock = null;
+        int lastPrefabIndex = -1;
         for (int ring = 1; ring <= rings; ring++)
         {
             int petalsInRing = (int)petals * ring;
@@ -32,35 +36,94 @@ public class Mother : MonoBehaviour {
             float theta = Random.Range(0, 2.0f * Mathf.PI);
             for (int i = 0; i < petalsInRing; i++)
             {
-                GameObject prefab = formPrefabs[Random.Range(0, formPrefabs.Count)];
-                GameObject form = Instantiate<GameObject>(prefab);
+
+                GameObject prefab = null;
+                
                 Vector3 position = new Vector3();
-                position.x = transform.position.x + radius + Mathf.Sin(theta) * gap * ring;
-                position.z = transform.position.z + radius + Mathf.Cos(theta) * gap * ring;
-                position.y = transform.position.y; // +Random.Range(-1500, 500);
-                form.transform.position = position;
-                form.transform.parent = transform;
+                float formRadius = gap * ring + radius;
+                position.x = transform.position.x + (Mathf.Sin(theta) * formRadius);
+                position.z = transform.position.z + (Mathf.Cos(theta) * formRadius);
+                position.y = 0;
+
+                int prefabIndex;
+                do
+                {
+                    prefabIndex = Random.Range(0, formPrefabs.Count);
+                    prefab = formPrefabs[prefabIndex];
+                }
+                while (lastPrefabIndex == prefabIndex && prefabIndex == 0 && lastBigFlock != null && Vector3.Distance(position, lastBigFlock.transform.position) < activateDistance);
+                
+                GameObject form = Instantiate<GameObject>(prefab);
+                 // +Random.Range(-1500, 500);
+                form.transform.position = position;                
                 form.transform.rotation = Quaternion.AngleAxis(Mathf.Rad2Deg * theta, Vector3.up);
+                form.transform.parent = transform;
+
                 theta += thetaInc;
                 forms.Add(form);
+
+                GameObject formController = AddFormBoid(form, formRadius);
+                formController.transform.parent = transform;
+                formControlers.Add(formController);
+                lastPrefabIndex = prefabIndex;
             }
         }
 	}
 	
+    GameObject AddFormBoid(GameObject form, float radius)
+    {
+        GameObject flockBoidControllerObject = new GameObject();
+        flockBoidControllerObject.transform.position = form.transform.position;
+        flockBoidControllerObject.transform.rotation = form.transform.rotation;
+        flockBoidControllerObject.transform.parent = transform;
+        BGE.Boid boid = flockBoidControllerObject.AddComponent<BGE.Boid>();
+        FlockBoidController boidFlockController = flockBoidControllerObject.AddComponent<FlockBoidController>();
+        boidFlockController.flock = form.GetComponent<BGE.Flock>();
+        Vector3 transPoint = form.transform.position - transform.position;
+        
+        int numPoints = 10;
+
+        float thetaInc = (Mathf.PI * 2.0f) / numPoints;
+        Vector3 lastPoint = transPoint;
+        for (int i = 0 ; i <= numPoints ; i ++)
+        {
+
+            Vector3 point = (Quaternion.AngleAxis(thetaInc * Mathf.Rad2Deg,  Vector3.up) * lastPoint);
+            boid.path.Waypoints.Add(point + transform.position); 
+            lastPoint = point;            
+        }
+        boid.followPathEnabled = true;
+        boid.drawVectors = true;
+        boid.path.Looped = true;
+        boid.drawGizmos = true;
+        boid.maxSpeed = 50.0f;
+        boid.maxForce = 50.0f;
+
+        return flockBoidControllerObject;
+    }
 	
 	void Update () {
         // Deactivate forms that are too far from the player to be perceived
         int formsActive = 0;
 	    for (int i = 0 ; i < forms.Count ; i ++)
         {
-            float distToPlayer = Vector3.Distance(Player.Instance.transform.position, forms[i].transform.position);
+            float distToPlayer = Vector3.Distance(Player.Instance.transform.position, formControlers[i].transform.position);
             if (distToPlayer < activateDistance)
             {
+                BGE.BoidManager.PrintVector("FormPos: ", forms[i].transform.position);
+                BGE.BoidManager.PrintFloat("Distance: ", Vector3.Distance(Player.Instance.transform.position, forms[i].transform.position));
+                
                 forms[i].SetActive(true);
+                Vector3 oldFlockCenter = forms[i].GetComponent<Flock>().flockCenter;
+                Vector3 transformBy = formControlers[i].transform.position - oldFlockCenter;
+                forms[i].transform.position += transformBy;
+                forms[i].GetComponent<Flock>().flockCenter = formControlers[i].transform.position;
+                
                 formsActive++;
             }
             else
             {
+                forms[i].GetComponent<Flock>().flockCenter = formControlers[i].transform.position;
                 forms[i].SetActive(false);
             }
         }

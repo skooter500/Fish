@@ -81,7 +81,7 @@ public class Mother : MonoBehaviour {
         boidFlockController.flock = form.GetComponent<BGE.Flock>();
         Vector3 transPoint = form.transform.position - transform.position;
         
-        int numPoints = 10;
+        int numPoints = (int) (10.0f * 2.0f * Mathf.PI);
 
         float thetaInc = (Mathf.PI * 2.0f) / numPoints;
         Vector3 lastPoint = transPoint;
@@ -93,11 +93,11 @@ public class Mother : MonoBehaviour {
             lastPoint = point;            
         }
         boid.followPathEnabled = true;
-        boid.drawVectors = true;
+        boid.drawVectors = false;
         boid.path.Looped = true;
-        boid.drawGizmos = true;
-        boid.maxSpeed = 50.0f;
-        boid.maxForce = 50.0f;
+        boid.drawGizmos = false;
+        boid.maxSpeed = 20.0f;
+        boid.maxForce = 20.0f;
 
         return flockBoidControllerObject;
     }
@@ -110,21 +110,27 @@ public class Mother : MonoBehaviour {
             float distToPlayer = Vector3.Distance(Player.Instance.transform.position, formControlers[i].transform.position);
             if (distToPlayer < activateDistance)
             {
+                if (!forms[i].activeSelf)
+                {                    
+                    forms[i].SetActive(true);
+                    Vector3 oldFlockCenter = forms[i].GetComponent<Flock>().oldFlockCenter;
+                    Vector3 translateBy = formControlers[i].transform.position - oldFlockCenter;
+                    forms[i].transform.position += translateBy;
+                    forms[i].GetComponent<Flock>().flockCenter = formControlers[i].transform.position;
+                }
                 BGE.BoidManager.PrintVector("FormPos: ", forms[i].transform.position);
                 BGE.BoidManager.PrintFloat("Distance: ", Vector3.Distance(Player.Instance.transform.position, forms[i].transform.position));
-                
-                forms[i].SetActive(true);
-                Vector3 oldFlockCenter = forms[i].GetComponent<Flock>().flockCenter;
-                Vector3 transformBy = formControlers[i].transform.position - oldFlockCenter;
-                forms[i].transform.position += transformBy;
-                forms[i].GetComponent<Flock>().flockCenter = formControlers[i].transform.position;
-                
                 formsActive++;
+
             }
             else
             {
-                forms[i].GetComponent<Flock>().flockCenter = formControlers[i].transform.position;
-                forms[i].SetActive(false);
+                if (forms[i].activeSelf)
+                {
+                    // Remember the old position
+                    forms[i].GetComponent<Flock>().oldFlockCenter = forms[i].GetComponent<Flock>().flockCenter;
+                    forms[i].SetActive(false);
+                }
             }
         }
         BGE.BoidManager.PrintFloat("Forms active: ", formsActive);

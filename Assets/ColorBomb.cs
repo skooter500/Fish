@@ -36,7 +36,7 @@ public class ColorBomb : MonoBehaviour {
         running = true;
         while (true)
         {
-            Vector3 center = CenterOfMass();
+            Vector3 center = flock.flockCenter; // CenterOfMass();
             Color color = Pallette.Random();
             Color color1 = Pallette.RandomNot(color);
             Color color2 = Pallette.RandomNot(color1);

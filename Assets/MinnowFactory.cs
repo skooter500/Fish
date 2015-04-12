@@ -76,7 +76,7 @@ namespace BGE
                 AudioSource audioSource = boid.GetComponent<AudioSource>();
                 if (audioSource != null)
                 {
-                    if (Random.Range(0, 1) > 0.05f)
+                    if (Random.Range(0, 1) > 0.1f)
                     {
                         audioSource.enabled = true;
                         audioSource.loop = true;

@@ -1081,10 +1081,11 @@ namespace BGE
             float dist = (transform.position - randomWalkTarget).magnitude;
             if (dist < 10)
             {
-                StartCoroutine("RandomWalkWait");                
+                StartCoroutine("RandomWalkWait");
+                float sphereRadius = (flock != null) ? flock.radius : randomWalkRadius;
                 randomWalkTarget = 
                     ((flock != null) ? flock.flockCenter : sphereCentre)
-                    + UnityEngine.Random.insideUnitSphere * randomWalkRadius;
+                    + UnityEngine.Random.insideUnitSphere * sphereRadius;
                 if (randomWalkKeepY)
                 {
                     randomWalkTarget.y = transform.position.y;
@@ -1265,10 +1266,11 @@ namespace BGE
         {
             Vector3 toTarget = transform.position -
                 ((flock != null) ? flock.flockCenter : sphereCentre);
+            float sphereRadius = (flock != null) ? flock.radius : radius;
             Vector3 steeringForce = Vector3.zero;
-            if (toTarget.magnitude > radius)
+            if (toTarget.magnitude > sphereRadius)
             {
-                steeringForce = Vector3.Normalize(toTarget) * (radius - toTarget.magnitude);
+                steeringForce = Vector3.Normalize(toTarget) * (sphereRadius - toTarget.magnitude);
             }
             if (drawGizmos)
             {

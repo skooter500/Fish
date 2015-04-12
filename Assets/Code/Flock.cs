@@ -32,11 +32,12 @@ namespace BGE
         public float updateDither;
 
         public Vector3 flockCenter;
+        public Vector3 oldFlockCenter;
 
         void OnDrawGizmos()
         {
             Gizmos.color = Color.yellow;
-            Gizmos.DrawWireSphere(transform.position, radius);
+            Gizmos.DrawWireSphere(flockCenter, radius);
         }
 
         Flock()
@@ -64,17 +65,20 @@ namespace BGE
 
         public void Update()
         {
-            if (drawGizmos)
+            if (UseCellSpacePartitioning)
             {
-                LineDrawer.DrawSphere(transform.position, radius, 20, Color.yellow);
-            }
-
-            if (drawGizmos)
-            {
-                // In case the flock center moves
                 space.bounds.center = transform.position;
-                space.Draw();
             }
+            if (drawGizmos)
+            {
+                LineDrawer.DrawSphere(transform.position, radius, 20, Color.magenta);
+                if (UseCellSpacePartitioning)
+                {
+                    // In case the flock center moves
+
+                    space.Draw();
+                }
+            }            
         }
 
         void LateUpdate()

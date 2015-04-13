@@ -71,7 +71,7 @@ namespace BGE
             }
             if (drawGizmos)
             {
-                LineDrawer.DrawSphere(transform.position, radius, 20, Color.magenta);
+                LineDrawer.DrawSphere(flockCenter, radius, 20, Color.magenta);
                 if (UseCellSpacePartitioning)
                 {
                     // In case the flock center moves

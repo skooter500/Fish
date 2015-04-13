@@ -92,7 +92,7 @@ namespace BGE
                     if (drawGizmos)
                     {
                         boid.GetComponent<Boid>().drawGizmos = drawGizmos;
-                        boid.GetComponent<Boid>().drawNeighbours = true;
+                        boid.GetComponent<Boid>().drawNeighbours = false;
                     }
                 }
             }

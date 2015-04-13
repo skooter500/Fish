@@ -1,5 +1,6 @@
 ﻿using System.Collections;
 using UnityEngine;
+using BGE;
 
 public class ColorBomb : MonoBehaviour {
 
@@ -44,6 +45,7 @@ public class ColorBomb : MonoBehaviour {
             int boidsTagged = 0;
             while (boidsTagged < flock.boids.Count)
             {
+                //LineDrawer.DrawSphere(flock.flockCenter, radius, 20, color);   
                 boidsTagged = 0;
                 foreach (GameObject boid in flock.boids)
                 {

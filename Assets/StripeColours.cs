@@ -9,6 +9,7 @@ public class StripeColours : MonoBehaviour {
     public int numStripes;
     public List<Color> sequence;
 
+    ColorLerper lerper;
     List<GameObject> segments; // The list of children objects in order of Z
 
     public StripeColours()
@@ -41,8 +42,12 @@ public class StripeColours : MonoBehaviour {
      
         for (int i = 0; i < segments.Count; i++)
         {
-            Utilities.RecursiveSetColor(segments[i], sequence[i % numStripes]);
+            Color col = sequence[i % numStripes];
+            Utilities.RecursiveSetColor(segments[i], col);
+
         }
+
+        lerper = GetComponent<ColorLerper>();
 
         StartCoroutine("CycleOnTimer");
 	}
@@ -52,18 +57,24 @@ public class StripeColours : MonoBehaviour {
         while (true)
         {
             CycleColours();
-            yield return new WaitForSeconds(0.5f);
+            yield return new WaitForSeconds(2.5f);
         }
     }
 
-    int cycle = 0;
-
     public void CycleColours()
     {
-        Debug.Log("Cycle");
-        for (int i = 0; i < segments.Count; i++)
+        if (lerper == null)
         {
-            Utilities.RecursiveSetColor(segments[i], sequence[i % numStripes]);            
+            for (int i = 0; i < segments.Count; i++)
+            {
+                Utilities.RecursiveSetColor(segments[i], sequence[i % numStripes]);
+            }
+        }
+        else
+        {
+            lerper.to = sequence;
+            lerper.speed = 1.0f;
+            lerper.StartLerping();
         }
     }
 	

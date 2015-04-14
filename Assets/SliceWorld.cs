@@ -35,7 +35,7 @@ public class SliceWorld : MonoBehaviour {
                 gameObject.transform.rotation = Quaternion.AngleAxis(Mathf.Rad2Deg * theta, Vector3.up);
                 sliceForm.size = new Vector3(1000, 2000, 1000);
                 sliceForm.sliceCount = new Vector2(20, 20);
-                sliceForm.noiseDelta = new Vector2(0.2f, 0.2f);
+                sliceForm.noiseDelta = new Vector2(0.1f, 0.1f);
                 sliceForm.noiseStart = new Vector2(Random.Range(0.0f, 1000.0f), Random.Range(0.0f, 1000.0f));
                 sliceForm.noiseToBase = 0.8f;
                 sliceForm.closed = false;

@@ -41,6 +41,8 @@ namespace BGE
         void Start()
         {
             flock = GetComponent<Flock>();
+            int maxAudioBoids = 20;
+            int audioBoids = 0;
             Color color = Pallette.Random();
 
             for (int i = 0; i < boidCount; i++)
@@ -76,11 +78,12 @@ namespace BGE
                 AudioSource audioSource = boid.GetComponent<AudioSource>();
                 if (audioSource != null)
                 {
-                    if (Random.Range(0, 1) > 0.1f)
+                    if (audioBoids < maxAudioBoids)
                     {
                         audioSource.enabled = true;
                         audioSource.loop = true;
                         audioSource.Play();
+                        audioBoids++;
                     }
                     else
                     {

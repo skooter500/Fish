@@ -806,6 +806,7 @@ namespace BGE
                 velocity *= maxSpeed;
             }
             Utilities.checkNaN(velocity);
+            // UNCOMMENT THIS!!
             transform.position += velocity * timeDelta;
 
 

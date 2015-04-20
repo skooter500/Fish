@@ -79,11 +79,16 @@ public class SliceForm : MonoBehaviour {
 
         Texture2D texture = new Texture2D(width, height, TextureFormat.RGBAFloat, false);
         texture.filterMode = FilterMode.Point;
+
+        Color c = horizontalColour;
+        horizontalColour.a = 0.5f;
+
         for (int y = 0 ; y < height ; y ++)
         {
             for (int x = 0 ; x < width ; x ++)
             {
-                texture.SetPixel(x, y, (x < width / 2) ? horizontalColour : verticalColour);                
+                texture.SetPixel(x, y, c);
+                //texture.SetPixel(x, y, (x < width / 2) ? horizontalColour : verticalColour);
             }
         }
         

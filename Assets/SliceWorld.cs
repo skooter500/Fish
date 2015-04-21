@@ -37,7 +37,7 @@ public class SliceWorld : MonoBehaviour {
                 sliceForm.sliceCount = new Vector2(20, 20);
                 sliceForm.noiseDelta = new Vector2(0.1f, 0.1f);
                 sliceForm.noiseStart = new Vector2(Random.Range(0.0f, 1000.0f), Random.Range(0.0f, 1000.0f));
-                sliceForm.noiseToBase = 0.8f;
+                sliceForm.noiseToBase = 0.4f;
                 sliceForm.closed = false;
                 sliceForm.horizontalColour = sliceForm.verticalColour = Pallette.Random();
                 theta += thetaInc;

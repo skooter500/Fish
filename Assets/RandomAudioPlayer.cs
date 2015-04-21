@@ -7,6 +7,8 @@ public class RandomAudioPlayer : MonoBehaviour {
     public float maxInterval;
     public bool cycleColoursOnPlay;
 
+    bool playing = false;
+
     public RandomAudioPlayer()
     {
         maxInterval = 20.0f;
@@ -14,6 +16,7 @@ public class RandomAudioPlayer : MonoBehaviour {
 
     System.Collections.IEnumerator PlayDelayedAudio()
     {
+        playing = true;
         while(true)
         {
             yield return new WaitForSeconds(Random.Range(1.0f, maxInterval));
@@ -34,15 +37,13 @@ public class RandomAudioPlayer : MonoBehaviour {
 	// Use this for initialization
 	void Start () 
     {
-        audioSource = GetComponent<AudioSource>();
-        if (audioSource != null)
-        {
-            StartCoroutine("PlayDelayedAudio");
-        }
 	}
 	
 	// Update is called once per frame
 	void Update () {
-	
+        if (audioSource != null && ! playing)
+        {
+            StartCoroutine("PlayDelayedAudio");
+        }
 	}
 }

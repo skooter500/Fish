@@ -60,6 +60,19 @@ public class OVRScreenFade : MonoBehaviour
 	void OnEnable()
 	{
 		StartCoroutine(FadeIn());
+
+#if UNITY_ANDROID && !UNITY_EDITOR
+		// Add a listener to the OVRManager for custom postrender work
+		OVRPostRender.OnCustomPostRender += OnCustomPostRender;
+#endif
+	}
+
+	void OnDisable()
+	{
+#if UNITY_ANDROID && !UNITY_EDITOR
+		// Remove listener on the OVRManager for custom postrender work
+		OVRPostRender.OnCustomPostRender -= OnCustomPostRender;
+#endif
 	}
 
 	/// <summary>
@@ -102,7 +115,11 @@ public class OVRScreenFade : MonoBehaviour
 	/// <summary>
 	/// Renders the fade overlay when attached to a camera object
 	/// </summary>
+#if UNITY_ANDROID && !UNITY_EDITOR
+	void OnCustomPostRender()
+#else
 	void OnPostRender()
+#endif
 	{
 		if (isFading)
 		{

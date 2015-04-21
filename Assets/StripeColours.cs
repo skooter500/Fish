@@ -61,6 +61,9 @@ public class StripeColours : MonoBehaviour {
         }
     }
 
+    [HideInInspector]
+    public int sequenceNumber = 0;
+
     public void CycleColours()
     {
         if (lerper == null)
@@ -72,8 +75,15 @@ public class StripeColours : MonoBehaviour {
         }
         else
         {
-            lerper.to = sequence;
-            lerper.speed = 1.0f;
+            lerper.to.Clear();
+            for (int i = 0; i < segments.Count; i ++ )
+            {
+                lerper.to.Add(sequence[(i + sequenceNumber) % numStripes]);
+            }
+
+            sequenceNumber++;
+            lerper.gameObjects = segments;
+            lerper.speed = 0.1f;
             lerper.StartLerping();
         }
     }

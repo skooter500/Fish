@@ -1,5 +1,6 @@
 ﻿using UnityEngine;
 using System.Collections.Generic;
+using BGE;
 
 public class ColorLerper : MonoBehaviour {
 
@@ -30,16 +31,7 @@ public class ColorLerper : MonoBehaviour {
             myColor.g = Mathf.Lerp(fromColor.g, toColor.g, t);
             myColor.b = Mathf.Lerp(fromColor.b, toColor.b, t);
             t += Time.deltaTime * speed;
-            Renderer renderer = gameObject.GetComponentInChildren<Renderer>();
-            if (renderer != null)
-            {
-                renderer.material.color = myColor;
-            }
-            else
-            {
-                Debug.Log("No renderer in lerper");
-            }
-            
+            Utilities.RecursiveSetColor(gameObject, myColor);            
         }
 	}
 

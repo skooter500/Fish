@@ -38,10 +38,22 @@ namespace BGE
             spread = 1.0f;
         }
 
-        void Start()
+        void Update()
         {
+            if (audioSource != null && audioSource.enabled && !audioSource.isPlaying)
+            {
+                audioSource.Play();
+            }
+        }
+
+        AudioSource audioSource = null;
+
+        void Start()
+        {            
+            audioSource = GetComponent<AudioSource>();
+
             flock = GetComponent<Flock>();
-            int maxAudioBoids = 20;
+            int maxAudioBoids = 50;
             int audioBoids = 0;
             Color color = Pallette.Random();
 
@@ -75,15 +87,16 @@ namespace BGE
                 boid.GetComponent<Boid>().flock = flock;
                 boid.GetComponent<Boid>().sphereConstrainEnabled = true;
                 boid.GetComponent<Boid>().sphereRadius = radius;
-                AudioSource audioSource = boid.GetComponent<AudioSource>();
                 if (audioSource != null)
                 {
+                    Debug.Log(audioSource);
                     if (audioBoids < maxAudioBoids)
                     {
                         audioSource.enabled = true;
                         audioSource.loop = true;
                         audioSource.Play();
                         audioBoids++;
+                        Debug.Log("Audio boids " + audioBoids);
                     }
                     else
                     {

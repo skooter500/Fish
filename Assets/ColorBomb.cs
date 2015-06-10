@@ -62,8 +62,8 @@ public class ColorBomb : MonoBehaviour {
                         lerper.gameObjects.Add(boid.transform.GetChild(2).gameObject);
                         lerper.StartLerping();
                         //BGE.Utilities.RecursiveSetColor(boid.transform.GetChild(0).gameObject, color);
-                        //BGE.Utilities.RecursiveSetColor(boid.transform.GetChild(1).gameObject, color1);
-                        //BGE.Utilities.RecursiveSetColor(boid.transform.GetChild(2).gameObject, color2);
+                        //BGE.Utilities.RecursiveSetColor(boid.transform.GetChild(1).gameObject, color);
+                        //BGE.Utilities.RecursiveSetColor(boid.transform.GetChild(2).gameObject, color);
                         boidsTagged++;
                     }
                 }
@@ -77,10 +77,9 @@ public class ColorBomb : MonoBehaviour {
 	// Use this for initialization
 	void Start () {
         flock = GetComponent<BGE.Flock>();
-
 	}
 
-    bool running = false;
+    public bool running = false;
 
 	// Update is called once per frame
 	void Update () {

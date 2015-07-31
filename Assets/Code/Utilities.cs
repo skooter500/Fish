@@ -16,6 +16,17 @@ namespace BGE
 {
     public class Utilities
     {
+        public static float TWO_PI = Mathf.PI * 2.0f;
+
+        public static float RadToDegrees(float rads)
+        {
+            return rads * Mathf.Rad2Deg;
+        }
+
+        public static float DegreesToRads(float degrees)
+        {
+            return degrees * Mathf.Deg2Rad;
+        }
 
         public static void RecursiveSetColor(GameObject boid, Color color)
         {
@@ -34,11 +45,12 @@ namespace BGE
             }            
         }
 
-        public static float Map(float value, float r1, float r2, float m1, float m2)
+        public static float Map(float value, float r1, float r2, float m1, float m2)        
         {
+            float dist = value - r1;
             float range1 = r2 - r1;
             float range2 = m2 - m1;
-            return m1 + ((value / range1) * range2);
+            return m1 + ((dist / range1) * range2);
         }
         public static Vector3 RandomPosition(float range)
         {

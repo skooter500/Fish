@@ -35,7 +35,12 @@ namespace BGE
 
         public float headField;
         public float tailField;
-       
+
+        public GameObject boidGameObject;
+
+        [HideInInspector]
+        public Boid boid;
+
         public FishParts()
         {
             segments = new List<GameObject>();
@@ -97,6 +102,9 @@ namespace BGE
             {
                 tail.GetComponent<Collider>().enabled = false;
             }
+
+            boid = (boidGameObject == null) ? GetComponent<Boid>() : boidGameObject.GetComponent<Boid>();
+
         }
 
         private void LayoutSegments()
@@ -131,49 +139,8 @@ namespace BGE
         private float fleeColourWait;
         private bool fleeColourStarted;
 
-        System.Collections.IEnumerator FleeColourCycle()
-        {
-            fleeColourStarted = true;
-            while (true)
-            {
-                if (GetComponent<Boid>().fleeForce.magnitude == 0)
-                {
-                    break;
-                }
-                /*
-                for(int i = segments.Count - 1 ; i > 0  ; i --)
-                {
-                    segments[i] = segments[i - 1];
-                }
-                segments[0].renderer.material.color = Pallette.Random();
-                yield return new WaitForSeconds(fleeColourWait);
-                */
-
-                foreach (GameObject segment in segments)
-                {
-                    segment.GetComponent<Renderer>().material.color = new Color(Random.Range(0.5f, 1.0f), Random.Range(0.0f, 0.0f), Random.Range(0.0f, 0.0f));
-                }
-                yield return new WaitForSeconds(fleeColourWait);
-                foreach (GameObject segment in segments)
-                {
-                    segment.GetComponent<Renderer>().material.color = Pallette.Random();
-                }
-                yield return new WaitForSeconds(fleeColourWait);
-            }
-            fleeColourStarted = false;
-        }
-
         public void Update()
         {
-            float fleeForce = GetComponent<Boid>().fleeForce.magnitude;
-            if (fleeForce > 0)
-            {
-                fleeColourWait = 0.1f; // 100000.0f / fleeForce;
-                if (!fleeColourStarted)
-                {
-                    StartCoroutine("FleeColourCycle");
-                }
-            }
             // Animate the head            
             float headRot = Mathf.Sin(theta) * headField;
             head.transform.RotateAround(transform.TransformPoint(headRotPoint), transform.up, headRot - oldHeadRot);
@@ -185,7 +152,7 @@ namespace BGE
             tail.transform.RotateAround(transform.TransformPoint(tailRotPoint), transform.up, tailRot - oldTailRot);
             oldTailRot = tailRot;
 
-            float speed = GetComponent<Boid>().acceleration.magnitude;
+            float speed = boid.acceleration.magnitude;
             theta += speed * angularVelocity * Time.deltaTime * speedMultiplier;
             if (theta >= Mathf.PI * 2.0f)
             {

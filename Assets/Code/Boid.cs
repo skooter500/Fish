@@ -22,8 +22,10 @@ namespace BGE
         public CalculationMethods calculationMethod;
         public float radius;
         public float maxTurnDegrees;
-        public bool keepUpright;
         public bool applyBanking;
+
+        [HideInInspector]
+        public bool clamping;
 
         [HideInInspector]
         public Flock flock;
@@ -67,7 +69,6 @@ namespace BGE
         public float wanderDistance;
         public float wanderWeight;
         public float wanderNoiseDeltaX;
-        public float wanderNoiseDeltaY;
         private float wanderNoiseX;
         private float wanderNoiseY;
        
@@ -92,6 +93,7 @@ namespace BGE
         [Header("Plane Avoidance")]                
         public bool planeAvoidanceEnabled;
         public float planeAvoidanceWeight;
+        public float planeY;
 
         [Header("Follow Path")]                        
         public bool followPathEnabled;
@@ -116,6 +118,11 @@ namespace BGE
         public bool hideEnabled;
         public float hideWeight;
 
+        [Header("Min Distance Pursuit")]
+        public bool minDistancePursuitEnabled;
+        public float minDistancePursuitWeight;
+        public float minDistance;
+
         [Header("Offset Pursuit")]                                
         public bool offsetPursuitEnabled;
         public GameObject offsetPursuitTarget;        
@@ -133,6 +140,7 @@ namespace BGE
 
         [Header("Random Walk")]
         public bool randomWalkEnabled;
+        [HideInInspector]
         public Vector3 randomWalkCenter;
         public float randomWalkWaitMaxSeconds;
         private float randomWalkWait; 
@@ -146,6 +154,7 @@ namespace BGE
         public bool sceneAvoidanceEnabled;
         public float sceneAvoidanceWeight;
         public float sceneAvoidanceFeelerDepth;
+
         
         [HideInInspector]        
         public Vector3 force;
@@ -166,10 +175,12 @@ namespace BGE
         Color debugLineColour = Color.cyan;
         float timeDelta;
 
+        Collider myCollider;
+
         public void OnDrawGizmos()
         {
-            Gizmos.color = Color.cyan;
-            //Gizmos.DrawWireSphere(transform.position, radius);
+            Gizmos.color = Color.green;
+            //Gizmos.DrawWireSphere(sphereCentre, sphereRadius);
         }
 
 
@@ -216,7 +227,6 @@ namespace BGE
             
             
             wanderNoiseDeltaX = 0.01f;
-            wanderNoiseDeltaY = 0.01f;
 
             cohesionWeight = 1.0f;
             separationWeight = 1.0f;
@@ -258,15 +268,21 @@ namespace BGE
             maxForce = 10;
             maxTurnDegrees = 180.0f;
 
-            sceneAvoidanceEnabled = true;
+            sceneAvoidanceEnabled = false;
             sceneAvoidanceWeight = 1.0f;
             sceneAvoidanceFeelerDepth = 30.0f;
+
+            minDistancePursuitEnabled = false;
+            minDistancePursuitWeight = 1.0f;
+            minDistance = 5.0f;
+
+            planeY = 0.0f;
         }
 
         void Start()
         {
-            wanderTargetPos = UnityEngine.Random.insideUnitSphere * wanderRadius;
-            randomWalkTarget = transform.position; // randomWalkCenter + UnityEngine.Random.insideUnitSphere * randomWalkRadius;
+            randomWalkCenter = transform.position;
+            randomWalkTarget = transform.position;
             //if (randomWalkKeepY)
             //{
             //    randomWalkTarget.y = transform.position.y;
@@ -285,6 +301,8 @@ namespace BGE
             {
                 sphereCentre = transform.position;
             }
+
+            myCollider = GetComponentInChildren<Collider>();
         }
 
         #region Flags
@@ -308,6 +326,8 @@ namespace BGE
             offsetPursuitEnabled= false;
             sphereConstrainEnabled= false;
             randomWalkEnabled= false;
+            wiggleEnabled = false;
+            minDistancePursuitEnabled = false;
         }
 
         
@@ -317,7 +337,7 @@ namespace BGE
         private void makeFeelers()
         {
             PlaneAvoidanceFeelers.Clear();
-            float feelerDistance = 20.0f;
+            float feelerDistance = 50.0f;
             // Make the forward feeler
             Vector3 newFeeler = Vector3.forward * feelerDistance;
             newFeeler = transform.TransformPoint(newFeeler);
@@ -443,9 +463,20 @@ namespace BGE
                 }
             }
 
+
             if (sphereConstrainEnabled)
             {
                 force = SphereConstrain(sphereRadius) * sphereConstrainWeight;
+                force *= forceMultiplier;
+                if (!accumulateForce(ref steeringForce, force))
+                {
+                    return steeringForce;
+                }
+            }
+
+            if (wiggleEnabled)
+            {
+                force = Wiggle() * wiggleWeigth;
                 force *= forceMultiplier;
                 if (!accumulateForce(ref steeringForce, force))
                 {
@@ -612,6 +643,18 @@ namespace BGE
                 }
             }
 
+            if (minDistancePursuitEnabled)
+            {
+                force = MinDistancePursuit(minDistance) * minDistancePursuitWeight;
+                force *= forceMultiplier;
+                if (!accumulateForce(ref steeringForce, force))
+                {
+                    return steeringForce;
+                }
+            }
+
+            
+
             if (followPathEnabled)
             {
                 force = FollowPath() * followPathWeight;
@@ -635,6 +678,72 @@ namespace BGE
             return steeringForce;
         }
 
+
+        float wiggleTheta = 0;
+
+        [Header("Wiggle")]        
+        public float wiggleAngularSpeedDegrees = 30;
+        public float wiggleLowDegrees = -30;
+        public float wiggleHighDegrees = 30;
+        public bool wiggleEnabled = false;
+        public float wiggleWeigth = 1.0f;
+        public WiggleAxis wiggleDirection = WiggleAxis.Horizontal;
+        public enum WiggleAxis { Horizontal, Vertical };
+
+        Vector3 Wiggle()
+        {
+
+            float n = Mathf.Sin(wiggleTheta);
+            float t = Utilities.Map(n, -1.0f, 1.0f, wiggleLowDegrees, wiggleHighDegrees);
+            float theta = Mathf.Sin(Utilities.DegreesToRads(t));
+
+            if (wiggleDirection == WiggleAxis.Horizontal)
+            {
+                wanderTargetPos.x = Mathf.Sin(theta);
+                wanderTargetPos.z = Mathf.Cos(theta);
+                wanderTargetPos.y = 0;
+            }
+            else
+            {
+                wanderTargetPos.y = Mathf.Sin(theta);
+                wanderTargetPos.z = Mathf.Cos(theta);
+                wanderTargetPos.x = 0;
+            }
+
+
+            wanderTargetPos *= wanderRadius;
+            Vector3 yawRoll = transform.rotation.eulerAngles;
+            yawRoll.x = 0;
+            Vector3 localTarget = wanderTargetPos + (Vector3.forward * wanderDistance);
+            Vector3 worldTarget = TransformPointNoScale(transform, localTarget);
+
+            Vector3 worldTargetOnY = transform.position + Quaternion.Euler(yawRoll) * localTarget;
+
+            BoidManager.PrintVector("World target: ", worldTarget);
+            BoidManager.PrintVector("World target on y: ", worldTargetOnY);
+
+            if (drawGizmos)
+            {
+                LineDrawer.DrawTarget(worldTarget, Color.red);
+                LineDrawer.DrawTarget(worldTargetOnY, Color.yellow);
+
+                Vector3 worldCenter = TransformPointNoScale(transform, Vector3.forward * wanderDistance);
+                LineDrawer.DrawSphere(worldCenter, wanderRadius, 10, Color.yellow);
+            }
+
+            wiggleTheta += timeDelta * wiggleAngularSpeedDegrees * Mathf.Deg2Rad;
+            if (wiggleTheta > Utilities.TWO_PI)
+            {
+                wiggleTheta = 0;
+            }
+
+            return Seek(worldTargetOnY);
+        }
+
+
+
+        
+
         Vector3 SceneAvoidance()
         {
             Vector3 force = Vector3.zero;
@@ -643,12 +752,13 @@ namespace BGE
             // Check the forward feeler and generate a up force
             Vector3 feeler = Vector3.forward;
             feeler = transform.TransformDirection(feeler);
-            if (Physics.Raycast(transform.position, feeler, out info, sceneAvoidanceFeelerDepth))
+            bool collided = Physics.Raycast(transform.position, feeler, out info, sceneAvoidanceFeelerDepth);
+            if (collided && info.collider != myCollider)
             {
                 // Push me away in the direction of the up vector. 
                 // The deeper the penetration the bigger the force
                 float depth = (info.point - feeler).magnitude;
-                force = transform.up * depth;
+                force = Vector3.up * depth;
                 if (drawGizmos)
                 {
                     LineDrawer.DrawLine(transform.position, transform.position + feeler * sceneAvoidanceFeelerDepth, Color.red);
@@ -659,12 +769,13 @@ namespace BGE
             feeler = Vector3.forward;
             feeler = Quaternion.AngleAxis(45, Vector3.right) * feeler;
             feeler = transform.TransformDirection(feeler);
-            if (Physics.Raycast(transform.position, feeler, out info, sceneAvoidanceFeelerDepth))
+            collided = Physics.Raycast(transform.position, feeler, out info, sceneAvoidanceFeelerDepth);
+            if (collided && info.collider != myCollider)
             {
                 // Push me away in the direction of the up vector. 
                 // The deeper the penetration the bigger the force
                 float depth = (info.point - feeler).magnitude;
-                force += transform.up * depth;
+                force += Vector3.up * depth;
                 if (drawGizmos)
                 {
                     LineDrawer.DrawLine(transform.position, transform.position + feeler * sceneAvoidanceFeelerDepth, Color.red);
@@ -675,7 +786,8 @@ namespace BGE
             feeler = Vector3.forward;
             feeler = Quaternion.AngleAxis(-45, Vector3.right) * feeler;
             feeler = transform.TransformDirection(feeler);
-            if (Physics.Raycast(transform.position, feeler, out info, sceneAvoidanceFeelerDepth))
+            collided = Physics.Raycast(transform.position, feeler, out info, sceneAvoidanceFeelerDepth);
+            if (collided && info.collider != myCollider)
             {
                 // Push me away in the direction of the up vector. 
                 // The deeper the penetration the bigger the force
@@ -691,7 +803,8 @@ namespace BGE
             feeler = Vector3.forward;
             feeler = Quaternion.AngleAxis(45, Vector3.right) * feeler;
             feeler = transform.TransformDirection(feeler);
-            if (Physics.Raycast(transform.position, feeler, out info, sceneAvoidanceFeelerDepth))
+            collided = Physics.Raycast(transform.position, feeler, out info, sceneAvoidanceFeelerDepth);
+            if (collided && info.collider != myCollider)
             {
                 // Push me away in the direction of the up vector. 
                 // The deeper the penetration the bigger the force
@@ -707,7 +820,8 @@ namespace BGE
             feeler = Vector3.forward;
             feeler = Quaternion.AngleAxis(-45, Vector3.right) * feeler;
             feeler = transform.TransformDirection(feeler);
-            if (Physics.Raycast(transform.position, feeler, out info, sceneAvoidanceFeelerDepth))
+            collided = Physics.Raycast(transform.position, feeler, out info, sceneAvoidanceFeelerDepth);
+            if (collided && info.collider != myCollider)
             {
                 // Push me away in the direction of the up vector. 
                 // The deeper the penetration the bigger the force
@@ -718,9 +832,6 @@ namespace BGE
                     LineDrawer.DrawLine(transform.position, transform.position + feeler * sceneAvoidanceFeelerDepth, Color.red);
                 }
             }
-
-
-
             return force;
         }
 
@@ -752,7 +863,8 @@ namespace BGE
         */
 
         float maxAngle = float.MinValue;
-
+        [HideInInspector]
+        public float bankAngle = 0.0f;
         void Update()
         {
             bool calculateThisFrame = true;
@@ -806,7 +918,6 @@ namespace BGE
                 velocity *= maxSpeed;
             }
             Utilities.checkNaN(velocity);
-            // UNCOMMENT THIS!!
             transform.position += velocity * timeDelta;
 
 
@@ -822,14 +933,28 @@ namespace BGE
             smoothRate = timeDelta * 3.0f;
             Vector3 tempUp = transform.up;
             Utilities.BlendIntoAccumulator(smoothRate, bankUp, ref tempUp);
-
+            
             if (speed > 0.01f)
             {
                 float maxTurnFrame = maxTurnDegrees * Time.deltaTime;
                 float maxTurn = maxTurnFrame * Mathf.Deg2Rad; // Max turn in rads
-                float angle = Mathf.Acos(Vector3.Dot(transform.forward, velocity.normalized));
-                if (angle > maxTurn)
+                float dot = Vector3.Dot(transform.forward, velocity.normalized);
+                bankAngle = Mathf.Acos(dot);
+
+                if (float.IsNaN(bankAngle))
                 {
+                    bankAngle = 0.0f;
+                }
+
+                float side = Vector3.Dot(transform.right, velocity.normalized);
+                if (side < 0 ) // Angle < 90
+                {
+                    bankAngle = -bankAngle;
+                } 
+
+                if (Mathf.Abs(bankAngle) > maxTurn)
+                {
+                    clamping = true;
                     // Clamp the turn
                     Vector3 axis = Vector3.Cross(transform.forward, velocity.normalized);
                     Quaternion q = Quaternion.AngleAxis(maxTurnFrame, axis);
@@ -838,15 +963,13 @@ namespace BGE
                 }
                 else
                 {
-                    if (!keepUpright)
-                    {
-                        transform.forward = velocity;
-                        transform.forward.Normalize();
-                    }
+                    clamping = false;
+                    transform.forward = velocity;
+                    transform.forward.Normalize();
                 }
-                if (angle > maxAngle)
+                if (Mathf.Abs(bankAngle) > maxAngle)
                 {
-                    maxAngle = angle;
+                    maxAngle = Mathf.Abs(bankAngle);
                 }
 
                 //BoidManager.PrintFloat("Rotation angle: ", angle * Mathf.Rad2Deg);
@@ -885,7 +1008,7 @@ namespace BGE
             desiredVelocity *= maxSpeed;
             if (drawGizmos)
             {
-                LineDrawer.DrawTarget(targetPos, Color.red);
+                //LineDrawer.DrawTarget(targetPos, Color.red);
             }
             return (desiredVelocity - velocity);
         }
@@ -1028,6 +1151,109 @@ namespace BGE
             return force;
         }
 
+
+        Vector3 MinDistancePursuit(float acceptableDistance)
+        {
+            acceptableDistance = 1;
+            GameObject _quarry = offsetPursuitTarget;
+
+            if (_quarry == null)
+            {
+                enabled = false;
+                return Vector3.zero;
+            }
+
+            var force = Vector3.zero;
+            var offset = _quarry.transform.position - transform.position;
+            var distance = offset.magnitude;
+            var radius = this.radius + _quarry.GetComponent<Boid>().radius + acceptableDistance;
+
+            BoidManager.PrintFloat("Min distance: ", distance);
+
+            if (distance < radius) return force;
+
+            var unitOffset = offset / distance;
+
+            // how parallel are the paths of "this" and the quarry
+            // (1 means parallel, 0 is pependicular, -1 is anti-parallel)
+            var parallelness = Vector3.Dot(transform.forward, _quarry.transform.forward);
+
+            // how "forward" is the direction to the quarry#
+            // (1 means dead ahead, 0 is directly to the side, -1 is straight back)
+            var forwardness = Vector3.Dot(transform.forward, unitOffset);
+
+            //var directTravelTime = distance / velocity.magnitude;
+            var directTravelTime = distance / maxSpeed;
+            // While we could parametrize this value, if we care about forward/backwards
+            // these values are appropriate enough.
+            var f = Utilities.IntervalComparison(forwardness, -0.707f, 0.707f);
+            var p = Utilities.IntervalComparison(parallelness, -0.707f, 0.707f);
+
+            float timeFactor = 0; // to be filled in below
+
+            // Break the pursuit into nine cases, the cross product of the
+            // quarry being [ahead, aside, or behind] us and heading
+            // [parallel, perpendicular, or anti-parallel] to us.
+            switch (f)
+            {
+                case +1:
+                    switch (p)
+                    {
+                        case +1: // ahead, parallel
+                            timeFactor = 4;
+                            break;
+                        case 0: // ahead, perpendicular
+                            timeFactor = 1.8f;
+                            break;
+                        case -1: // ahead, anti-parallel
+                            timeFactor = 0.85f;
+                            break;
+                    }
+                    break;
+                case 0:
+                    switch (p)
+                    {
+                        case +1: // aside, parallel
+                            timeFactor = 1;
+                            break;
+                        case 0: // aside, perpendicular
+                            timeFactor = 0.8f;
+                            break;
+                        case -1: // aside, anti-parallel
+                            timeFactor = 4;
+                            break;
+                    }
+                    break;
+                case -1:
+                    switch (p)
+                    {
+                        case +1: // behind, parallel
+                            timeFactor = 0.5f;
+                            break;
+                        case 0: // behind, perpendicular
+                            timeFactor = 2;
+                            break;
+                        case -1: // behind, anti-parallel
+                            timeFactor = 2;
+                            break;
+                    }
+                    break;
+            }
+
+            // estimated time until intercept of quarry
+            var et = directTravelTime * timeFactor;
+            //var etl = (et > _maxPredictionTime) ? _maxPredictionTime : et;
+
+            //var target = _quarry.PredictFuturePosition(etl);
+            Vector3 target = offsetPursuitTarget.GetComponent<Boid>().transform.position + (et * offsetPursuitTarget.GetComponent<Boid>().velocity);
+            
+            // estimated position of quarry at intercept
+
+            //force = Vehicle.GetSeekVector(target, _slowDownOnApproach);
+            return Seek(target);
+        }
+
+
         Vector3 OffsetPursuit(Vector3 offset)
         {
             Vector3 target = Vector3.zero;
@@ -1080,18 +1306,18 @@ namespace BGE
         Vector3 RandomWalk()
         {
             float dist = (transform.position - randomWalkTarget).magnitude;
-            if (dist < 10)
+            if (dist < 30)
             {
                 StartCoroutine("RandomWalkWait");
                 float sphereRadius = (flock != null) ? flock.radius : randomWalkRadius;
-                randomWalkTarget = 
-                    ((flock != null) ? flock.flockCenter : sphereCentre)
-                    + UnityEngine.Random.insideUnitSphere * sphereRadius;
-                if (randomWalkKeepY)
-                {
-                    randomWalkTarget.y = transform.position.y;
-                }                
+                Vector3 r = UnityEngine.Random.insideUnitSphere;
+                r.y = Mathf.Abs(r.y);
+                randomWalkTarget = randomWalkTarget = randomWalkCenter +  r * randomWalkRadius;
             }
+            if (randomWalkKeepY)
+            {
+                randomWalkTarget.y = transform.position.y;
+            } 
             return Arrive(randomWalkTarget);
         }
 
@@ -1130,12 +1356,12 @@ namespace BGE
                
         Vector3 NoiseWander()
         {
-            float n = Mathf.PerlinNoise(wanderNoiseX, wanderNoiseY);
+            float n = Mathf.PerlinNoise(wanderNoiseX, 0);
             float theta = Utilities.Map(n, 0.0f, 1.0f, 0, Mathf.PI * 2.0f);
             wanderTargetPos.x = Mathf.Sin(theta);
             wanderTargetPos.z = -Mathf.Cos(theta);
 
-            n = Mathf.PerlinNoise(wanderNoiseY, 0);
+            n = Mathf.PerlinNoise(wanderNoiseX, 0);
             theta = Utilities.Map(n, 0.0f, 1.0f, 0, Mathf.PI * 2.0f);
            
             wanderTargetPos.y = 0;
@@ -1150,7 +1376,6 @@ namespace BGE
                 LineDrawer.DrawSphere(worldCenter, wanderRadius, 10, Color.yellow);
             }
             wanderNoiseX += wanderNoiseDeltaX;
-            wanderNoiseY += wanderNoiseDeltaY;
             Vector3 desired = worldTarget - transform.position;
             desired.Normalize();
             desired *= maxSpeed;
@@ -1186,7 +1411,7 @@ namespace BGE
         {
             makeFeelers();
 
-            Plane worldPlane = new Plane(new Vector3(0, 1, 0), 0);           
+            Plane worldPlane = new Plane(new Vector3(0, 1, 0), -planeY);           
             Vector3 force = Vector3.zero;
             foreach (Vector3 feeler in PlaneAvoidanceFeelers)
             {
@@ -1275,7 +1500,7 @@ namespace BGE
             }
             if (drawGizmos)
             {
-                LineDrawer.DrawSphere((flock != null) ? flock.flockCenter : sphereCentre, radius, 20, Color.yellow);
+                LineDrawer.DrawSphere((flock != null) ? flock.flockCenter : sphereCentre, radius, 20, Color.green);
             }
             return steeringForce;
         }

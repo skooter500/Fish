@@ -31,7 +31,9 @@ namespace BGE
         public bool drawGizmos;        
         public float updateDither;
 
+        [HideInInspector]
         public Vector3 flockCenter;
+        [HideInInspector]
         public Vector3 oldFlockCenter;
 
         void OnDrawGizmos()

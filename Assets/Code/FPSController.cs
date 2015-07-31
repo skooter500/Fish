@@ -16,7 +16,7 @@ namespace BGE
             Cursor.visible = false;
             Cursor.lockState = CursorLockMode.Locked;
 
-            ovrCamera = GameObject.FindGameObjectWithTag("ovrplayer");
+            //ovrCamera = GameObject.FindGameObjectWithTag("ovrplayer");
         }
 
         void Yaw(float angle)
@@ -34,7 +34,7 @@ namespace BGE
         void Pitch(float angle)
         {
             float invcosTheta1 = Vector3.Dot(transform.forward, Vector3.up);
-            float threshold = 0.95f;
+            float threshold = 0.98f;
             if ((angle > 0 && invcosTheta1 < (-threshold)) || (angle < 0 && invcosTheta1 > (threshold)))
             {
                 return;
@@ -63,7 +63,7 @@ namespace BGE
             if (ovrCamera != null)
             {
                 transform.position += ovrCamera.transform.right * units;
-            }
+            } 
             else
             {
                 transform.position += transform.right * units;
@@ -76,7 +76,7 @@ namespace BGE
             float mouseX, mouseY;
             float speed = this.speed;
 
-            float runAxis = Input.GetAxis("Run Axis");
+            float runAxis = 0; // Input.GetAxis("Run Axis");
 
             if (Input.GetKey(KeyCode.LeftShift) || runAxis != 0)
             {
@@ -117,27 +117,27 @@ namespace BGE
 
             
             Yaw(mouseX);
-            float contYaw = Input.GetAxis("Yaw Axis");
-            float contPitch = Input.GetAxis("Pitch Axis");
-            Yaw(contYaw);
+            //float contYaw = Input.GetAxis("Yaw Axis");
+            //float contPitch = Input.GetAxis("Pitch Axis");
+            //Yaw(contYaw);
 
             // If in Rift mode, dont pitch
             if (ovrCamera == null)
             {
                 Pitch(-mouseY);
-                Pitch(contPitch);
+                //Pitch(contPitch);
             }
             
-            float contWalk = Input.GetAxis("Walk Axis");
-            float contStrafe = Input.GetAxis("Strafe Axis");
-            if (Mathf.Abs(contWalk) > 0.1f)
-            {
-                Walk(-contWalk * speed * Time.deltaTime);
-            }
-            if (Mathf.Abs(contStrafe) > 0.1f)
-            {
-                Strafe(contStrafe * speed * Time.deltaTime);            
-            }            
+            //float contWalk = Input.GetAxis("Walk Axis");
+            //float contStrafe = Input.GetAxis("Strafe Axis");
+            //if (Mathf.Abs(contWalk) > 0.1f)
+            //{
+            //    Walk(-contWalk * speed * Time.deltaTime);
+            //}
+            //if (Mathf.Abs(contStrafe) > 0.1f)
+            //{
+            //    Strafe(contStrafe * speed * Time.deltaTime);            
+            //}            
         }
     }
 }

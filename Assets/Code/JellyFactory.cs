@@ -34,8 +34,6 @@ public class JellyFactory : MonoBehaviour {
             BGE.Boid boid = boidGameObject.AddComponent<BGE.Boid>();
             boid.TurnOffAll();
            
-            //boid.drawVectors = true;
-            //boid.drawGizmos = true;
             boid.randomWalkEnabled = true;
             boid.enforceNonPenetrationConstraint = true;
             boid.randomWalkRadius = width;

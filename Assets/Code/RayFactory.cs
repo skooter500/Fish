@@ -12,7 +12,7 @@ public class RayFactory : MonoBehaviour {
             pos.x = Random.Range(-500.0f, 500.0f);
             pos.z = Random.Range(-500.0f, 500.0f);
             pos.y = y;
-            ray.transform.position = pos;
+            ray.transform.position = transform.position + pos;
         }
 	}
 	

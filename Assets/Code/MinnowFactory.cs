@@ -49,6 +49,7 @@ namespace BGE
             {
                 GameObject boid = GameObject.Instantiate<GameObject>(boidPrefab);
                 flock.boids.Add(boid);
+                boid.GetComponent<TrailRenderer>().material.SetColor("_TintColor", Color.green);
                 //BGE.Utilities.RecursiveSetColor(boid, color);
 
                 bool inside = false;

@@ -57,6 +57,13 @@ public class ColorBomb : MonoBehaviour {
                         lerper.to.Add(color1);
                         lerper.to.Add(color2);
                         lerper.gameObjects.Clear();
+                        int childcount = boid.transform.childCount;
+                        if (childcount == 0)
+                        {
+                            // Why??
+                            break;
+                        }
+
                         lerper.gameObjects.Add(boid.transform.GetChild(0).gameObject);
                         lerper.gameObjects.Add(boid.transform.GetChild(1).gameObject);
                         lerper.gameObjects.Add(boid.transform.GetChild(2).gameObject);

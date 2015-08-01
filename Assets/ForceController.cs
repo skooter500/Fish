@@ -155,6 +155,6 @@ public class ForceController : MonoBehaviour {
         force = Vector3.zero;
         transform.position = pos;
 
-        velocity *= 0.92f;
+        velocity *= 0.99f;
     }
 }

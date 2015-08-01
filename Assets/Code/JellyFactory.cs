@@ -50,7 +50,7 @@ public class JellyFactory : MonoBehaviour {
 
             jelly.transform.parent = boid.transform;
             jelly.GetComponent<AnimationSpeed>().boidObject = boidGameObject;
-            float scale = Random.Range(0.2f, 0.7f) * gap;
+            float scale = Random.Range(0.2f, 1.0f) * gap;
             jelly.transform.localScale = new Vector3(scale, scale, scale);
         }
 	}

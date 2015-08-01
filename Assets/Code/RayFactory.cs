@@ -5,7 +5,7 @@ public class RayFactory : MonoBehaviour {
     public GameObject rayPrefab;
 	// Use this for initialization
 	void Start () {
-	    for (int y = -1500 ; y <= 1500 ; y += 500)
+	    for (int y = -500 ; y <= 500 ; y += 200)
         {
             GameObject ray = Instantiate(rayPrefab);
             Vector3 pos = new Vector3();

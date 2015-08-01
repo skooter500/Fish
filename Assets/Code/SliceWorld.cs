@@ -35,11 +35,11 @@ public class SliceWorld : MonoBehaviour {
         pos.y += Random.Range(-200, 200);
         gameObject.transform.position = pos;
 
-        sliceForm.size = new Vector3(1000, 3500, 1000);
-        sliceForm.sliceCount = new Vector2(20, 20);
-        sliceForm.noiseDelta = new Vector2(0.1f, 0.1f);
+        sliceForm.size = new Vector3(1000, 5000, 1000);
+        sliceForm.sliceCount = new Vector2(5, 5);
+        sliceForm.noiseDelta = new Vector2(0.15f, 0.15f);
         sliceForm.noiseStart = new Vector2(Random.Range(0.0f, 1000.0f), Random.Range(0.0f, 1000.0f));
-        sliceForm.noiseToBase = 0.4f;
+        sliceForm.noiseToBase = 0.5f;
         sliceForm.closed = false;
         sliceForm.horizontalColour = sliceForm.verticalColour = Pallette.Random();
         gameObject.transform.parent = transform;

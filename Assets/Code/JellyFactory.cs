@@ -13,7 +13,7 @@ public class JellyFactory : MonoBehaviour {
 
     public JellyFactory()
     {
-        height = 2000;
+        height = 1000;
         width = 500;
         numJellies = 10;
         
@@ -50,7 +50,7 @@ public class JellyFactory : MonoBehaviour {
 
             jelly.transform.parent = boid.transform;
             jelly.GetComponent<AnimationSpeed>().boidObject = boidGameObject;
-            float scale = Random.Range(0.2f, 1.0f) * gap * 2.0f;
+            float scale = Random.Range(0.2f, 0.7f) * gap;
             jelly.transform.localScale = new Vector3(scale, scale, scale);
         }
 	}

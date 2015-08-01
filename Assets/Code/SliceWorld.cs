@@ -10,12 +10,15 @@ public class SliceWorld : MonoBehaviour {
     public float zCount;
     public float gap;
 
+    public int nextLifeForm;
+
 
     public SliceWorld()
     {
         xCount = 5;
         zCount = 5;
         gap = 2000;
+        nextLifeForm = 0;
     }
 
     private void CreateSliceForm(Vector3 pos)
@@ -68,11 +71,12 @@ public class SliceWorld : MonoBehaviour {
 
     private void CreateLifeForm(Vector3 pos)
     {
-        int i = Random.Range(0, formPrefabs.Count);
-
-        GameObject form = Instantiate(formPrefabs[i]);
+        GameObject form = Instantiate(formPrefabs[nextLifeForm]);
         form.SetActive(true);
         form.transform.position = pos;
+        form.transform.Translate(new Vector3(0, 1000, 0));
+        nextLifeForm = (nextLifeForm + 1) % formPrefabs.Count;
+
     }
 	
 	// Update is called once per frame

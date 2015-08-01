@@ -6,6 +6,8 @@ using BGE;
 public class SectionColours : MonoBehaviour {
     List<GameObject> segments; // The list of children objects in order of Z
 
+    public bool lerpColors;
+
     Boid boid;
 
     SectionColours()
@@ -45,6 +47,14 @@ public class SectionColours : MonoBehaviour {
 
     public void CycleColours()
     {
+        ColorLerper lerper = null;
+
+        if (lerpColors)
+        {
+            lerper = GetComponent<ColorLerper>();
+            lerper.Clear();
+            lerper.StartLerping();
+        }
         for (int i = segments.Count - 1; i > 0; i--)
         {
             Renderer current = segments[i].GetComponent<Renderer>();
@@ -52,10 +62,29 @@ public class SectionColours : MonoBehaviour {
 
             if (current != null && previous != null)
             {
-                current.material.color = previous.material.color;
+                if (lerpColors)
+                {
+                    lerper.gameObjects.Add(segments[i]);
+                    lerper.from.Add(current.material.color);
+                    lerper.to.Add(previous.material.color);
+                }
+                else
+                {
+                    current.material.color = previous.material.color;
+                }
             }
         }
-        segments[0].GetComponent<Renderer>().material.color = Pallette.Random();
+        if (lerpColors)
+        {
+            lerper.gameObjects.Add(segments[0]);
+            lerper.from.Add(segments[0].GetComponent<Renderer>().material.color);
+            lerper.to.Add(Pallette.Random());            
+            lerper.StartLerping();
+        }
+        else
+        {
+            segments[0].GetComponent<Renderer>().material.color = Pallette.RandomNot(segments[0].GetComponent<Renderer>().material.color);
+        }
     }
 
     System.Collections.IEnumerator FleeColourCycle()

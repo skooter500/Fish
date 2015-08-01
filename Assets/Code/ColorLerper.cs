@@ -15,6 +15,13 @@ public class ColorLerper : MonoBehaviour {
         speed = 0.2f;
 	}
 	
+    public void Clear()
+    {
+        gameObjects.Clear();
+        from.Clear();
+        to.Clear();
+    }
+
 	// Update is called once per frame
 	void Update () {
 	    if (t >= 1.0f)

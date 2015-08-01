@@ -6,13 +6,11 @@ public class RandomAudioPlayer : MonoBehaviour {
     public AudioSource audioSource;
     public float maxInterval;
     public bool cycleColoursOnPlay;
-    public bool lerpColours;
     bool playing = false;
 
     public RandomAudioPlayer()
     {
         maxInterval = 20.0f;
-        lerpColours = false;
     }
 
     System.Collections.IEnumerator PlayDelayedAudio()
@@ -21,25 +19,25 @@ public class RandomAudioPlayer : MonoBehaviour {
         while(true)
         {
             yield return new WaitForSeconds(Random.Range(1.0f, maxInterval));
-            audioSource.Play();
+            if (audioSource != null)
+            {
+                audioSource.Play();
+            }
             if (cycleColoursOnPlay)
             {
-                if (lerpColours)
+                SectionColours sc = GetComponent<SectionColours>();
+                if (sc == null)
                 {
-                    ColorLerper lerper = GetComponent<ColorLerper>();
-                    lerper.gameObjects.Clear();
-                    lerper.gameObjects.Add(gameObject);
-                    lerper.from.Clear();
-                    lerper.to.Clear();
                     Renderer renderer = GetComponentInChildren<Renderer>();
-                    lerper.from.Add(renderer.material.color);
-                    lerper.to.Add(Pallette.RandomNot(renderer.material.color));
-                    lerper.StartLerping();
-                }                                
-            }
-            else
-            {
-                GetComponent<SectionColours>().CycleColours();
+                    if (renderer != null)
+                    {
+                        renderer.material.color = Pallette.RandomNot(renderer.material.color);
+                    }
+                }
+                else
+                {
+                    sc.CycleColours();
+                }                
             }
         }
     }
@@ -52,7 +50,7 @@ public class RandomAudioPlayer : MonoBehaviour {
 	
 	// Update is called once per frame
 	void Update () {
-        if (audioSource != null && ! playing)
+        if (! playing)
         {
             StartCoroutine("PlayDelayedAudio");
         }

@@ -45,13 +45,13 @@ namespace BGE
             int maxAudioBoids = 20;
             int audioBoids = 0;
 
+            
+
             for (int i = 0; i < boidCount; i++)
             {
                 GameObject boid = GameObject.Instantiate<GameObject>(boidPrefab);
                 flock.boids.Add(boid);
-                boid.GetComponent<TrailRenderer>().material.SetColor("_TintColor", Color.green);
-                //BGE.Utilities.RecursiveSetColor(boid, color);
-
+                
                 bool inside = false;
                 do
                 {
@@ -61,6 +61,8 @@ namespace BGE
                         unit.y = Mathf.Abs(unit.y);
                     }
                     boid.transform.position = transform.position + unit * UnityEngine.Random.Range(0, radius * spread);
+
+                    Vector3 p = boid.transform.position;                    
                     inside = false;
                     foreach (Obstacle obstacle in BoidManager.Instance.obstacles)
                     {

@@ -7,16 +7,18 @@ namespace BGE
 {
     public class FPSController : MonoBehaviour
     {
-        GameObject ovrCamera;
+        Camera ovrCamera;
         float speed = 50.0f;
-        
         // Use this for initialization
         void Start()
         {
             Cursor.visible = false;
             Cursor.lockState = CursorLockMode.Locked;
 
-            //ovrCamera = GameObject.FindGameObjectWithTag("ovrplayer");
+            if (GameObject.FindGameObjectWithTag("ovrplayer") != null)
+            {
+                ovrCamera = GameObject.FindGameObjectWithTag("ovrplayer").GetComponentInChildren<Camera>();
+            }
         }
 
         void Yaw(float angle)
@@ -34,7 +36,7 @@ namespace BGE
         void Pitch(float angle)
         {
             float invcosTheta1 = Vector3.Dot(transform.forward, Vector3.up);
-            float threshold = 0.98f;
+            float threshold = 0.95f;
             if ((angle > 0 && invcosTheta1 < (-threshold)) || (angle < 0 && invcosTheta1 > (threshold)))
             {
                 return;
@@ -58,12 +60,17 @@ namespace BGE
             }
         }
 
+        void Fly(float units)
+        {
+            transform.position += Vector3.up * units;
+        }
+
         void Strafe(float units)
         {
             if (ovrCamera != null)
             {
                 transform.position += ovrCamera.transform.right * units;
-            } 
+            }
             else
             {
                 transform.position += transform.right * units;
@@ -90,12 +97,12 @@ namespace BGE
 
             if (Input.GetKey(KeyCode.S))
             {
-                Walk(- Time.deltaTime * speed);
+                Walk(-Time.deltaTime * speed);
             }
 
             if (Input.GetKey(KeyCode.A))
             {
-                Strafe(- Time.deltaTime * speed);
+                Strafe(-Time.deltaTime * speed);
             }
 
             if (Input.GetKey(KeyCode.D))
@@ -104,7 +111,7 @@ namespace BGE
             }
             if (Input.GetKey(KeyCode.Q))
             {
-                Roll(- Time.deltaTime * speed);
+                Roll(-Time.deltaTime * speed);
             }
             if (Input.GetKey(KeyCode.E))
             {
@@ -115,7 +122,7 @@ namespace BGE
             mouseX = Input.GetAxis("Mouse X");
             mouseY = Input.GetAxis("Mouse Y");
 
-            
+
             Yaw(mouseX);
             float contYaw = Input.GetAxis("Yaw Axis");
             float contPitch = Input.GetAxis("Pitch Axis");
@@ -127,6 +134,10 @@ namespace BGE
                 Pitch(-mouseY);
                 Pitch(contPitch);
             }
+            else
+            {
+                Fly(-contPitch * speed * Time.deltaTime);
+            }
 
             float contWalk = Input.GetAxis("Walk Axis");
             float contStrafe = Input.GetAxis("Strafe Axis");
@@ -137,7 +148,7 @@ namespace BGE
             if (Mathf.Abs(contStrafe) > 0.1f)
             {
                 Strafe(contStrafe * speed * Time.deltaTime);
-            }            
+            }
         }
     }
 }

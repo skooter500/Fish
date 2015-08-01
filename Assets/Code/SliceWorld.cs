@@ -6,8 +6,8 @@ public class SliceWorld : MonoBehaviour {
 
     public List<GameObject> formPrefabs;
 
-    public float xCount;
-    public float zCount;
+    public int xCount;
+    public int zCount;
     public float gap;
 
     public int nextLifeForm;
@@ -29,7 +29,7 @@ public class SliceWorld : MonoBehaviour {
         pos.y += Random.Range(-200, 200);
         gameObject.transform.position = pos;
 
-        sliceForm.size = new Vector3(1000, 3000, 1000);
+        sliceForm.size = new Vector3(1000, 3500, 1000);
         sliceForm.sliceCount = new Vector2(20, 20);
         sliceForm.noiseDelta = new Vector2(0.1f, 0.1f);
         sliceForm.noiseStart = new Vector2(Random.Range(0.0f, 1000.0f), Random.Range(0.0f, 1000.0f));
@@ -46,23 +46,25 @@ public class SliceWorld : MonoBehaviour {
         float depth = zCount * gap;
         float left = transform.position.x - (width / 2);
         float front = transform.position.z - (depth / 2);
-        
-        for (float x = 0; x < xCount; x ++)
+
+        int xMid = xCount / 2;
+        int zMid = zCount / 2;
+
+        for (int x = 0; x < xCount; x ++)
         {
-            for (float z = 0 ; z < zCount; z ++)
+            for (int z = 0 ; z < zCount; z ++)
             {
                 Vector3 pos = new Vector3();
                 pos.x = left + (x * gap);
                 pos.z = front + (z * gap);
                 pos.y = transform.position.y;
-                if (Random.Range(0.0f, 1.0f) > 0.5f)
+                if ((x == xMid || x == xMid - 1) && (z == zMid || z == zMid - 1))
                 {
-                    CreateSliceForm(pos);
+                    // Skip
                 }
                 else
                 {
-                    //CreateSliceForm(pos);
-                    CreateLifeForm(pos);
+                    CreateSliceForm(pos);
                 }
             }
         }
@@ -74,7 +76,7 @@ public class SliceWorld : MonoBehaviour {
         GameObject form = Instantiate(formPrefabs[nextLifeForm]);
         form.SetActive(true);
         form.transform.position = pos;
-        form.transform.Translate(new Vector3(0, 1000, 0));
+        form.transform.Translate(new Vector3(0, 2000, 0));
         nextLifeForm = (nextLifeForm + 1) % formPrefabs.Count;
 
     }

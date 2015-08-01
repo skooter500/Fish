@@ -55,6 +55,7 @@ public class SectionColours : MonoBehaviour {
             lerper.Clear();
             lerper.StartLerping();
         }
+
         for (int i = segments.Count - 1; i > 0; i--)
         {
             Renderer current = segments[i].GetComponent<Renderer>();

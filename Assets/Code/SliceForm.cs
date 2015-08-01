@@ -74,8 +74,8 @@ public class SliceForm : MonoBehaviour {
         texture.SetPixel(1, 0, Color.green);
         */
         
-        int width = 128;
-        int height = 128;
+        int width = 1;
+        int height = 1;
 
         Texture2D texture = new Texture2D(width, height, TextureFormat.RGBAFloat, false);
         texture.filterMode = FilterMode.Point;
@@ -261,19 +261,20 @@ public class SliceForm : MonoBehaviour {
 
         //mesh.RecalculateNormals();
 
+        renderer.material.color = horizontalColour;
         
-        Shader shader = Shader.Find("Diffuse");
-        Material material = new Material(shader);
-        //material.color = color;
-        material.mainTexture = CreateTexture(); 
-        if (renderer == null)
-        {
-            Debug.Log("Renderer is null 2");
-        }
-        else
-        {
-            renderer.material = material;
-        }
+        //Shader shader = Shader.Find("Diffuse");
+        //Material material = new Material(shader);
+        //material.color = horizontalColour;
+        ////material.mainTexture = CreateTexture(); 
+        //if (renderer == null)
+        //{
+        //    Debug.Log("Renderer is null 2");
+        //}
+        //else
+        //{
+        //    renderer.material = material;
+        //}
 	    
 	}
 	

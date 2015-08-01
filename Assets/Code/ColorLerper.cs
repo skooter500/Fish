@@ -5,14 +5,14 @@ using BGE;
 public class ColorLerper : MonoBehaviour {
 
     [HideInInspector]
-    public List<GameObject> gameObjects;
-    public List<Color> from;
-    public List<Color> to;
+    public List<GameObject> gameObjects = new List<GameObject>();
+    public List<Color> from = new List<Color>();
+    public List<Color> to = new List<Color>();
     public float t = 1.0f;
     public float speed;
 	// Use this for initialization
 	void Start () {
-        speed = 0.2f;
+        speed = 0.5f;
 	}
 	
     public void Clear()

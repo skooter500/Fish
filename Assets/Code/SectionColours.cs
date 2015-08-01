@@ -4,7 +4,7 @@ using System.Collections.Generic;
 using BGE;
 
 public class SectionColours : MonoBehaviour {
-    List<GameObject> segments; // The list of children objects in order of Z
+    public List<GameObject> segments; // The list of children objects in order of Z
 
     public bool lerpColors;
 

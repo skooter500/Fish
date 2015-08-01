@@ -25,6 +25,12 @@ public class SliceWorld : MonoBehaviour {
     {
         GameObject gameObject = new GameObject();
         SliceForm sliceForm = gameObject.AddComponent<SliceForm>();
+        gameObject.AddComponent<ColorLerper>();
+        gameObject.AddComponent<SectionColours>().segments.Add(gameObject);
+        gameObject.GetComponent<SectionColours>().lerpColors = true;
+        RandomAudioPlayer rap = gameObject.AddComponent<RandomAudioPlayer>();
+        rap.cycleColoursOnPlay = true;
+        rap.maxInterval = 3.0f;
         gameObject.AddComponent<Hover>();
         pos.y += Random.Range(-200, 200);
         gameObject.transform.position = pos;
@@ -52,10 +58,11 @@ public class SliceWorld : MonoBehaviour {
 
         for (int x = 0; x < xCount; x ++)
         {
+            Vector3 pos = new Vector3();
+            pos.x = left + (x * gap);
             for (int z = 0 ; z < zCount; z ++)
             {
-                Vector3 pos = new Vector3();
-                pos.x = left + (x * gap);
+                
                 pos.z = front + (z * gap);
                 pos.y = transform.position.y;
                 if ((x == xMid || x == xMid - 1) && (z == zMid || z == zMid - 1))
@@ -69,6 +76,8 @@ public class SliceWorld : MonoBehaviour {
             }
         }
 
+
+        
       }
 
     private void CreateLifeForm(Vector3 pos)
@@ -83,6 +92,33 @@ public class SliceWorld : MonoBehaviour {
 	
 	// Update is called once per frame
 	void Update () {
-	
+        //float width = xCount * gap;
+        //float depth = zCount * gap;
+        //float left = transform.position.x - (width / 2);
+        //float front = transform.position.z - (depth / 2);
+
+        //int xMid = xCount / 2;
+        //int zMid = zCount / 2;
+        //float height = -500;
+        //for (int x = 0; x < xCount; x++)
+        //{
+        //    Vector3 pos = new Vector3();
+        //    pos.x = left + (x * gap);
+        //    Vector3[] points = new Vector3[2];
+        //    points[0] = new Vector3(pos.x, height, front);
+        //    points[1] = new Vector3(pos.x, height, front + depth);
+        //    BGE.LineDrawer.DrawLine(points[0], points[1], Color.cyan);
+        //}
+
+        //for (int z = 0; z < zCount; z++)
+        //{
+        //    Vector3 pos = new Vector3();
+        //    pos.z = front + (z * gap);
+        //    Vector3[] points = new Vector3[2];
+        //    points[0] = new Vector3(left, height, pos.z);
+        //    points[1] = new Vector3(left + width, height, pos.z);
+        //    BGE.LineDrawer.DrawLine(points[0], points[1], Color.cyan);
+        //}
+
 	}
 }

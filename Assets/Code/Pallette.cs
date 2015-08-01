@@ -24,12 +24,15 @@ public class Pallette : MonoBehaviour {
 
     public static Color Random()
     {
-        int i = UnityEngine.Random.Range(0, Instance.pallette.Count - 1);
-        return Instance.pallette[i];
+        return new Color(UnityEngine.Random.Range(0.0f, 1.0f), UnityEngine.Random.Range(0.0f, 1.0f), UnityEngine.Random.Range(0.0f, 1.0f));
+        //int i = UnityEngine.Random.Range(0, Instance.pallette.Count - 1);
+        //return Instance.pallette[i];
     }
 
     public static Color RandomNot(Color c)
     {
+        return new Color(UnityEngine.Random.Range(0.0f, 1.0f), UnityEngine.Random.Range(0.0f, 1.0f), UnityEngine.Random.Range(0.0f, 1.0f));
+        /*
         int i = 0;
         do
         {
@@ -37,6 +40,7 @@ public class Pallette : MonoBehaviour {
         }
         while (Instance.pallette[i] == c);
         return Instance.pallette[i];
+         */
     }
 
     

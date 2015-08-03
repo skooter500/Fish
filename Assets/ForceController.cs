@@ -6,7 +6,7 @@ public class ForceController : MonoBehaviour {
     float mass = 1.0f;
     Vector3 velocity;
 	Camera ovrCamera;
-    float speed = 500.0f;
+    float speed = 200.0f;
     // Use this for initialization
     void Start()
     {
@@ -85,7 +85,7 @@ public class ForceController : MonoBehaviour {
 
         if (Input.GetKey(KeyCode.LeftShift) || runAxis != 0)
         {
-            speed *= 10.0f;
+            speed *= 3f;
         }
 
         if (Input.GetKey(KeyCode.W))
@@ -122,7 +122,7 @@ public class ForceController : MonoBehaviour {
 
 
         Yaw(mouseX);
-        float contYaw = Input.GetAxis("Yaw Axis");
+        float contYaw = Input.GetAxis("Yaw Axis") *0.5f;
         float contPitch = Input.GetAxis("Pitch Axis");
         Yaw(contYaw);
 

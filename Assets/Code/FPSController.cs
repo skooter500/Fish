@@ -17,7 +17,7 @@ namespace BGE
 
             if (GameObject.FindGameObjectWithTag("ovrplayer") != null)
             {
-                ovrCamera = GameObject.FindGameObjectWithTag("ovrplayer").GetComponentInChildren<Camera>();
+                //ovrCamera = GameObject.FindGameObjectWithTag("ovrplayer").GetComponentInChildren<Camera>();
             }
         }
 

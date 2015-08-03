@@ -24,7 +24,7 @@ public class SectionColours : MonoBehaviour {
         for(int i = 0 ; i < count ; i ++)
         {
             GameObject child = transform.GetChild(i).gameObject;
-            Renderer render = child.GetComponent<Renderer>();
+            Renderer render = child.GetComponentInChildren<Renderer>();
             if (render != null)
             {
                 segments.Add(child);
@@ -34,11 +34,7 @@ public class SectionColours : MonoBehaviour {
 
         foreach (GameObject segment in segments)
         {
-            Renderer render = segment.GetComponent<Renderer>();
-            if (render != null)
-            {
-                render.material.color = Pallette.Random();
-            }
+            Utilities.RecursiveSetColor(segment, Pallette.Random());
         }
 	}
 
@@ -58,8 +54,8 @@ public class SectionColours : MonoBehaviour {
 
         for (int i = segments.Count - 1; i > 0; i--)
         {
-            Renderer current = segments[i].GetComponent<Renderer>();
-            Renderer previous = segments[i - 1].GetComponent<Renderer>();
+            Renderer current = segments[i].GetComponentInChildren<Renderer>();
+            Renderer previous = segments[i - 1].GetComponentInChildren<Renderer>();
 
             if (current != null && previous != null)
             {

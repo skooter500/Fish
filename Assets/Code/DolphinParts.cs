@@ -6,7 +6,7 @@ using UnityEngine;
 
 namespace BGE
 {
-    public class WhaleParts : MonoBehaviour
+    public class DolphinParts : MonoBehaviour
     {
         [HideInInspector]
         public GameObject head;
@@ -59,7 +59,7 @@ namespace BGE
         [HideInInspector]
         public Boid boid;
 
-        public WhaleParts()
+        public DolphinParts()
         {
             segments = new List<GameObject>();
 
@@ -95,7 +95,7 @@ namespace BGE
             Gizmos.DrawSphere(transform.TransformPoint(headRotPoint), 5);
             Gizmos.DrawSphere(transform.TransformPoint(bodyRotPoint), 5);
             Gizmos.DrawSphere(transform.TransformPoint(tailRotPoint), 5);
-            
+
             Gizmos.color = Color.magenta;
         }
 

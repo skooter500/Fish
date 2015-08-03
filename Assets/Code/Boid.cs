@@ -1318,7 +1318,7 @@ namespace BGE
             {
                 randomWalkTarget.y = transform.position.y;
             } 
-            return Arrive(randomWalkTarget);
+            return Seek(randomWalkTarget);
         }
 
         IEnumerator RandomWalkWait()

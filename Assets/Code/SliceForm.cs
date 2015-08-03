@@ -29,6 +29,11 @@ public class SliceForm : MonoBehaviour {
     
     float baseHeight, noiseHeight;
 
+    [HideInInspector]
+    public float maxY;
+
+    private bool generated = false;
+
     public static Color HexToColor(string hex)
     {
         hex = hex.Replace("0x", "");//in case the string is formatted 0xFFFFFF
@@ -95,14 +100,26 @@ public class SliceForm : MonoBehaviour {
         texture.Apply();
         return texture;
     }
-	
-	void Start () {
 
+    void MaxY(float y)
+    {
+        if (y > maxY)
+        {
+            maxY = y;
+        }
+    }
+
+    public void Generate()
+    {
+        if (generated)
+        {
+            return;
+        }
         sliceSize = new Vector2(size.x / sliceCount.x, size.z / sliceCount.y);
 
         noiseHeight = size.y * noiseToBase;
         baseHeight = size.y - noiseHeight;
-        
+
         MeshRenderer renderer = gameObject.AddComponent<MeshRenderer>();
         renderer.shadowCastingMode = UnityEngine.Rendering.ShadowCastingMode.On;
         renderer.receiveShadows = true;
@@ -110,14 +127,14 @@ public class SliceForm : MonoBehaviour {
         {
             Debug.Log("Renderer is null 1");
         }
-        
+
         Mesh mesh = gameObject.AddComponent<MeshFilter>().mesh;
         mesh.Clear();
 
 
         int verticesPerSegment = 24;
 
-        int verticesPerHorizontalSlice = verticesPerSegment * (int) sliceCount.x; 
+        int verticesPerHorizontalSlice = verticesPerSegment * (int)sliceCount.x;
         int vertexCount = 0;
         if (closed)
         {
@@ -129,14 +146,14 @@ public class SliceForm : MonoBehaviour {
         // Reduce by one vertical slice and one horizontal slice
         vertexCount -= (verticesPerSegment / 2) * (int)sliceCount.x;
         vertexCount -= (verticesPerSegment / 2) * (int)sliceCount.y;
-        
+
         initialVertices = new Vector3[vertexCount];
         initialNormals = new Vector3[vertexCount];
         meshUv = new Vector2[vertexCount];
         meshTriangles = new int[vertexCount];
         colours = new Color[vertexCount];
-    
-        Vector3 bottomLeft = - (size / 2);
+
+        Vector3 bottomLeft = -(size / 2);
 
         Vector2 noiseXY = noiseStart;
         int vertex = 0;
@@ -147,8 +164,8 @@ public class SliceForm : MonoBehaviour {
             noiseXY.x = noiseStart.x;
             for (int x = 0; x < sliceCount.x; x++)
             {
-               
-                int startVertex = vertex;                    
+
+                int startVertex = vertex;
                 // Make the horizontal slice
                 if ((!closed && y == 0) || (closed && x == sliceCount.x - 1))
                 {
@@ -161,6 +178,7 @@ public class SliceForm : MonoBehaviour {
                     Vector3 sliceTopLeft = sliceBottomLeft + new Vector3(0, baseHeight + (Mathf.PerlinNoise(noiseXY.x, noiseXY.y) * noiseHeight));
                     Vector3 sliceTopRight = sliceBottomLeft + new Vector3(sliceSize.x, baseHeight + (Mathf.PerlinNoise(noiseXY.x + noiseDelta.x, noiseXY.y) * noiseHeight));
                     Vector3 sliceBottomRight = sliceBottomLeft + new Vector3(sliceSize.x, 0, 0);
+                    MaxY(sliceTopLeft.y); MaxY(sliceTopRight.y);
                     if (x == 0)
                     {
                         sliceBottomLeft.x += seam;
@@ -203,13 +221,13 @@ public class SliceForm : MonoBehaviour {
                 }
                 else
                 {
-                    startVertex = vertex;                    
+                    startVertex = vertex;
                     // Make the vertical slice
                     Vector3 sliceBottomLeft = bottomLeft + new Vector3(x * sliceSize.x, 0, y * sliceSize.y);
                     Vector3 sliceTopLeft = sliceBottomLeft + new Vector3(0, baseHeight + (Mathf.PerlinNoise(noiseXY.x, noiseXY.y) * noiseHeight));
                     Vector3 sliceBottomForward = sliceBottomLeft + new Vector3(0, 0, sliceSize.y);
                     Vector3 sliceTopForward = sliceBottomLeft + new Vector3(0, baseHeight + (Mathf.PerlinNoise(noiseXY.x, noiseXY.y + noiseDelta.y) * noiseHeight), sliceSize.y);
-
+                    MaxY(sliceTopLeft.y); MaxY(sliceTopForward.y);
                     if (y == 0)
                     {
                         sliceBottomLeft.z += seam;
@@ -247,7 +265,7 @@ public class SliceForm : MonoBehaviour {
                         colours[startVertex + i] = Color.red;
                     }
                 }
-                noiseXY.x += noiseDelta.x;         
+                noiseXY.x += noiseDelta.x;
             }
             noiseXY.y += noiseDelta.y;
         }
@@ -262,7 +280,7 @@ public class SliceForm : MonoBehaviour {
         //mesh.RecalculateNormals();
 
         renderer.material.color = horizontalColour;
-        
+
         //Shader shader = Shader.Find("Diffuse");
         //Material material = new Material(shader);
         //material.color = horizontalColour;
@@ -275,6 +293,13 @@ public class SliceForm : MonoBehaviour {
         //{
         //    renderer.material = material;
         //}
+
+        generated = true;
+    }
+	
+	void Start () {
+
+        Generate();
 	    
 	}
 	

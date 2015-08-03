@@ -22,20 +22,20 @@ public class JellyFactory : MonoBehaviour {
 	void Start () {
         flock = GetComponent<Flock>();
         float gap = height / numJellies;
-        float halfHeight = height / 2.0f;
-        for(float y = - halfHeight ; y < halfHeight ; y += gap)
+        for(float y = height ; y >= 0 ; y -= gap)
         {
             GameObject boidGameObject = new GameObject();
             boidGameObject.name = "Boid Game Object";
             Vector3 pos = Random.insideUnitSphere * width;
-            pos.y = y;
-            boidGameObject.transform.position = transform.position + pos;
+            pos = Random.insideUnitSphere * width;
+            pos.x += transform.position.x;
+            pos.z += transform.position.z;
+            pos.y = transform.position.y - y;
+            boidGameObject.transform.position = pos;
             boidGameObject.transform.parent = transform;
             BGE.Boid boid = boidGameObject.AddComponent<BGE.Boid>();
-            //boid.drawGizmos = true;
-            //boid.drawVectors = true;
             boid.TurnOffAll();
-           
+            //boid.drawVectors = true;
             boid.randomWalkEnabled = true;
             boid.randomWalkRadius = width;
             boid.randomWalkKeepY = true;
@@ -45,7 +45,7 @@ public class JellyFactory : MonoBehaviour {
             flock.boids.Add(boidGameObject);
             GameObject jelly = GameObject.Instantiate<GameObject>(jellyPrefab);
             Vector3 offset = Random.insideUnitSphere * width;
-            offset.y = y;
+            offset.y = 0;
             jelly.transform.position = boidGameObject.transform.position + offset;
 
             jelly.transform.parent = boid.transform;

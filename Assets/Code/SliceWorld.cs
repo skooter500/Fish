@@ -5,13 +5,15 @@ using System.Collections.Generic;
 public class SliceWorld : MonoBehaviour {
 
     public List<GameObject> formPrefabs;
-
+    public Vector2 noiseDelta;
+    public Vector2 sliceCount;
     public int xCount;
     public int zCount;
     public float gap;
 
     public int nextLifeForm;
 
+    public bool createLifeForms;
 
     public SliceWorld()
     {
@@ -19,9 +21,12 @@ public class SliceWorld : MonoBehaviour {
         zCount = 5;
         gap = 2000;
         nextLifeForm = 0;
+        createLifeForms = false;
+        noiseDelta = new Vector2(0.2f, 0.2f);
+        sliceCount = new Vector2(5, 5);
     }
 
-    private void CreateSliceForm(Vector3 pos)
+    private SliceForm CreateSliceForm(Vector3 pos, Vector2 noise)
     {
         GameObject gameObject = new GameObject();
         SliceForm sliceForm = gameObject.AddComponent<SliceForm>();
@@ -32,17 +37,19 @@ public class SliceWorld : MonoBehaviour {
         rap.cycleColoursOnPlay = true;
         rap.maxInterval = 3.0f;
         gameObject.AddComponent<Hover>();
-        pos.y += Random.Range(-200, 200);
+        //pos.y += Random.Range(-200, 200);
         gameObject.transform.position = pos;
 
-        sliceForm.size = new Vector3(1000, 5000, 1000);
-        sliceForm.sliceCount = new Vector2(5, 5);
-        sliceForm.noiseDelta = new Vector2(0.15f, 0.15f);
-        sliceForm.noiseStart = new Vector2(Random.Range(0.0f, 1000.0f), Random.Range(0.0f, 1000.0f));
-        sliceForm.noiseToBase = 0.5f;
+        sliceForm.size = new Vector3(1000, 10000, 1000);
+        sliceForm.sliceCount = sliceCount;
+        sliceForm.noiseDelta = noiseDelta;
+        sliceForm.noiseStart = noise;
+        sliceForm.noiseToBase = 0.2f;
         sliceForm.closed = false;
         sliceForm.horizontalColour = sliceForm.verticalColour = Pallette.Random();
         gameObject.transform.parent = transform;
+        sliceForm.Generate();
+        return sliceForm;
     }
 
 	// Use this for initialization
@@ -55,29 +62,45 @@ public class SliceWorld : MonoBehaviour {
 
         int xMid = xCount / 2;
         int zMid = zCount / 2;
-
+        Vector2 noiseStart = Random.insideUnitCircle * 1000;
+        float lastY = 0;
+        bool first = true;
         for (int x = 0; x < xCount; x ++)
         {
             Vector3 pos = new Vector3();
             pos.x = left + (x * gap);
+            Vector2 thisNoiseStart = noiseStart;
+            thisNoiseStart.x += (noiseDelta.x * x * sliceCount.x);
             for (int z = 0 ; z < zCount; z ++)
-            {
-                
+            {                
                 pos.z = front + (z * gap);
                 pos.y = transform.position.y;
-                if ((x == xMid || x == xMid - 1) && (z == zMid || z == zMid - 1))
+                thisNoiseStart.y += (noiseDelta.y * z * sliceCount.y);
+                if (!first && (Random.Range(0.0f, 1.0f) > 0.5f))
                 {
-                    // Skip
+                    pos.y = lastY - 1000; // 500 pixels below the height of the last sliceform
+                    CreateLifeForm(pos);                    
                 }
                 else
                 {
-                    CreateSliceForm(pos);
+                    SliceForm sf = CreateSliceForm(pos, noiseStart);
+                    pos.y += 100;
+                    lastY = sf.maxY;
+                    first = false;
                 }
+                noiseStart.x += noiseDelta.x * sliceCount.x;
+
+
+                //if ((x == xMid || x == xMid - 1) && (z == zMid || z == zMid - 1))
+                //{
+                //    // Skip
+                //}
+                //else
+                //{
+                //    CreateSliceForm(pos);
+                //}
             }
         }
-
-
-        
       }
 
     private void CreateLifeForm(Vector3 pos)
@@ -85,7 +108,6 @@ public class SliceWorld : MonoBehaviour {
         GameObject form = Instantiate(formPrefabs[nextLifeForm]);
         form.SetActive(true);
         form.transform.position = pos;
-        form.transform.Translate(new Vector3(0, 2000, 0));
         nextLifeForm = (nextLifeForm + 1) % formPrefabs.Count;
 
     }

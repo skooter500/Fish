@@ -3,16 +3,28 @@ using System.Collections;
 
 public class RayFactory : MonoBehaviour {
     public GameObject rayPrefab;
+    public float height;
+    public float width;
+    public int numRays = 5;
+
+    public RayFactory()
+    {
+        height = 1000;
+        width = 1000;
+    }
 	// Use this for initialization
 	void Start () {
-	    for (int y = -500 ; y <= 500 ; y += 200)
+        float gap = height / numRays;       
+      
+	    for (float y = height; y >= 0; y -= gap)
         {
             GameObject ray = Instantiate(rayPrefab);
             Vector3 pos = new Vector3();
-            pos.x = Random.Range(-500.0f, 500.0f);
-            pos.z = Random.Range(-500.0f, 500.0f);
-            pos.y = y;
-            ray.transform.position = transform.position + pos;
+            pos = Random.insideUnitSphere * width;
+            pos.x += transform.position.x;
+            pos.z += transform.position.z;
+            pos.y = transform.position.y - y;
+            ray.transform.position = pos;
         }
 	}
 	

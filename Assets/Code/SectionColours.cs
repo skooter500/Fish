@@ -74,7 +74,7 @@ public class SectionColours : MonoBehaviour {
         if (lerpColors)
         {
             lerper.gameObjects.Add(segments[0]);
-            lerper.from.Add(segments[0].GetComponent<Renderer>().material.color);
+            lerper.from.Add(segments[0].GetComponentInChildren<Renderer>().material.color);
             lerper.to.Add(Pallette.Random());            
             lerper.StartLerping();
         }

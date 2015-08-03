@@ -76,7 +76,7 @@ public class SliceWorld : MonoBehaviour {
                 pos.z = front + (z * gap);
                 pos.y = transform.position.y;
                 thisNoiseStart.y += (noiseDelta.y * z * sliceCount.y);
-                if (!first && (Random.Range(0.0f, 1.0f) > 0.5f))
+                if (!first && z != 0 && z != zCount - 1 && x!= 0 && x != xCount - 1 && Random.Range(0.0f, 1.0f) > 0.8f)
                 {
                     pos.y = lastY - 1000; // 500 pixels below the height of the last sliceform
                     CreateLifeForm(pos);                    

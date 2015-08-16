@@ -40,7 +40,7 @@ public class SliceWorld : MonoBehaviour {
         //pos.y += Random.Range(-200, 200);
         gameObject.transform.position = pos;
 
-        sliceForm.size = new Vector3(1000, 10000, 1000);
+        sliceForm.size = new Vector3(2000, 10000, 2000);
         sliceForm.sliceCount = sliceCount;
         sliceForm.noiseDelta = noiseDelta;
         sliceForm.noiseStart = noise;
@@ -76,7 +76,7 @@ public class SliceWorld : MonoBehaviour {
                 pos.z = front + (z * gap);
                 pos.y = transform.position.y;
                 thisNoiseStart.y += (noiseDelta.y * z * sliceCount.y);
-                if (!first && z != 0 && z != zCount - 1 && x!= 0 && x != xCount - 1 && Random.Range(0.0f, 1.0f) > 0.8f)
+                if (!first && z != 0 && z != zCount - 1 && x!= 0 && x != xCount - 1 && Random.Range(0.0f, 1.0f) > 0.6f)
                 {
                     pos.y = lastY - 1000; // 500 pixels below the height of the last sliceform
                     CreateLifeForm(pos);                    

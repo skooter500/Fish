@@ -82,6 +82,7 @@ public class ForceController : MonoBehaviour {
         float speed = this.speed;
 
         float runAxis = Input.GetAxis("Run Axis");
+        float angularSpeed = 60.0f;
 
         if (Input.GetKey(KeyCode.LeftShift) || runAxis != 0)
         {
@@ -109,11 +110,11 @@ public class ForceController : MonoBehaviour {
         }
         if (Input.GetKey(KeyCode.Q))
         {
-            Roll(-Time.deltaTime * speed);
+            Roll(-Time.deltaTime * angularSpeed);
         }
         if (Input.GetKey(KeyCode.E))
         {
-            Roll(Time.deltaTime * speed);
+            Roll(Time.deltaTime * angularSpeed);
         }
         //BoidManager.PrintVector("OVR Forward: ", ovrCamera.transform.forward);
 
@@ -121,16 +122,16 @@ public class ForceController : MonoBehaviour {
         mouseY = Input.GetAxis("Mouse Y");
 
 
-        Yaw(mouseX);
-        float contYaw = Input.GetAxis("Yaw Axis") *0.5f;
+        Yaw(mouseX * Time.deltaTime * angularSpeed);
+        float contYaw = Input.GetAxis("Yaw Axis");
         float contPitch = Input.GetAxis("Pitch Axis");
-        Yaw(contYaw);
+        Yaw(contYaw * Time.deltaTime * angularSpeed);
 
         // If in Rift mode, dont pitch
         if (ovrCamera == null)
         {
-            Pitch(-mouseY);
-            Pitch(contPitch);
+            Pitch(-mouseY * Time.deltaTime * angularSpeed);
+            Pitch(contPitch * Time.deltaTime * angularSpeed);
         }
         else
         {

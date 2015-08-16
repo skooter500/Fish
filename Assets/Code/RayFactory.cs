@@ -25,6 +25,7 @@ public class RayFactory : MonoBehaviour {
             pos.z += transform.position.z;
             pos.y = transform.position.y - y;
             ray.transform.position = pos;
+            ray.transform.parent = transform;
         }
 	}
 	

@@ -10,9 +10,18 @@ public class ColorLerper : MonoBehaviour {
     public List<Color> to = new List<Color>();
     public float t = 1.0f;
     public float speed;
-	// Use this for initialization
-	void Start () {
+	
+
+    public ColorLerper()
+    {
         speed = 0.5f;
+    }
+
+	void Start () {
+        if (speed == 0)
+        {
+            speed = 0.5f;
+        }
 	}
 	
     public void Clear()

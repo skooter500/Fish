@@ -7,13 +7,21 @@ public class ForceController : MonoBehaviour {
     Vector3 velocity;
 	Camera ovrCamera;
     float speed = 200.0f;
+
+    public bool vrMode;
+
+    public ForceController()
+    {
+        vrMode = true;
+    }
+
     // Use this for initialization
     void Start()
     {
         Cursor.visible = false;
         Cursor.lockState = CursorLockMode.Locked;
 
-        if (GameObject.FindGameObjectWithTag("ovrplayer") != null)
+        if (vrMode && GameObject.FindGameObjectWithTag("ovrplayer") != null)
         {
             ovrCamera = GameObject.FindGameObjectWithTag("ovrplayer").GetComponentInChildren<Camera>();
         }

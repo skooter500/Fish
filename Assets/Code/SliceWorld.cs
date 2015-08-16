@@ -4,6 +4,10 @@ using System.Collections.Generic;
 
 public class SliceWorld : MonoBehaviour {
 
+    [HideInInspector]
+    public List<GameObject> forms;
+    
+
     public List<GameObject> formPrefabs;
     public Vector2 noiseDelta;
     public Vector2 sliceCount;
@@ -15,15 +19,27 @@ public class SliceWorld : MonoBehaviour {
 
     public bool createLifeForms;
 
+    public float probabilityOfEmpty;
+    public float probabilityOfSlice;
+    public float probabilityOfCreature;
+
+
     public SliceWorld()
     {
         xCount = 5;
         zCount = 5;
         gap = 2000;
+
+        probabilityOfEmpty = 0.5f;
+        probabilityOfSlice = 0.25f;
+        probabilityOfCreature = 0.25f;
+
         nextLifeForm = 0;
         createLifeForms = false;
         noiseDelta = new Vector2(0.2f, 0.2f);
         sliceCount = new Vector2(5, 5);
+        forms = new List<GameObject>();
+
     }
 
     private SliceForm CreateSliceForm(Vector3 pos, Vector2 noise)
@@ -63,7 +79,7 @@ public class SliceWorld : MonoBehaviour {
         int xMid = xCount / 2;
         int zMid = zCount / 2;
         Vector2 noiseStart = Random.insideUnitCircle * 1000;
-        float lastY = 0;
+        float lastY = transform.position.y;
         bool first = true;
         for (int x = 0; x < xCount; x ++)
         {
@@ -75,21 +91,18 @@ public class SliceWorld : MonoBehaviour {
             {                
                 pos.z = front + (z * gap);
                 pos.y = transform.position.y;
-                thisNoiseStart.y += (noiseDelta.y * z * sliceCount.y);
-                if (!first && z != 0 && z != zCount - 1 && x!= 0 && x != xCount - 1 && Random.Range(0.0f, 1.0f) > 0.6f)
+                thisNoiseStart.y += (noiseDelta.y * z * sliceCount.y);             
+                float prob = Random.Range(0.0f, 1.0f);
+                if (prob > probabilityOfEmpty && prob < probabilityOfEmpty + probabilityOfCreature)
                 {
-                    pos.y = lastY - 1000; // 500 pixels below the height of the last sliceform
-                    CreateLifeForm(pos);                    
+                    GameObject lifeForm = CreateLifeForm(pos);
+                    lifeForm.transform.parent = transform;
                 }
-                else
+                else if (prob > probabilityOfEmpty + probabilityOfCreature)
                 {
                     SliceForm sf = CreateSliceForm(pos, noiseStart);
-                    pos.y += 100;
-                    lastY = sf.maxY;
-                    first = false;
                 }
                 noiseStart.x += noiseDelta.x * sliceCount.x;
-
 
                 //if ((x == xMid || x == xMid - 1) && (z == zMid || z == zMid - 1))
                 //{
@@ -103,44 +116,43 @@ public class SliceWorld : MonoBehaviour {
         }
       }
 
-    private void CreateLifeForm(Vector3 pos)
+    private GameObject CreateLifeForm(Vector3 pos)
     {
         GameObject form = Instantiate(formPrefabs[nextLifeForm]);
         form.SetActive(true);
         form.transform.position = pos;
         nextLifeForm = (nextLifeForm + 1) % formPrefabs.Count;
-
+        forms.Add(form);
+        return form;
     }
 	
-	// Update is called once per frame
-	void Update () {
-        //float width = xCount * gap;
-        //float depth = zCount * gap;
-        //float left = transform.position.x - (width / 2);
-        //float front = transform.position.z - (depth / 2);
+    void Update()
+    {
+        // Deactivate forms that are too far from the player to be perceived
+        int formsActive = 0;
+        float activateDistance = gap * 2f;
+        for (int i = 0; i < forms.Count; i++)
+        {
+            float distToPlayer = Vector3.Distance(Player.Instance.transform.position, forms[i].transform.position);
+            if (distToPlayer < activateDistance)
+            {
+                if (!forms[i].activeSelf)
+                {
+                    forms[i].SetActive(true);                    
+                }
+                BGE.BoidManager.PrintVector("FormPos: ", forms[i].transform.position);
+                BGE.BoidManager.PrintFloat("Distance: ", Vector3.Distance(Player.Instance.transform.position, forms[i].transform.position));
+                formsActive++;
 
-        //int xMid = xCount / 2;
-        //int zMid = zCount / 2;
-        //float height = -500;
-        //for (int x = 0; x < xCount; x++)
-        //{
-        //    Vector3 pos = new Vector3();
-        //    pos.x = left + (x * gap);
-        //    Vector3[] points = new Vector3[2];
-        //    points[0] = new Vector3(pos.x, height, front);
-        //    points[1] = new Vector3(pos.x, height, front + depth);
-        //    BGE.LineDrawer.DrawLine(points[0], points[1], Color.cyan);
-        //}
-
-        //for (int z = 0; z < zCount; z++)
-        //{
-        //    Vector3 pos = new Vector3();
-        //    pos.z = front + (z * gap);
-        //    Vector3[] points = new Vector3[2];
-        //    points[0] = new Vector3(left, height, pos.z);
-        //    points[1] = new Vector3(left + width, height, pos.z);
-        //    BGE.LineDrawer.DrawLine(points[0], points[1], Color.cyan);
-        //}
-
-	}
+            }
+            else
+            {
+                if (forms[i].activeSelf)
+                {
+                    forms[i].SetActive(false);
+                }
+            }
+        }
+        BGE.BoidManager.PrintFloat("Forms active: ", formsActive);
+    }
 }

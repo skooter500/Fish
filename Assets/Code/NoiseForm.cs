@@ -4,7 +4,7 @@ using System.Collections;
 public class NoiseForm : MonoBehaviour {
 
     public Vector3 size; 
-    public Vector2 sliceCount; // The number of slices on each axis
+    public Vector2 cellCount; // The number of slices on each axis
     public Vector2 noiseStart;
     public Vector2 noiseDelta;
     public Color color;
@@ -19,11 +19,11 @@ public class NoiseForm : MonoBehaviour {
     Vector2[] uvSeq = new Vector2[] { new Vector2(0, 0), new Vector2(0, 1), new Vector2(1f, 1)
                                       , new Vector2(1f, 1), new Vector2(1f, 0), new Vector2(0, 0)
                                 };
-
     [HideInInspector]
     public float maxY;
 
     private bool generated = false;
+    TextureGenerator textureGenerator;
 
     public static Color HexToColor(string hex)
     {
@@ -44,7 +44,7 @@ public class NoiseForm : MonoBehaviour {
     public NoiseForm()
     {
         size = new Vector3(100, 100, 100);
-        sliceCount = new Vector3(10, 10);
+        cellCount = new Vector3(10, 10);
         noiseStart = new Vector2(0, 0);
         noiseDelta = new Vector2(0.1f, 0.1f);
 
@@ -54,38 +54,6 @@ public class NoiseForm : MonoBehaviour {
     public void OnDrawGizmos()
     {
         Gizmos.DrawWireCube(transform.position, size);
-    }
-
-    public Texture2D CreateTexture()
-    {
-        /*
-        Texture2D texture = new Texture2D(2, 1, TextureFormat.RGBAFloat, false);
-        texture.filterMode = FilterMode.Point;
-
-        texture.SetPixel(0, 0, Color.red);
-        texture.SetPixel(1, 0, Color.green);
-        */
-        
-        int width = 1;
-        int height = 1;
-
-        Texture2D texture = new Texture2D(width, height, TextureFormat.RGBAFloat, false);
-        texture.filterMode = FilterMode.Point;
-
-        Color c = color;
-        //color.a = 0.5f;
-
-        for (int y = 0 ; y < height ; y ++)
-        {
-            for (int x = 0 ; x < width ; x ++)
-            {
-                texture.SetPixel(x, y, c);
-                //texture.SetPixel(x, y, (x < width / 2) ? horizontalColour : verticalColour);
-            }
-        }
-        
-        texture.Apply();
-        return texture;
     }
 
     void MaxY(float y)
@@ -102,8 +70,7 @@ public class NoiseForm : MonoBehaviour {
         {
             return;
         }
-        sliceSize = new Vector2(size.x / sliceCount.x, size.z / sliceCount.y);
-
+        sliceSize = new Vector2(size.x / cellCount.x, size.z / cellCount.y);
 
         MeshRenderer renderer = gameObject.AddComponent<MeshRenderer>();
         renderer.shadowCastingMode = UnityEngine.Rendering.ShadowCastingMode.On;
@@ -118,7 +85,7 @@ public class NoiseForm : MonoBehaviour {
 
         int verticesPerSegment = 6;
 
-        int vertexCount = verticesPerSegment * ((int)sliceCount.x) * ((int)sliceCount.y);
+        int vertexCount = verticesPerSegment * ((int)cellCount.x) * ((int)cellCount.y);
         
         initialVertices = new Vector3[vertexCount];
         initialNormals = new Vector3[vertexCount];
@@ -132,10 +99,10 @@ public class NoiseForm : MonoBehaviour {
         int vertex = 0;
         float noiseHeight = size.y;
 
-        for (int z = 0; z < sliceCount.y; z++)
+        for (int z = 0; z < cellCount.y; z++)
         {
             noiseXY.x = noiseStart.x;
-            for (int x = 0; x < sliceCount.x; x++)
+            for (int x = 0; x < cellCount.x; x++)
             {
 
                 int startVertex = vertex;
@@ -157,7 +124,7 @@ public class NoiseForm : MonoBehaviour {
                     // Make the normals, UV's and triangles                
                 for (int i = 0; i < 6; i++)
                 {
-                    initialNormals[startVertex + i] = (i < 6) ? Vector3.forward : -Vector3.forward;
+                    //initialNormals[startVertex + i] = (i < 6) ? Vector3.forward : -Vector3.forward;
                     meshUv[startVertex + i] = uvSeq[i % 6];
                     meshTriangles[startVertex + i] = startVertex + i;
                 }                
@@ -166,34 +133,37 @@ public class NoiseForm : MonoBehaviour {
             noiseXY.y += noiseDelta.y;
         }
 
+        for (int i = 0; i < meshUv.Length; i++)
+        {
+            Vector3 v = initialVertices[i] + (size / 2.0f);
+            meshUv[i] = new Vector2(v.x / size.x, v.z / size.z);
+        }
 
         mesh.vertices = initialVertices;
         mesh.uv = meshUv;
         mesh.triangles = meshTriangles;
         mesh.RecalculateNormals();
 
-        renderer.material.color = color;
+        //renderer.material.color = color;
 
-        //Shader shader = Shader.Find("Diffuse");
-        //Material material = new Material(shader);
-        //material.color = horizontalColour;
-        ////material.mainTexture = CreateTexture(); 
-        //if (renderer == null)
-        //{
-        //    Debug.Log("Renderer is null 2");
-        //}
-        //else
-        //{
-        //    renderer.material = material;
-        //}
-
+        Shader shader = Shader.Find("Diffuse");
+        Material material = new Material(shader);
+        
+        textureGenerator = GetComponent<TextureGenerator>();
+        if (textureGenerator != null)
+        {
+            material.mainTexture = textureGenerator.GenerateTexture();
+        }
+        else
+        {
+            material.color = color;
+        }
+        renderer.material = material;
         generated = true;
     }
 	
 	void Start () {
-
-        Generate();
-	    
+        Generate();	    
 	}
 	
 	// Update is called once per frame

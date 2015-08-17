@@ -130,7 +130,7 @@ public class SliceWorld : MonoBehaviour {
     {
         // Deactivate forms that are too far from the player to be perceived
         int formsActive = 0;
-        float activateDistance = gap * 2f;
+        float activateDistance = gap;
         for (int i = 0; i < forms.Count; i++)
         {
             float distToPlayer = Vector3.Distance(Player.Instance.transform.position, forms[i].transform.position);

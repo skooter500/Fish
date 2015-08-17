@@ -27,6 +27,7 @@ public class Mother : MonoBehaviour {
     }
 	// Use this for initialization
 	void Start () {
+        
         GameObject lastBigFlock = null;
         int lastPrefabIndex = -1;
         for (int ring = 1; ring <= rings; ring++)

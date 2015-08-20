@@ -153,7 +153,7 @@ public class GameOfLifeTextureGenerator : TextureGenerator
         return count;
     }
 
-    public void Randomise()
+    public void Randomise()  
     {
         for (int row = 0; row < boardHeight; row++)
         {

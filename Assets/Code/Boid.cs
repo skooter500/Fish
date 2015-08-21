@@ -923,14 +923,14 @@ namespace BGE
 
             // the length of this global-upward-pointing vector controls the vehicle's
             // tendency to right itself as it is rolled over from turning acceleration
-            Vector3 globalUp = new Vector3(0, 0.2f, 0);
+            Vector3 globalUp = new Vector3(0, 1.2f, 0);
             // acceleration points toward the center of local path curvature, the
             // length determines how much the vehicle will roll while turning
             Vector3 accelUp = acceleration * 0.05f;
             // combined banking, sum of UP due to turning and global UP
             Vector3 bankUp = accelUp + globalUp;
             // blend bankUp into vehicle's UP basis vector
-            smoothRate = timeDelta * 3.0f;
+            smoothRate = timeDelta;// * 3.0f;
             Vector3 tempUp = transform.up;
             Utilities.BlendIntoAccumulator(smoothRate, bankUp, ref tempUp);
             

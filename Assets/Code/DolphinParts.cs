@@ -179,8 +179,8 @@ namespace BGE
                 bankAngle = boid.bankAngle;
                 BoidManager.PrintFloat("Bank angle: ", bankAngle);
 
-                float threshold = 0.001f;
-                float turnSpeed = maxTurnSpeed * Mathf.Deg2Rad * Time.deltaTime;
+                float threshold = 0.01f;
+                float turnSpeed = maxTurnSpeed * Mathf.Deg2Rad * Time.deltaTime * 1.1f;
                 if (boid.clamping && lastClamp)
                 {
                     turning = true;
@@ -234,7 +234,7 @@ namespace BGE
 
             if (forwardWiggle)
             {
-                float speed = (boidSpeedToAnimationSpeed) ? boid.acceleration.magnitude : 20.0f;
+                float speed = (boidSpeedToAnimationSpeed) ? boid.velocity.magnitude : 20.0f;
                 theta += speed * angularVelocity * Time.deltaTime * speedMultiplier;
                 if (theta >= Mathf.PI * 2.0f)
                 {

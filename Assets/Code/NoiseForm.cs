@@ -73,7 +73,7 @@ public class NoiseForm : MonoBehaviour {
         sliceSize = new Vector2(size.x / cellCount.x, size.z / cellCount.y);
 
         MeshRenderer renderer = gameObject.AddComponent<MeshRenderer>();
-        renderer.shadowCastingMode = UnityEngine.Rendering.ShadowCastingMode.On;
+        renderer.shadowCastingMode = UnityEngine.Rendering.ShadowCastingMode.Off;
         renderer.receiveShadows = true;
         if (renderer == null)
         {

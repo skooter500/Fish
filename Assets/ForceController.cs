@@ -94,7 +94,7 @@ public class ForceController : MonoBehaviour {
 
         if (Input.GetKey(KeyCode.LeftShift) || runAxis != 0)
         {
-            speed *= 3f;
+            speed *= 10f;
         }
 
         if (Input.GetKey(KeyCode.W))

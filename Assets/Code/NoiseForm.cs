@@ -1,15 +1,16 @@
 ﻿using UnityEngine;
-using System.Collections;
+using System.Collections.Generic;
+using BGE;
 
 public class NoiseForm : MonoBehaviour {
 
     public Vector3 size; 
-    public Vector2 cellCount; // The number of slices on each axis
+    public Vector2 noiseCount; 
     public Vector2 noiseStart;
     public Vector2 noiseDelta;
     public Color color;
 
-    Vector2 sliceSize; // The size of each slice
+    Vector2 tileSize; // The size of each tile
 
     Vector3[] initialVertices;
     Vector3[] initialNormals;
@@ -24,6 +25,56 @@ public class NoiseForm : MonoBehaviour {
 
     private bool generated = false;
     TextureGenerator textureGenerator;
+
+    GameObject[] tiles = new GameObject[9];
+    GameObject player;
+    Texture2D texture;
+
+    private void CreateTiles()
+    {
+
+        Vector3 botomLeft = (transform.position - (size / 2.0f)) - size;
+        int tileIndex = 0;
+        for (int z = 0; z < 3; z ++)
+        {
+            for (int x = 0; x < 3; x ++)
+            {
+                GameObject tile = new GameObject();
+                tile.transform.parent = this.transform;
+                MeshRenderer renderer = tile.AddComponent<MeshRenderer>();
+                renderer.shadowCastingMode = UnityEngine.Rendering.ShadowCastingMode.Off;
+                renderer.receiveShadows = true;
+                Mesh mesh = tile.AddComponent<MeshFilter>().mesh;
+                mesh.Clear();
+                Vector3 tilePos = new Vector3();
+                tilePos.x = botomLeft.x + (x * size.x) + (size.x / 2.0f);
+                tilePos.z = botomLeft.z + (z * size.z) + (size.z / 2.0f);
+                tilePos.y = transform.position.y;
+                tile.transform.position = tilePos;
+
+                Vector2 noiseXY = new Vector2();
+                noiseXY.x = noiseStart.x + (noiseCount.x * noiseDelta.x * x);
+                noiseXY.y = noiseStart.y + (noiseCount.y * noiseDelta.y * z);
+                GenerateTile(tile, noiseXY, noiseDelta, color);
+                tiles[tileIndex ++] = tile;
+            }
+        }
+    }
+
+    private int FindTile(Vector3 pos)
+    {
+        for (int i = 0; i < tiles.Length; i ++)
+        {
+            GameObject tile = tiles[i];
+            Vector3 tileBottomLeft = tile.transform.position - (size / 2);
+            Vector3 tileTopRight = tile.transform.position + (size / 2);
+            if (pos.x > tileBottomLeft.x && pos.x <= tileTopRight.x && pos.z > tileBottomLeft.z && pos.z <= tileTopRight.z)
+            {
+                return i;
+            }
+        }
+        return -1;
+    }
 
     public static Color HexToColor(string hex)
     {
@@ -44,7 +95,7 @@ public class NoiseForm : MonoBehaviour {
     public NoiseForm()
     {
         size = new Vector3(100, 100, 100);
-        cellCount = new Vector3(10, 10);
+        noiseCount = new Vector3(10, 10);
         noiseStart = new Vector2(0, 0);
         noiseDelta = new Vector2(0.1f, 0.1f);
 
@@ -63,29 +114,22 @@ public class NoiseForm : MonoBehaviour {
             maxY = y;
         }
     }
-
-    public void Generate()
+    
+    public void GenerateTile(GameObject tile, Vector2 noiseStart, Vector2 noiseDelta, Color color)
     {
         if (generated)
         {
-            return;
+            //return;
         }
-        sliceSize = new Vector2(size.x / cellCount.x, size.z / cellCount.y);
+        tileSize = new Vector2(size.x / noiseCount.x, size.z / noiseCount.y);
 
-        MeshRenderer renderer = gameObject.AddComponent<MeshRenderer>();
-        renderer.shadowCastingMode = UnityEngine.Rendering.ShadowCastingMode.Off;
-        renderer.receiveShadows = true;
-        if (renderer == null)
-        {
-            Debug.Log("Renderer is null 1");
-        }
-
-        Mesh mesh = gameObject.AddComponent<MeshFilter>().mesh;
+        MeshRenderer renderer = tile.GetComponent<MeshRenderer>();
+        Mesh mesh = tile.GetComponent<MeshFilter>().mesh;
         mesh.Clear();
 
         int verticesPerSegment = 6;
 
-        int vertexCount = verticesPerSegment * ((int)cellCount.x) * ((int)cellCount.y);
+        int vertexCount = verticesPerSegment * ((int)noiseCount.x) * ((int)noiseCount.y);
         
         initialVertices = new Vector3[vertexCount];
         initialNormals = new Vector3[vertexCount];
@@ -98,20 +142,30 @@ public class NoiseForm : MonoBehaviour {
         Vector2 noiseXY = noiseStart;
         int vertex = 0;
         float noiseHeight = size.y;
-
-        for (int z = 0; z < cellCount.y; z++)
+        bool mountain = true;
+        for (int z = 0; z < noiseCount.y; z++)
         {
             noiseXY.x = noiseStart.x;
-            for (int x = 0; x < cellCount.x; x++)
+            for (int x = 0; x < noiseCount.x; x++)
             {
 
                 int startVertex = vertex;
                 // Calculate some stuff
-                Vector3 sliceBottomLeft = bottomLeft + new Vector3(x * sliceSize.x, Mathf.PerlinNoise(noiseXY.x, noiseXY.y) * noiseHeight, z * sliceSize.y);
-                Vector3 sliceTopLeft = bottomLeft + new Vector3(x * sliceSize.x, Mathf.PerlinNoise(noiseXY.x, noiseXY.y + noiseDelta.y) * noiseHeight, (z + 1) * sliceSize.y);
-                Vector3 sliceTopRight = bottomLeft + new Vector3((x + 1) * sliceSize.x, Mathf.PerlinNoise(noiseXY.x + noiseDelta.x, noiseXY.y + noiseDelta.y) * noiseHeight, (z + 1) * sliceSize.y);
-                Vector3 sliceBottomRight = bottomLeft + new Vector3((x + 1) * sliceSize.x, Mathf.PerlinNoise(noiseXY.x + noiseDelta.x, noiseXY.y) * noiseHeight, z * sliceSize.y);
+                Vector3 sliceBottomLeft = bottomLeft + new Vector3(x * tileSize.x, Mathf.PerlinNoise(noiseXY.x, noiseXY.y) * noiseHeight, z * tileSize.y);
+                Vector3 sliceTopLeft = bottomLeft + new Vector3(x * tileSize.x, Mathf.PerlinNoise(noiseXY.x, noiseXY.y + noiseDelta.y) * noiseHeight, (z + 1) * tileSize.y);
+                Vector3 sliceTopRight = bottomLeft + new Vector3((x + 1) * tileSize.x, Mathf.PerlinNoise(noiseXY.x + noiseDelta.x, noiseXY.y + noiseDelta.y) * noiseHeight, (z + 1) * tileSize.y);
+                Vector3 sliceBottomRight = bottomLeft + new Vector3((x + 1) * tileSize.x, Mathf.PerlinNoise(noiseXY.x + noiseDelta.x, noiseXY.y) * noiseHeight, z * tileSize.y);
                 MaxY(sliceTopLeft.y); MaxY(sliceTopRight.y);
+
+                if (mountain)
+                {
+                    float thetaX = Mathf.PI * ((float)x / (float)noiseCount.x - 1);
+                    float thetaZ = Mathf.PI * ((float)z / (float)noiseCount.y - 1);
+                    sliceBottomLeft.y += Mathf.Sin(thetaX) * Mathf.Sin(thetaZ) * noiseHeight;
+                    sliceTopLeft.y += Mathf.Sin(thetaX) * Mathf.Sin(thetaZ) * noiseHeight;
+                    sliceTopRight.y += Mathf.Sin(thetaX) * Mathf.Sin(thetaZ) * noiseHeight;
+                    sliceBottomRight.y += Mathf.Sin(thetaX) * Mathf.Sin(thetaZ) * noiseHeight;
+                }
                     
                 // Make the vertices
                 initialVertices[vertex++] = sliceBottomLeft;
@@ -121,7 +175,7 @@ public class NoiseForm : MonoBehaviour {
                 initialVertices[vertex++] = sliceBottomRight;
                 initialVertices[vertex++] = sliceBottomLeft;
 
-                    // Make the normals, UV's and triangles                
+                // Make the normals, UV's and triangles                
                 for (int i = 0; i < 6; i++)
                 {
                     //initialNormals[startVertex + i] = (i < 6) ? Vector3.forward : -Vector3.forward;
@@ -149,25 +203,109 @@ public class NoiseForm : MonoBehaviour {
         Shader shader = Shader.Find("Diffuse");
         Material material = new Material(shader);
         
-        textureGenerator = GetComponent<TextureGenerator>();
-        if (textureGenerator != null)
+        if (texture != null)
         {
-            material.mainTexture = textureGenerator.GenerateTexture();
+            material.mainTexture = texture;
         }
         else
         {
             material.color = color;
         }
         renderer.material = material;
-        generated = true;
     }
 	
 	void Start () {
-        Generate();	    
-	}
-	
-	// Update is called once per frame
-	void Update () {
-	
-	}
+        textureGenerator = GetComponent<TextureGenerator>();
+        if (textureGenerator != null)
+        {
+            texture = textureGenerator.GenerateTexture();
+        }
+        CreateTiles();
+        player = GameObject.FindGameObjectWithTag("ovrplayer");
+    }
+
+    Vector2 CalculateNoiseTileStart(Vector2 tileOffset)
+    {
+        Vector2 noiseTileStart = new Vector2();
+        noiseTileStart.x = noiseStart.x + (noiseDelta.x * noiseCount.x * tileOffset.x);
+        noiseTileStart.y = noiseStart.y + (noiseDelta.y * noiseCount.y * tileOffset.y);
+        return noiseTileStart;
+    }
+
+    void Update () {
+        int tileIndex = FindTile(player.transform.position);
+        BoidManager.PrintFloat("Tile: ", tileIndex);
+        //TODO: Diagonals
+        switch (tileIndex)
+        {
+            case 7:
+            {
+                // Player has moved forward one tile, so regenerate the 0th row
+                GenerateTile(tiles[0], CalculateNoiseTileStart(new Vector2(0, 3)), noiseDelta, color);
+                GenerateTile(tiles[1], CalculateNoiseTileStart(new Vector2(1, 3)), noiseDelta, color);
+                GenerateTile(tiles[2], CalculateNoiseTileStart(new Vector2(2, 3)), noiseDelta, color);
+                tiles[0].transform.Translate(new Vector3(0, 0, size.z * 3.0f));
+                tiles[1].transform.Translate(new Vector3(0, 0, size.z * 3.0f));
+                tiles[2].transform.Translate(new Vector3(0, 0, size.z * 3.0f));
+                GameObject[] newTiles = new GameObject[9];
+                newTiles[0] = tiles[3]; newTiles[1] = tiles[4]; newTiles[2] = tiles[5];
+                newTiles[3] = tiles[6]; newTiles[4] = tiles[7]; newTiles[5] = tiles[8];
+                newTiles[6] = tiles[0]; newTiles[7] = tiles[1]; newTiles[8] = tiles[2];
+                noiseStart = CalculateNoiseTileStart(new Vector2(0, 1));
+                tiles = newTiles;
+                break;
+            }
+            case 1:
+            {
+                // Player has moved backward one tile, so regenerate the 2nd row
+                GenerateTile(tiles[6], CalculateNoiseTileStart(new Vector2(0, -1)), noiseDelta, Pallette.Random());
+                GenerateTile(tiles[7], CalculateNoiseTileStart(new Vector2(1, -1)), noiseDelta, Pallette.Random());
+                GenerateTile(tiles[8], CalculateNoiseTileStart(new Vector2(2, -1)), noiseDelta, Pallette.Random());
+                tiles[6].transform.Translate(new Vector3(0, 0, -size.z * 3.0f));
+                tiles[7].transform.Translate(new Vector3(0, 0, -size.z * 3.0f));
+                tiles[8].transform.Translate(new Vector3(0, 0, -size.z * 3.0f));
+                GameObject[] newTiles = new GameObject[9];
+                newTiles[0] = tiles[6]; newTiles[1] = tiles[7]; newTiles[2] = tiles[8];
+                newTiles[3] = tiles[0]; newTiles[4] = tiles[1]; newTiles[5] = tiles[2];
+                newTiles[6] = tiles[3]; newTiles[7] = tiles[4]; newTiles[8] = tiles[5];
+                noiseStart = CalculateNoiseTileStart(new Vector2(0, -1));
+                tiles = newTiles;
+                break;
+            }
+            case 3:
+            {
+                // Player has moved left one tile, so regenerate the 0th col
+                GenerateTile(tiles[2], CalculateNoiseTileStart(new Vector2(-1, 0)), noiseDelta, Pallette.Random());
+                GenerateTile(tiles[5], CalculateNoiseTileStart(new Vector2(-1, 1)), noiseDelta, Pallette.Random());
+                GenerateTile(tiles[8], CalculateNoiseTileStart(new Vector2(-1, 2)), noiseDelta, Pallette.Random());
+                tiles[2].transform.Translate(new Vector3(-size.x * 3.0f, 0, 0));
+                tiles[5].transform.Translate(new Vector3(-size.x * 3.0f, 0, 0));
+                tiles[8].transform.Translate(new Vector3(-size.x * 3.0f, 0, 0));
+                GameObject[] newTiles = new GameObject[9];
+                newTiles[0] = tiles[2]; newTiles[1] = tiles[0]; newTiles[2] = tiles[1];
+                newTiles[3] = tiles[5]; newTiles[4] = tiles[3]; newTiles[5] = tiles[4];
+                newTiles[6] = tiles[8]; newTiles[7] = tiles[6]; newTiles[8] = tiles[7];
+                noiseStart = CalculateNoiseTileStart(new Vector2(-1, 0));
+                tiles = newTiles;
+                break;
+            }
+            case 5:
+            {
+                // Player has moved left one tile, so regenerate the 0th col
+                GenerateTile(tiles[0], CalculateNoiseTileStart(new Vector2(3, 0)), noiseDelta, Pallette.Random());
+                GenerateTile(tiles[3], CalculateNoiseTileStart(new Vector2(3, 1)), noiseDelta, Pallette.Random());
+                GenerateTile(tiles[6], CalculateNoiseTileStart(new Vector2(3, 2)), noiseDelta, Pallette.Random());
+                tiles[0].transform.Translate(new Vector3(size.x * 3.0f, 0, 0));
+                tiles[3].transform.Translate(new Vector3(size.x * 3.0f, 0, 0));
+                tiles[6].transform.Translate(new Vector3(size.x * 3.0f, 0, 0));
+                GameObject[] newTiles = new GameObject[9];
+                newTiles[0] = tiles[1]; newTiles[1] = tiles[2]; newTiles[2] = tiles[0];
+                newTiles[3] = tiles[4]; newTiles[4] = tiles[5]; newTiles[5] = tiles[3];
+                newTiles[6] = tiles[7]; newTiles[7] = tiles[8]; newTiles[8] = tiles[6];
+                noiseStart = CalculateNoiseTileStart(new Vector2(1, 0));
+                tiles = newTiles;
+                break;
+            }
+        }
+    }
 }

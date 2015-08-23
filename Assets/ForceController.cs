@@ -124,6 +124,15 @@ public class ForceController : MonoBehaviour {
         {
             Roll(Time.deltaTime * angularSpeed);
         }
+        if (Input.GetKey(KeyCode.R))
+        {
+            Fly(speed);
+        }
+        if (Input.GetKey(KeyCode.F))
+        {
+            Fly(-speed);
+        }
+
         //BoidManager.PrintVector("OVR Forward: ", ovrCamera.transform.forward);
 
         mouseX = Input.GetAxis("Mouse X");

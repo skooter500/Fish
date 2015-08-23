@@ -282,15 +282,14 @@ public class NoiseForm : MonoBehaviour {
         Debug.Log(p);
         if (p < probabilityOfMountains)
         {
-            Debug.Log("Mountain");
             deformation = Deformation.mountain;
         } 
         else if (p >= probabilityOfMountains && p < probabilityOfMountains + probabilityOfCraters)
         {
-            Debug.Log("Crater");
             deformation = Deformation.crater;
         }
-        return EnsureAdjacentAreNot(noiseStart, deformation);
+        return deformation;
+        // return EnsureAdjacentAreNot(noiseStart, deformation);
     }
 
     void Start () {

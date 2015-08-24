@@ -6,7 +6,7 @@ public class ForceController : MonoBehaviour {
     float mass = 1.0f;
     Vector3 velocity;
 	Camera ovrCamera;
-    float speed = 200.0f;
+    float speed = 100.0f;
 
     public bool vrMode;
 

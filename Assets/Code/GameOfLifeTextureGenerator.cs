@@ -98,7 +98,9 @@ public class GameOfLifeTextureGenerator : TextureGenerator
         
         current = new bool[boardHeight, boardWidth];
         next = new bool[boardHeight, boardWidth];
-        //MakeGosperGun(boardWidth / 2, boardHeight / 2);        
+        // MakeGosperGun(boardWidth / 2, boardHeight / 2);
+        MakeTumbler(boardWidth / 2, boardHeight / 2);
+        
         Randomise();
     }
 

@@ -279,7 +279,6 @@ public class NoiseForm : MonoBehaviour {
         }
         Deformation deformation = Deformation.none; 
         float p = Random.Range(0.0f, 1.0f);
-        Debug.Log(p);
         if (p < probabilityOfMountains)
         {
             deformation = Deformation.mountain;

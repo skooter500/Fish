@@ -82,7 +82,7 @@ public class ForceController : MonoBehaviour {
             force += transform.right * units;
         }
     }
-
+    int test = 0;
     // Update is called once per frame
     void Update()
     {
@@ -99,6 +99,7 @@ public class ForceController : MonoBehaviour {
 
         if (Input.GetKey(KeyCode.W))
         {
+            Debug.Log("Walk " + (test++));
             Walk(speed);
         }
 

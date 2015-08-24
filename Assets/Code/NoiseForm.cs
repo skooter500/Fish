@@ -174,21 +174,22 @@ public class NoiseForm : MonoBehaviour {
                 float deformHeight = (deformation == Deformation.mountain) ? noiseHeight * 3.0f : - noiseHeight * 3.0f;
                 if (deformation == Deformation.mountain || deformation == Deformation.crater)
                 {
+                    float angle = Mathf.PI;
                     sliceBottomLeft.y +=
-                    Mathf.Sin(Utilities.Map(x, 0, noiseCount.x, 0, Mathf.PI))
-                    * Mathf.Sin(Utilities.Map(z, 0, noiseCount.y, 0, Mathf.PI))
+                    Mathf.Sin(Utilities.Map(x, 0, noiseCount.x, 0, angle))
+                    * Mathf.Sin(Utilities.Map(z, 0, noiseCount.y, 0, angle))
                     * deformHeight;
                     sliceTopLeft.y +=
-                        Mathf.Sin(Utilities.Map(x, 0, noiseCount.x, 0, Mathf.PI))
-                        * Mathf.Sin(Utilities.Map(z + 1, 0, noiseCount.y, 0, Mathf.PI))
+                        Mathf.Sin(Utilities.Map(x, 0, noiseCount.x, 0, angle))
+                        * Mathf.Sin(Utilities.Map(z + 1, 0, noiseCount.y, 0, angle))
                         * deformHeight;
                     sliceTopRight.y +=
-                        Mathf.Sin(Utilities.Map(x + 1, 0, noiseCount.x, 0, Mathf.PI))
-                        * Mathf.Sin(Utilities.Map(z + 1, 0, noiseCount.y, 0, Mathf.PI))
+                        Mathf.Sin(Utilities.Map(x + 1, 0, noiseCount.x, 0, angle))
+                        * Mathf.Sin(Utilities.Map(z + 1, 0, noiseCount.y, 0, angle))
                         * deformHeight;
                     sliceBottomRight.y +=
-                        Mathf.Sin(Utilities.Map(x + 1, 0, noiseCount.x, 0, Mathf.PI))
-                        * Mathf.Sin(Utilities.Map(z, 0, noiseCount.y, 0, Mathf.PI))
+                        Mathf.Sin(Utilities.Map(x + 1, 0, noiseCount.x, 0, angle))
+                        * Mathf.Sin(Utilities.Map(z, 0, noiseCount.y, 0, angle))
                         * deformHeight;
                 }               
                     
@@ -279,7 +280,6 @@ public class NoiseForm : MonoBehaviour {
         }
         Deformation deformation = Deformation.none; 
         float p = Random.Range(0.0f, 1.0f);
-        Debug.Log(p);
         if (p < probabilityOfMountains)
         {
             deformation = Deformation.mountain;

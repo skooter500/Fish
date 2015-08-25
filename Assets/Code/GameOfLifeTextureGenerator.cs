@@ -93,8 +93,8 @@ public class GameOfLifeTextureGenerator : TextureGenerator
             Debug.LogError("GameOfLifeTextureGenerator with no NoiseForm");
         }
 
-        boardWidth = (int)noiseForm.noiseCount.x;
-        boardHeight = (int)noiseForm.noiseCount.y;
+        boardWidth = (int)noiseForm.samplesPerTile.x;
+        boardHeight = (int)noiseForm.samplesPerTile.y;
         
         current = new bool[boardHeight, boardWidth];
         next = new bool[boardHeight, boardWidth];

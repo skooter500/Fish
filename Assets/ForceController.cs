@@ -99,7 +99,6 @@ public class ForceController : MonoBehaviour {
 
         if (Input.GetKey(KeyCode.W))
         {
-            Debug.Log("Walk " + (test++));
             Walk(speed);
         }
 
@@ -174,6 +173,6 @@ public class ForceController : MonoBehaviour {
         force = Vector3.zero;
         transform.position = pos;
 
-        velocity *= 0.999f;
+        velocity *= 0.995f;
     }
 }

@@ -177,14 +177,12 @@ namespace BGE
             {
                 float turnAngle = TurnAngle();
                 bankAngle = boid.bankAngle;
-                BoidManager.PrintFloat("Bank angle: ", bankAngle);
 
                 float threshold = 0.01f;
                 float turnSpeed = maxTurnSpeed * Mathf.Deg2Rad * Time.deltaTime * 1.1f;
                 if (boid.clamping && lastClamp)
                 {
                     turning = true;
-                    BoidManager.PrintMessage("Clamping: " + boid.clamping);
                     if (bankAngle < -threshold)
                     {
                         if (turnAngle > -maxTurnAngleRadians)
@@ -193,8 +191,6 @@ namespace BGE
                             head.transform.RotateAround(transform.TransformPoint(headRotPoint), transform.up, -turnSpeed);
                             tail.transform.RotateAround(transform.TransformPoint(tailRotPoint), transform.up, turnSpeed);
                             myBankAngle--;
-                            BoidManager.PrintMessage("Turning Left");
-                            
                         }
                     }
                     else if (bankAngle > threshold)
@@ -205,7 +201,6 @@ namespace BGE
                             head.transform.RotateAround(transform.TransformPoint(headRotPoint), transform.up, turnSpeed);
                             tail.transform.RotateAround(transform.TransformPoint(tailRotPoint), transform.up, -turnSpeed);
                             myBankAngle++;
-                            BoidManager.PrintMessage("Turning right");
                         }
                     }
                 }
@@ -217,13 +212,11 @@ namespace BGE
                     float rot = 0;
                     if (turnAngle < -turnThreshold)
                     {
-                        BoidManager.PrintMessage("Straightening right");
                         rot = turnSpeed;
                         myBankAngle += 1;
                     }
                     if (turnAngle > turnThreshold)
                     {
-                        BoidManager.PrintMessage("Straightening left");
                         rot = -turnSpeed;
                         myBankAngle -= 1;
                     }

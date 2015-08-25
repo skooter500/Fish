@@ -11,8 +11,8 @@ public class RandomTextureGenerator:TextureGenerator
 
     public override Texture2D GenerateTexture()
     {
-        int width = (int)noiseForm.noiseCount.x;
-        int height = (int)noiseForm.noiseCount.y;
+        int width = (int)noiseForm.samplesPerTile.x;
+        int height = (int)noiseForm.samplesPerTile.y;
 
         Texture2D texture = new Texture2D(width, height, TextureFormat.RGBAFloat, false);
         texture.filterMode = FilterMode.Point;

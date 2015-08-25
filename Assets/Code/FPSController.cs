@@ -8,7 +8,7 @@ namespace BGE
     public class FPSController : MonoBehaviour
     {
         Camera ovrCamera;
-        float speed = 50.0f;
+        float speed = 500.0f;
         // Use this for initialization
         void Start()
         {

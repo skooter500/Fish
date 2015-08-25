@@ -5,18 +5,15 @@ using BGE;
 public class NoiseForm : MonoBehaviour {
 
     public Vector3 size; 
-    public Vector2 noiseCount; 
-    public Vector2 noiseStart;
-    public Vector2 noiseDelta;
+    public Vector2 samplesPerTile; 
     public Color color;
-
     [Range(0.0f, 1.0f)]
     public float probabilityOfMountains;
 
     [Range(0.0f, 1.0f)]
     public float probabilityOfCraters;
 
-    Vector2 tileSize; // The size of each tile
+    Vector2 tileSize; // The size of each tile in cells
 
     Vector3[] initialVertices;
     Vector3[] initialNormals;
@@ -40,6 +37,8 @@ public class NoiseForm : MonoBehaviour {
     public enum Deformation { none, mountain, crater};
 
     Dictionary<string, Deformation> deformations = new Dictionary<string, Deformation>();
+
+    Sampler[] samplers;
     
     private void CreateTiles()
     {
@@ -62,11 +61,7 @@ public class NoiseForm : MonoBehaviour {
                 tilePos.z = botomLeft.z + (z * size.z) + (size.z / 2.0f);
                 tilePos.y = transform.position.y;
                 tile.transform.position = tilePos;
-
-                Vector2 noiseXY = new Vector2();
-                noiseXY.x = noiseStart.x + (noiseCount.x * noiseDelta.x * x);
-                noiseXY.y = noiseStart.y + (noiseCount.y * noiseDelta.y * z);                
-                GenerateTile(tile, noiseXY, noiseDelta, color);
+                GenerateTile(tile, new Vector2(x, z));
                 tiles[tileIndex ++] = tile;
             }
         }
@@ -106,9 +101,7 @@ public class NoiseForm : MonoBehaviour {
     public NoiseForm()
     {
         size = new Vector3(100, 100, 100);
-        noiseCount = new Vector3(10, 10);
-        noiseStart = new Vector2(0, 0);
-        noiseDelta = new Vector2(0.1f, 0.1f);
+        samplesPerTile = new Vector3(10, 10);
         probabilityOfCraters = 0.3f;
         probabilityOfMountains = 0.3f;
         color = HexToColor("0x2A59AD");
@@ -126,22 +119,22 @@ public class NoiseForm : MonoBehaviour {
             maxY = y;
         }
     }
-    
-    public void GenerateTile(GameObject tile, Vector2 noiseStart, Vector2 noiseDelta, Color color)
+
+    public void GenerateTile(GameObject tileGameObject, Vector2 tile)
     {
         if (generated)
         {
             //return;
         }
-        tileSize = new Vector2(size.x / noiseCount.x, size.z / noiseCount.y);
+        tileSize = new Vector2(size.x / samplesPerTile.x, size.z / samplesPerTile.y);
 
-        MeshRenderer renderer = tile.GetComponent<MeshRenderer>();
-        Mesh mesh = tile.GetComponent<MeshFilter>().mesh;
+        MeshRenderer renderer = tileGameObject.GetComponent<MeshRenderer>();
+        Mesh mesh = tileGameObject.GetComponent<MeshFilter>().mesh;
         mesh.Clear();
 
         int verticesPerSegment = 6;
 
-        int vertexCount = verticesPerSegment * ((int)noiseCount.x) * ((int)noiseCount.y);
+        int vertexCount = verticesPerSegment * ((int)samplesPerTile.x) * ((int)samplesPerTile.y);
         
         initialVertices = new Vector3[vertexCount];
         initialNormals = new Vector3[vertexCount];
@@ -151,47 +144,57 @@ public class NoiseForm : MonoBehaviour {
 
         Vector3 bottomLeft = -(size / 2);
 
-        Vector2 noiseXY = noiseStart;
         int vertex = 0;
-        float noiseHeight = size.y;
-        Deformation deformation = CalculateDeformationType(noiseStart);
-        for (int z = 0; z < noiseCount.y; z++)
+        Deformation deformation = Deformation.none;
+
+        // What cell is the origin for this tile
+        Vector2 tileCellOrigin = new Vector2(tile.x * samplesPerTile.x, tile.y * samplesPerTile.y);
+        for (int z = 0; z < samplesPerTile.y; z++)
         {
-            noiseXY.x = noiseStart.x;
-            for (int x = 0; x < noiseCount.x; x++)
+            for (int x = 0; x < samplesPerTile.x; x++)
             {
                 int startVertex = vertex;
                 // Calculate some stuff
-                Vector3 sliceBottomLeft = bottomLeft + new Vector3(x * tileSize.x, Mathf.PerlinNoise(noiseXY.x, noiseXY.y) * noiseHeight, z * tileSize.y);
-                Vector3 sliceTopLeft = bottomLeft + new Vector3(x * tileSize.x, Mathf.PerlinNoise(noiseXY.x, noiseXY.y + noiseDelta.y) * noiseHeight, (z + 1) * tileSize.y);
-                Vector3 sliceTopRight = bottomLeft + new Vector3((x + 1) * tileSize.x, Mathf.PerlinNoise(noiseXY.x + noiseDelta.x, noiseXY.y + noiseDelta.y) * noiseHeight, (z + 1) * tileSize.y);
-                Vector3 sliceBottomRight = bottomLeft + new Vector3((x + 1) * tileSize.x, Mathf.PerlinNoise(noiseXY.x + noiseDelta.x, noiseXY.y) * noiseHeight, z * tileSize.y);
+                Vector2 cell = new Vector2(tileCellOrigin.x + x, tileCellOrigin.y + z);
+                Vector3 sliceBottomLeft = bottomLeft + new Vector3(x * tileSize.x, 0, z * tileSize.y);
+                Vector3 sliceTopLeft = bottomLeft + new Vector3(x * tileSize.x, 0, (z + 1) * tileSize.y);
+                Vector3 sliceTopRight = bottomLeft + new Vector3((x + 1) * tileSize.x, 0 , (z + 1) * tileSize.y);
+                Vector3 sliceBottomRight = bottomLeft + new Vector3((x + 1) * tileSize.x, 0, z * tileSize.y);
                 MaxY(sliceTopLeft.y); MaxY(sliceTopRight.y);
 
-                int hashcode = tile.transform.position.GetHashCode();
+                // Add all the samplers together to make the height
+                foreach(Sampler sampler in samplers)
+                {
+                    sliceBottomLeft.y += sampler.SampleCell(cell.x, cell.y);
+                    sliceTopLeft.y += sampler.SampleCell(cell.x, cell.y + 1);
+                    sliceTopRight.y += sampler.SampleCell(cell.x + 1, cell.y + 1);
+                    sliceBottomRight.y += sampler.SampleCell(cell.x + 1, cell.y);
+                }
+
+                int hashcode = tileGameObject.transform.position.GetHashCode();
                 
 
-                float deformHeight = (deformation == Deformation.mountain) ? noiseHeight * 3.0f : - noiseHeight * 3.0f;
-                if (deformation == Deformation.mountain || deformation == Deformation.crater)
-                {
-                    float angle = Mathf.PI;
-                    sliceBottomLeft.y +=
-                    Mathf.Sin(Utilities.Map(x, 0, noiseCount.x, 0, angle))
-                    * Mathf.Sin(Utilities.Map(z, 0, noiseCount.y, 0, angle))
-                    * deformHeight;
-                    sliceTopLeft.y +=
-                        Mathf.Sin(Utilities.Map(x, 0, noiseCount.x, 0, angle))
-                        * Mathf.Sin(Utilities.Map(z + 1, 0, noiseCount.y, 0, angle))
-                        * deformHeight;
-                    sliceTopRight.y +=
-                        Mathf.Sin(Utilities.Map(x + 1, 0, noiseCount.x, 0, angle))
-                        * Mathf.Sin(Utilities.Map(z + 1, 0, noiseCount.y, 0, angle))
-                        * deformHeight;
-                    sliceBottomRight.y +=
-                        Mathf.Sin(Utilities.Map(x + 1, 0, noiseCount.x, 0, angle))
-                        * Mathf.Sin(Utilities.Map(z, 0, noiseCount.y, 0, angle))
-                        * deformHeight;
-                }               
+                //float deformHeight = (deformation == Deformation.mountain) ? noiseHeight * 3.0f : - noiseHeight * 3.0f;
+                //if (deformation == Deformation.mountain || deformation == Deformation.crater)
+                //{
+                //    float angle = Mathf.PI;
+                //    sliceBottomLeft.y +=
+                //    Mathf.Sin(Utilities.Map(x, 0, samplesPerTile.x, 0, angle))
+                //    * Mathf.Sin(Utilities.Map(z, 0, samplesPerTile.y, 0, angle))
+                //    * deformHeight;
+                //    sliceTopLeft.y +=
+                //        Mathf.Sin(Utilities.Map(x, 0, samplesPerTile.x, 0, angle))
+                //        * Mathf.Sin(Utilities.Map(z + 1, 0, samplesPerTile.y, 0, angle))
+                //        * deformHeight;
+                //    sliceTopRight.y +=
+                //        Mathf.Sin(Utilities.Map(x + 1, 0, samplesPerTile.x, 0, angle))
+                //        * Mathf.Sin(Utilities.Map(z + 1, 0, samplesPerTile.y, 0, angle))
+                //        * deformHeight;
+                //    sliceBottomRight.y +=
+                //        Mathf.Sin(Utilities.Map(x + 1, 0, samplesPerTile.x, 0, angle))
+                //        * Mathf.Sin(Utilities.Map(z, 0, samplesPerTile.y, 0, angle))
+                //        * deformHeight;
+                //}               
                     
                 // Make the vertices
                 initialVertices[vertex++] = sliceBottomLeft;
@@ -208,9 +211,7 @@ public class NoiseForm : MonoBehaviour {
                     meshUv[startVertex + i] = uvSeq[i % 6];
                     meshTriangles[startVertex + i] = startVertex + i;
                 }                
-                noiseXY.x += noiseDelta.x;
             }
-            noiseXY.y += noiseDelta.y;
         }
 
         for (int i = 0; i < meshUv.Length; i++)
@@ -240,56 +241,60 @@ public class NoiseForm : MonoBehaviour {
         renderer.material = material;
     }
 
-    private Deformation EnsureAdjacentAreNot(Vector2 noiseStart, Deformation deformation)
-    {
-        Deformation ret = deformation;
-        Vector2 noiseVal;
-        // Check Forward
-        noiseVal = CalculateNoiseTileStartFromTile(Vector2.up, noiseStart);
-        if (deformations.ContainsKey("" + noiseVal) && deformations["" + noiseVal] == deformation && (deformation == Deformation.mountain || deformation == Deformation.crater))
-        {
-            ret = Deformation.none;
-        }
-        // Check behind
-        noiseVal = CalculateNoiseTileStartFromTile(Vector2.down, noiseStart);
-        if (deformations.ContainsKey("" + noiseVal) && deformations["" + noiseVal] == deformation && (deformation == Deformation.mountain || deformation == Deformation.crater))
-        {
-            ret = Deformation.none;
-        }
-        // Check left
-        noiseVal = CalculateNoiseTileStartFromTile(Vector2.left, noiseStart);
-        if (deformations.ContainsKey("" + noiseVal) && deformations["" + noiseVal] == deformation && (deformation == Deformation.mountain || deformation == Deformation.crater))
-        {
-            ret = Deformation.none;
-        }
-        // Check right
-        noiseVal = CalculateNoiseTileStartFromTile(Vector2.right, noiseStart);
-        if (deformations.ContainsKey("" + noiseVal) && deformations["" + noiseVal] == deformation && (deformation == Deformation.mountain || deformation == Deformation.crater))
-        {
-            ret = Deformation.none;
-        }
-        deformations["" + noiseStart] = ret;
-        return ret;
-    }
+    //private Deformation EnsureAdjacentAreNot(Vector2 noiseStart, Deformation deformation)
+    //{
+    //    Deformation ret = deformation;
+    //    Vector2 noiseVal;
+    //    // Check Forward
+    //    noiseVal = CalculateNoiseTileStartFromTile(Vector2.up, noiseStart);
+    //    if (deformations.ContainsKey("" + noiseVal) && deformations["" + noiseVal] == deformation && (deformation == Deformation.mountain || deformation == Deformation.crater))
+    //    {
+    //        ret = Deformation.none;
+    //    }
+    //    // Check behind
+    //    noiseVal = CalculateNoiseTileStartFromTile(Vector2.down, noiseStart);
+    //    if (deformations.ContainsKey("" + noiseVal) && deformations["" + noiseVal] == deformation && (deformation == Deformation.mountain || deformation == Deformation.crater))
+    //    {
+    //        ret = Deformation.none;
+    //    }
+    //    // Check left
+    //    noiseVal = CalculateNoiseTileStartFromTile(Vector2.left, noiseStart);
+    //    if (deformations.ContainsKey("" + noiseVal) && deformations["" + noiseVal] == deformation && (deformation == Deformation.mountain || deformation == Deformation.crater))
+    //    {
+    //        ret = Deformation.none;
+    //    }
+    //    // Check right
+    //    noiseVal = CalculateNoiseTileStartFromTile(Vector2.right, noiseStart);
+    //    if (deformations.ContainsKey("" + noiseVal) && deformations["" + noiseVal] == deformation && (deformation == Deformation.mountain || deformation == Deformation.crater))
+    //    {
+    //        ret = Deformation.none;
+    //    }
+    //    deformations["" + noiseStart] = ret;
+    //    return ret;
+    //}
 
     private Deformation CalculateDeformationType(Vector2 noiseStart)
     {
-        if (deformations.ContainsKey("" + noiseStart))
-        {
-            return deformations["" + noiseStart];
-        }
-        Deformation deformation = Deformation.none; 
-        float p = Random.Range(0.0f, 1.0f);
-        if (p < probabilityOfMountains)
-        {
-            deformation = Deformation.mountain;
-        } 
-        else if (p >= probabilityOfMountains && p < probabilityOfMountains + probabilityOfCraters)
-        {
-            deformation = Deformation.crater;
-        }
-        //return deformation;
-        return EnsureAdjacentAreNot(noiseStart, deformation);
+
+        return Deformation.none;
+
+       // if (deformations.ContainsKey("" + noiseStart))
+       // {
+       //     return deformations["" + noiseStart];
+       // }
+       // Deformation deformation = Deformation.none; 
+       // float p = Random.Range(0.0f, 1.0f);
+       // if (p < probabilityOfMountains)
+       // {
+       //     deformation = Deformation.mountain;
+       // } 
+       // else if (p >= probabilityOfMountains && p < probabilityOfMountains + probabilityOfCraters)
+       // {
+       //     deformation = Deformation.crater;
+       // }
+        
+       //return deformation;
+        //return EnsureAdjacentAreNot(noiseStart, deformation);
     }
 
     void Start () {
@@ -298,26 +303,33 @@ public class NoiseForm : MonoBehaviour {
         {
             texture = textureGenerator.GenerateTexture();
         }
+
+        samplers = GetComponents<Sampler>();
+        if (samplers == null)
+        {
+            Debug.Log("Sampler is null! Add a sampler to the NoiseForm");
+        }
+        else
+        {
+            foreach(Sampler sampler in samplers)
+            {
+                sampler.samplesPerTile = samplesPerTile;
+            }            
+        }
+
         CreateTiles();
         Random.seed = 42;
         player = GameObject.FindGameObjectWithTag("ovrplayer");
     }
 
-    Vector2 CalculateNoiseTileStart(Vector2 tileOffset)
+    private void TraanslateSamplersByTile(float x, float y)
     {
-        Vector2 noiseTileStart = new Vector2();
-        noiseTileStart.x = noiseStart.x + (noiseDelta.x * noiseCount.x * tileOffset.x);
-        noiseTileStart.y = noiseStart.y + (noiseDelta.y * noiseCount.y * tileOffset.y);
-        return noiseTileStart;
+        foreach(Sampler sampler in samplers)
+        {
+            sampler.TranslateOriginByTile(x, y);
+        }
     }
-
-    Vector2 CalculateNoiseTileStartFromTile(Vector2 tileOffset, Vector2 tilePos)
-    {
-        Vector2 noiseTileStart = new Vector2();
-        noiseTileStart.x = tilePos.x + (noiseDelta.x * noiseCount.x * tileOffset.x);
-        noiseTileStart.y = tilePos.y + (noiseDelta.y * noiseCount.y * tileOffset.y);
-        return noiseTileStart;
-    }
+   
 
     void Update () {
         int tileIndex = FindTile(player.transform.position);
@@ -327,19 +339,22 @@ public class NoiseForm : MonoBehaviour {
         {
             case 7:
             {
-                    // Player has moved forward one tile, so regenerate the 0th row
+                // Player has moved forward one tile
                 GameObject[] newTiles = new GameObject[9];                
                 newTiles[0] = tiles[3]; newTiles[1] = tiles[4]; newTiles[2] = tiles[5];
                 newTiles[3] = tiles[6]; newTiles[4] = tiles[7]; newTiles[5] = tiles[8];
                 newTiles[6] = tiles[0]; newTiles[7] = tiles[1]; newTiles[8] = tiles[2];
                 tiles = newTiles;
-                GenerateTile(tiles[6], CalculateNoiseTileStart(new Vector2(0, 3)), noiseDelta, color);
-                GenerateTile(tiles[7], CalculateNoiseTileStart(new Vector2(1, 3)), noiseDelta, color);
-                GenerateTile(tiles[8], CalculateNoiseTileStart(new Vector2(2, 3)), noiseDelta, color);
+                // Move the sampler forward one tile
+                TraanslateSamplersByTile(0, 1); 
+                GenerateTile(tiles[6], new Vector2(0, 2));
+                GenerateTile(tiles[7], new Vector2(1, 2));
+                GenerateTile(tiles[8], new Vector2(2, 2));
+                // Translate the tiles forward
                 tiles[6].transform.Translate(new Vector3(0, 0, size.z * 3.0f));
                 tiles[7].transform.Translate(new Vector3(0, 0, size.z * 3.0f));
                 tiles[8].transform.Translate(new Vector3(0, 0, size.z * 3.0f));
-                noiseStart = CalculateNoiseTileStart(new Vector2(0, 1));
+                
                 break;
             }
             case 1:
@@ -350,13 +365,14 @@ public class NoiseForm : MonoBehaviour {
                 newTiles[3] = tiles[0]; newTiles[4] = tiles[1]; newTiles[5] = tiles[2];
                 newTiles[6] = tiles[3]; newTiles[7] = tiles[4]; newTiles[8] = tiles[5];
                 tiles = newTiles;
-                GenerateTile(tiles[0], CalculateNoiseTileStart(new Vector2(0, -1)), noiseDelta, color);
-                GenerateTile(tiles[1], CalculateNoiseTileStart(new Vector2(1, -1)), noiseDelta, color);
-                GenerateTile(tiles[2], CalculateNoiseTileStart(new Vector2(2, -1)), noiseDelta, color);
+                // Move the sampler backward one tile
+                TraanslateSamplersByTile(0, -1); 
+                GenerateTile(tiles[0], new Vector2(0, 0));
+                GenerateTile(tiles[1], new Vector2(1, 0));
+                GenerateTile(tiles[2], new Vector2(2, 0));
                 tiles[0].transform.Translate(new Vector3(0, 0, -size.z * 3.0f));
                 tiles[1].transform.Translate(new Vector3(0, 0, -size.z * 3.0f));
                 tiles[2].transform.Translate(new Vector3(0, 0, -size.z * 3.0f));                
-                noiseStart = CalculateNoiseTileStart(new Vector2(0, -1));                
                 break;
             }
             case 3:
@@ -367,13 +383,13 @@ public class NoiseForm : MonoBehaviour {
                 newTiles[3] = tiles[5]; newTiles[4] = tiles[3]; newTiles[5] = tiles[4];
                 newTiles[6] = tiles[8]; newTiles[7] = tiles[6]; newTiles[8] = tiles[7];
                 tiles = newTiles;
-                GenerateTile(tiles[0], CalculateNoiseTileStart(new Vector2(-1, 0)), noiseDelta, color);
-                GenerateTile(tiles[3], CalculateNoiseTileStart(new Vector2(-1, 1)), noiseDelta, color);
-                GenerateTile(tiles[6], CalculateNoiseTileStart(new Vector2(-1, 2)), noiseDelta, color);
+                TraanslateSamplersByTile(-1, 0); 
+                GenerateTile(tiles[0], new Vector2(0, 0));
+                GenerateTile(tiles[3], new Vector2(0, 1));
+                GenerateTile(tiles[6], new Vector2(0, 2));
                 tiles[0].transform.Translate(new Vector3(-size.x * 3.0f, 0, 0));
                 tiles[3].transform.Translate(new Vector3(-size.x * 3.0f, 0, 0));
                 tiles[6].transform.Translate(new Vector3(-size.x * 3.0f, 0, 0));
-                noiseStart = CalculateNoiseTileStart(new Vector2(-1, 0));
                 break;
             }
             case 5:
@@ -384,13 +400,13 @@ public class NoiseForm : MonoBehaviour {
                 newTiles[3] = tiles[4]; newTiles[4] = tiles[5]; newTiles[5] = tiles[3];
                 newTiles[6] = tiles[7]; newTiles[7] = tiles[8]; newTiles[8] = tiles[6];
                 tiles = newTiles;
-                GenerateTile(tiles[2], CalculateNoiseTileStart(new Vector2(3, 0)), noiseDelta, color);
-                GenerateTile(tiles[5], CalculateNoiseTileStart(new Vector2(3, 1)), noiseDelta, color);
-                GenerateTile(tiles[8], CalculateNoiseTileStart(new Vector2(3, 2)), noiseDelta, color);
+                TraanslateSamplersByTile(1, 0); 
+                GenerateTile(tiles[2], new Vector2(2, 0));
+                GenerateTile(tiles[5], new Vector2(2, 1));
+                GenerateTile(tiles[8], new Vector2(2, 2));
                 tiles[2].transform.Translate(new Vector3(size.x * 3.0f, 0, 0));
                 tiles[5].transform.Translate(new Vector3(size.x * 3.0f, 0, 0));
                 tiles[8].transform.Translate(new Vector3(size.x * 3.0f, 0, 0));
-                noiseStart = CalculateNoiseTileStart(new Vector2(1, 0));
                 break;
             }
         }

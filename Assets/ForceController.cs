@@ -90,7 +90,7 @@ public class ForceController : MonoBehaviour {
     int test = 0;
 
     // Update is called once per frame
-    void Update()
+    void FixedUpdate()
     {
         float mouseX, mouseY;
         float speed = this.speed;

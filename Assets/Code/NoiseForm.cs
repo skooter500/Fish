@@ -66,7 +66,6 @@ public class NoiseForm : MonoBehaviour {
                 GenerateTile(tile, new Vector2(x, z));
                 tile.GetComponent<MeshCollider>().sharedMesh = mesh;
                 tiles[tileIndex ++] = tile;
-                MeshCollider meshCollider = tile.AddComponent<MeshCollider>();
 
                 // Add Physics and colliders
                 //Rigidbody rigidBody = tile.AddComponent<Rigidbody>();

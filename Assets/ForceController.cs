@@ -2,13 +2,12 @@
 using System.Collections;
 
 public class ForceController : MonoBehaviour {
-    Vector3 force;
-    float mass = 1.0f;
-    Vector3 velocity;
-	Camera ovrCamera;
+    Camera ovrCamera;
     float speed = 100.0f;
 
     public bool vrMode;
+
+    Rigidbody rigidBody;
 
     public ForceController()
     {
@@ -21,16 +20,22 @@ public class ForceController : MonoBehaviour {
         Cursor.visible = false;
         Cursor.lockState = CursorLockMode.Locked;
 
+        rigidBody = GetComponent<Rigidbody>();
+
         if (vrMode && GameObject.FindGameObjectWithTag("ovrplayer") != null)
         {
             ovrCamera = GameObject.FindGameObjectWithTag("ovrplayer").GetComponentInChildren<Camera>();
         }
+
+        rigidBody.freezeRotation = true;
     }
 
     void Yaw(float angle)
     {
-        Quaternion rot = Quaternion.AngleAxis(angle, Vector3.up);
-        transform.rotation = rot * transform.rotation;
+        Debug.Log("Yaw" + angle);
+        rigidBody.AddTorque(Vector3.up * angle * 1000);
+        //Quaternion rot = Quaternion.AngleAxis(angle, Vector3.up);
+        //transform.rotation = rot * transform.rotation;
     }
 
     void Roll(float angle)
@@ -58,31 +63,33 @@ public class ForceController : MonoBehaviour {
     {
         if (ovrCamera != null)
         {
-            force += ovrCamera.transform.forward * units;
+            rigidBody.AddForce(ovrCamera.transform.forward* units);
         }
         else
         {
-            force += transform.forward * units;
+            rigidBody.AddForce(transform.forward* units);
         }
     }
 
     void Fly(float units)
     {
-        force += Vector3.up * units;
+        rigidBody.AddForce(Vector3.up* units);
     }
 
     void Strafe(float units)
     {
         if (ovrCamera != null)
         {
-            force += ovrCamera.transform.right * units;
+            rigidBody.AddForce(ovrCamera.transform.right* units);
         }
         else
         {
-            force += transform.right * units;
+            rigidBody.AddForce(transform.right * units);
         }
     }
+
     int test = 0;
+
     // Update is called once per frame
     void Update()
     {
@@ -165,14 +172,5 @@ public class ForceController : MonoBehaviour {
         {
             Strafe(contStrafe * speed);
         }
-
-        Vector3 accel = force / mass;
-        velocity += accel * Time.deltaTime;
-        Vector3 pos = transform.position;
-        pos += velocity * Time.deltaTime;
-        force = Vector3.zero;
-        transform.position = pos;
-
-        velocity *= 0.995f;
     }
 }

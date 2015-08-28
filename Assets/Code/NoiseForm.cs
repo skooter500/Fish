@@ -63,6 +63,12 @@ public class NoiseForm : MonoBehaviour {
                 tile.transform.position = tilePos;
                 GenerateTile(tile, new Vector2(x, z));
                 tiles[tileIndex ++] = tile;
+
+                // Add Physics and colliders
+                //Rigidbody rigidBody = tile.AddComponent<Rigidbody>();
+                //rigidBody.isKinematic = true;
+                MeshCollider meshCollider = tile.AddComponent<MeshCollider>();
+                meshCollider.sharedMesh = mesh;
             }
         }
     }

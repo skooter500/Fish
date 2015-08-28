@@ -56,19 +56,23 @@ public class NoiseForm : MonoBehaviour {
                 renderer.receiveShadows = true;
                 Mesh mesh = tile.AddComponent<MeshFilter>().mesh;
                 mesh.Clear();
+                tile.AddComponent<MeshCollider>();
                 Vector3 tilePos = new Vector3();
                 tilePos.x = botomLeft.x + (x * size.x) + (size.x / 2.0f);
                 tilePos.z = botomLeft.z + (z * size.z) + (size.z / 2.0f);
                 tilePos.y = transform.position.y;
                 tile.transform.position = tilePos;
+                
                 GenerateTile(tile, new Vector2(x, z));
+                tile.GetComponent<MeshCollider>().sharedMesh = mesh;
                 tiles[tileIndex ++] = tile;
+                MeshCollider meshCollider = tile.AddComponent<MeshCollider>();
 
                 // Add Physics and colliders
                 //Rigidbody rigidBody = tile.AddComponent<Rigidbody>();
                 //rigidBody.isKinematic = true;
-                MeshCollider meshCollider = tile.AddComponent<MeshCollider>();
-                meshCollider.sharedMesh = mesh;
+               
+                
             }
         }
     }
@@ -218,6 +222,8 @@ public class NoiseForm : MonoBehaviour {
                     meshTriangles[startVertex + i] = startVertex + i;
                 }                
             }
+            tileGameObject.GetComponent<MeshCollider>().sharedMesh = mesh;
+
         }
 
         for (int i = 0; i < meshUv.Length; i++)
@@ -245,8 +251,11 @@ public class NoiseForm : MonoBehaviour {
             material.color = color;
         }
         renderer.material = material;
-    }
 
+        tileGameObject.GetComponent<MeshCollider>().sharedMesh = null;
+        tileGameObject.GetComponent<MeshCollider>().sharedMesh = mesh;
+    }
+    
     //private Deformation EnsureAdjacentAreNot(Vector2 noiseStart, Deformation deformation)
     //{
     //    Deformation ret = deformation;

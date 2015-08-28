@@ -27,15 +27,14 @@ public class ForceController : MonoBehaviour {
             ovrCamera = GameObject.FindGameObjectWithTag("ovrplayer").GetComponentInChildren<Camera>();
         }
 
-        rigidBody.freezeRotation = true;
+        rigidBody.freezeRotation = true;        
     }
 
     void Yaw(float angle)
     {
-        Debug.Log("Yaw" + angle);
-        rigidBody.AddTorque(Vector3.up * angle * 100000);
-        //Quaternion rot = Quaternion.AngleAxis(angle, Vector3.up);
-        //transform.rotation = rot * transform.rotation;
+        //rigidBody.AddTorque(Vector3.up * angle * 150);
+        Quaternion rot = Quaternion.AngleAxis(angle, transform.up);
+        transform.rotation = rot * transform.rotation;
     }
 
     void Roll(float angle)
@@ -73,7 +72,7 @@ public class ForceController : MonoBehaviour {
 
     void Fly(float units)
     {
-        rigidBody.AddForce(Vector3.up* units);
+        rigidBody.AddForce(Vector3.up * units);
     }
 
     void Strafe(float units)
@@ -171,6 +170,6 @@ public class ForceController : MonoBehaviour {
         if (Mathf.Abs(contStrafe) > 0.1f)
         {
             Strafe(contStrafe * speed);
-        }
+        }      
     }
 }

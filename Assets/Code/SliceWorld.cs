@@ -134,7 +134,7 @@ public class SliceWorld : MonoBehaviour {
         for (int i = 0; i < forms.Count; i++)
         {
             float distToPlayer = Vector3.Distance(Player.Instance.transform.position, forms[i].transform.position);
-            if (distToPlayer < activateDistance)
+            if (distToPlayer < activateDistance * 2)
             {
                 if (!forms[i].activeSelf)
                 {

@@ -87,8 +87,8 @@ public class SliceForm : MonoBehaviour {
         {
             for (int x = 0 ; x < width ; x ++)
             {
-                texture.SetPixel(x, y, c);
-                //texture.SetPixel(x, y, (x < width / 2) ? horizontalColour : verticalColour);
+                //texture.SetPixel(x, y, c);
+                texture.SetPixel(x, y, (x < width / 2) ? horizontalColour : verticalColour);
             }
         }
         

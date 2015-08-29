@@ -26,7 +26,10 @@ public class Mother : MonoBehaviour {
         activateDistance = 2000;
     }
 	// Use this for initialization
-	void Start () {
+	/// <summary>
+    /// 
+    /// </summary>
+    void Start () {
         GameObject lastBigFlock = null;
         int lastPrefabIndex = -1;
         for (int ring = 1; ring <= rings; ring++)
@@ -92,8 +95,8 @@ public class Mother : MonoBehaviour {
             boid.path.Waypoints.Add(point + transform.position); 
             lastPoint = point;            
         }
-        boid.followPathEnabled = true;
-        boid.drawVectors = false;
+        boid.followPathEnabled = false;
+        boid.drawVectors = true;
         boid.path.Looped = true;
         boid.drawGizmos = false;
         boid.maxSpeed = 20.0f;
@@ -130,6 +133,7 @@ public class Mother : MonoBehaviour {
                     // Remember the old position
                     forms[i].GetComponent<Flock>().oldFlockCenter = forms[i].GetComponent<Flock>().flockCenter;
                     forms[i].SetActive(false);
+                    forms[i].GetComponent<ColorBomb>().running = false;
                 }
             }
         }

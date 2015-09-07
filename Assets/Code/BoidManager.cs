@@ -22,7 +22,9 @@ namespace BGE
         // Use this for initialization
         GUIStyle style = new GUIStyle();
 
+        [HideInInspector]
         public GameObject cameraBoid;
+        public GameObject player;
         
         public void OnDrawGizmos()
         {
@@ -73,6 +75,14 @@ namespace BGE
             style.normal.textColor = Color.white;
 
             obstacles = GameObject.FindObjectsOfType(typeof(Obstacle)) as Obstacle[];
+
+            player = (GameObject)GameObject.FindGameObjectWithTag("Player");
+
+            Renderer[] renderers = cameraBoid.GetComponentsInChildren<Renderer>();
+            foreach(Renderer renderer in renderers)
+            {
+                renderer.enabled = false;
+            }
         }
 
         public static BoidManager Instance
@@ -134,12 +144,10 @@ namespace BGE
             PrintFloat("Min FPS: ", (int)minFPS);
             PrintFloat("Max FPS: ", (int)maxFPS);      
             
-
-            GameObject player = (GameObject) GameObject.FindGameObjectWithTag("Player");
             if (player != null && cameraBoid != null)
             {
-                //player.transform.position = cameraBoid.transform.position;
-                //player.transform.forward = cameraBoid.transform.forward;
+                player.transform.position = cameraBoid.transform.position;
+                player.transform.parent = cameraBoid.transform;
             }
         }
 

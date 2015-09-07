@@ -21,7 +21,7 @@ public class RandomTextureGenerator:TextureGenerator
         {
             for (int x = 0; x < width; x++)
             {
-                texture.SetPixel(x, y, Pallette.Random());
+                texture.SetPixel(x, y, Palette.Random());
             }
         }
 

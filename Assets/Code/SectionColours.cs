@@ -34,7 +34,7 @@ public class SectionColours : MonoBehaviour {
 
         foreach (GameObject segment in segments)
         {
-            Utilities.RecursiveSetColor(segment, Pallette.Random());
+            Utilities.RecursiveSetColor(segment, Palette.Random());
         }
 	}
 
@@ -75,12 +75,12 @@ public class SectionColours : MonoBehaviour {
         {
             lerper.gameObjects.Add(segments[0]);
             lerper.from.Add(segments[0].GetComponentInChildren<Renderer>().material.color);
-            lerper.to.Add(Pallette.Random());            
+            lerper.to.Add(Palette.Random());            
             lerper.StartLerping();
         }
         else
         {
-            segments[0].GetComponent<Renderer>().material.color = Pallette.RandomNot(segments[0].GetComponent<Renderer>().material.color);
+            segments[0].GetComponent<Renderer>().material.color = Palette.RandomNot(segments[0].GetComponent<Renderer>().material.color);
         }
     }
 
@@ -101,7 +101,7 @@ public class SectionColours : MonoBehaviour {
             yield return new WaitForSeconds(fleeColourWait);
             foreach (GameObject segment in segments)
             {
-                segment.GetComponent<Renderer>().material.color = Pallette.Random();
+                segment.GetComponent<Renderer>().material.color = Palette.Random();
             }
             yield return new WaitForSeconds(fleeColourWait);
              

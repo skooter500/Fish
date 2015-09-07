@@ -24,7 +24,7 @@ public class StripeColours : MonoBehaviour {
 
         for (int i = 0; i < numStripes; i ++)
         {
-            Color color = Pallette.Random();
+            Color color = Palette.Random();
             sequence.Add(color);
         }
 

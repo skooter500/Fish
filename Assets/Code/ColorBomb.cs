@@ -38,9 +38,9 @@ public class ColorBomb : MonoBehaviour {
         while (true)
         {
             Vector3 center = flock.flockCenter; // CenterOfMass();
-            Color color = Pallette.Random();
-            Color color1 = Pallette.RandomNot(color);
-            Color color2 = Pallette.RandomNot(color1);
+            Color color = Palette.Random();
+            Color color1 = Palette.RandomNot(color);
+            Color color2 = Palette.RandomNot(color1);
             float radius = 20;
             int boidsTagged = 0;
             while (boidsTagged < flock.boids.Count)

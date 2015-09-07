@@ -6,7 +6,7 @@ public class JellyColour : MonoBehaviour {
 	// Use this for initialization
 	void Start () {
         Renderer renderer = GetComponentInChildren<Renderer>();
-        renderer.material.color = Pallette.Random();
+        renderer.material.color = Palette.Random();
 
         GetComponent<ColorLerper>().gameObjects.Add(gameObject);
 	}

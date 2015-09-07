@@ -62,7 +62,7 @@ public class SliceWorld : MonoBehaviour {
         sliceForm.noiseStart = noise;
         sliceForm.noiseToBase = 0.2f;
         sliceForm.closed = false;
-        sliceForm.horizontalColour = sliceForm.verticalColour = Pallette.Random();
+        sliceForm.horizontalColour = sliceForm.verticalColour = Palette.Random();
         gameObject.transform.parent = transform;
         sliceForm.Generate();
         return sliceForm;

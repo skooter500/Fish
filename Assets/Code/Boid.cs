@@ -98,6 +98,7 @@ namespace BGE
         [Header("Follow Path")]                        
         public bool followPathEnabled;
         public float followPathWeight;
+        public bool ignoreHeight = false;
         public Path path = new Path();
 
         [Header("Pursuit")]
@@ -176,6 +177,10 @@ namespace BGE
         float timeDelta;
 
         Collider myCollider;
+
+        [Header("Gravity")]
+        public bool applyGravity = false;
+        public Vector3 gravity = new Vector3(0, -9, 0);
 
         public void OnDrawGizmos()
         {
@@ -740,10 +745,6 @@ namespace BGE
             return Seek(worldTargetOnY);
         }
 
-
-
-        
-
         Vector3 SceneAvoidance()
         {
             Vector3 force = Vector3.zero;
@@ -766,10 +767,11 @@ namespace BGE
             }
             
             // Check the bottom feeler and generate an upwards force
-            feeler = Vector3.forward;
-            feeler = Quaternion.AngleAxis(45, Vector3.right) * feeler;
-            feeler = transform.TransformDirection(feeler);
-            collided = Physics.Raycast(transform.position, feeler, out info, sceneAvoidanceFeelerDepth);
+            //feeler = Vector3.forward;
+            //feeler = Quaternion.AngleAxis(45, Vector3.right) * feeler;
+            //feeler = transform.TransformDirection(feeler);
+            //collided = Physics.Raycast(transform.position, feeler, out info, sceneAvoidanceFeelerDepth);
+            feeler = Vector3.down;
             if (collided && info.collider != myCollider)
             {
                 // Push me away in the direction of the up vector. 
@@ -907,6 +909,11 @@ namespace BGE
             {
                 smoothRate = Utilities.Clip(9.0f * timeDelta, 0.15f, 0.4f) / 2.0f;
                 Utilities.BlendIntoAccumulator(smoothRate, newAcceleration, ref acceleration);
+            }
+
+            if (applyGravity)
+            {
+                acceleration += gravity;
             }
 
             velocity += acceleration * timeDelta;
@@ -1472,8 +1479,17 @@ namespace BGE
 
         private Vector3 FollowPath()
         {
-            float epsilon = 5.0f;
-            float dist = (transform.position - path.NextWaypoint()).magnitude;
+            float epsilon = 200.0f;
+            float dist;
+            Vector3 nextWayPoint = path.NextWaypoint();
+
+            if (ignoreHeight)
+            {
+                nextWayPoint.y = transform.position.y;
+            }
+            
+            dist = (transform.position - path.NextWaypoint()).magnitude;
+            
             if (dist < epsilon)
             {
                 path.AdvanceToNext();

@@ -239,16 +239,7 @@ public class NoiseForm : MonoBehaviour {
         //renderer.material.color = color;
 
         Shader shader = Shader.Find("Diffuse");
-        Material material = new Material(shader);
-        
-        if (texture != null)
-        {
-            material.mainTexture = texture;
-        }
-        else
-        {
-            material.color = color;
-        }
+        Material material = new Material(shader);        
         renderer.material = material;
 
         tileGameObject.GetComponent<MeshCollider>().sharedMesh = null;
@@ -311,13 +302,7 @@ public class NoiseForm : MonoBehaviour {
         //return EnsureAdjacentAreNot(noiseStart, deformation);
     }
 
-    void Start () {
-        textureGenerator = GetComponent<TextureGenerator>();
-        if (textureGenerator != null)
-        {
-            texture = textureGenerator.GenerateTexture();
-        }
-
+    void Awake () {
         samplers = GetComponents<Sampler>();
         if (samplers == null)
         {
@@ -333,7 +318,20 @@ public class NoiseForm : MonoBehaviour {
 
         CreateTiles();
         Random.seed = 42;
-        player = GameObject.FindGameObjectWithTag("ovrplayer");
+        player = GameObject.FindGameObjectWithTag("Player");
+    }
+
+    void Start()
+    {
+        textureGenerator = GetComponent<TextureGenerator>();
+        if (textureGenerator != null)
+        {
+            texture = textureGenerator.GenerateTexture();
+        }
+       foreach(GameObject tile in tiles)
+       {
+           tile.GetComponent<Renderer>().material.SetTexture(0, texture);
+       }
     }
 
     private void TraanslateSamplersByTile(float x, float y)

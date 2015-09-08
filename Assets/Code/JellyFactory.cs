@@ -30,7 +30,7 @@ public class JellyFactory : MonoBehaviour {
             pos = Random.insideUnitSphere * width;
             pos.x += transform.position.x;
             pos.z += transform.position.z;
-            pos.y = transform.position.y - y;
+            pos.y = transform.position.y + y;
             boidGameObject.transform.position = pos;
             boidGameObject.transform.parent = transform;
             BGE.Boid boid = boidGameObject.AddComponent<BGE.Boid>();

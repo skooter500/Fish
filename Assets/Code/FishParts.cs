@@ -17,7 +17,7 @@ namespace BGE
 
         List<GameObject> segments;
 
-        float segmentExtents = 3;
+        float segmentExtents = 30;
         public float gap;
 
         // Animation stuff
@@ -56,8 +56,9 @@ namespace BGE
 
             GameObject segment = null;
             segment = GameObject.CreatePrimitive(PrimitiveType.Cube);
-            Vector3 scale = new Vector3(1, segmentExtents, segmentExtents);
-            segment.transform.localScale = scale;            
+            Vector3 scale = new Vector3(segmentExtents / 2, segmentExtents, segmentExtents);
+            segment.transform.localScale = scale;
+            segment.transform.parent = transform;
             return segment;
         }
 

@@ -39,6 +39,21 @@ public class NoiseForm : MonoBehaviour {
     Dictionary<string, Deformation> deformations = new Dictionary<string, Deformation>();
 
     Sampler[] samplers;
+
+    public float GetHeight(Vector3 pos)
+    {
+        pos.y = 20000;
+        RaycastHit hitInfo;
+        bool collided = Physics.Raycast(pos, Vector3.down, out hitInfo);
+        if (collided)
+        {
+            return hitInfo.point.y;
+        }
+        else
+        {
+            return 0;
+        }
+    }
     
     private void CreateTiles()
     {
@@ -239,8 +254,13 @@ public class NoiseForm : MonoBehaviour {
         //renderer.material.color = color;
 
         Shader shader = Shader.Find("Diffuse");
-        Material material = new Material(shader);        
-        renderer.material = material;
+
+        Material material = null;
+        if (renderer.material == null)
+        {
+            material = new Material(shader);
+            renderer.material = material;
+        }
 
         tileGameObject.GetComponent<MeshCollider>().sharedMesh = null;
         tileGameObject.GetComponent<MeshCollider>().sharedMesh = mesh;

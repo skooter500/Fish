@@ -25,6 +25,7 @@ namespace BGE
         [HideInInspector]
         public GameObject cameraBoid;
         public GameObject player;
+        bool boidCam = true;
         
         public void OnDrawGizmos()
         {
@@ -75,14 +76,6 @@ namespace BGE
             style.normal.textColor = Color.white;
 
             obstacles = GameObject.FindObjectsOfType(typeof(Obstacle)) as Obstacle[];
-
-            player = (GameObject)GameObject.FindGameObjectWithTag("Player");
-
-            Renderer[] renderers = cameraBoid.GetComponentsInChildren<Renderer>();
-            foreach(Renderer renderer in renderers)
-            {
-                renderer.enabled = false;
-            }
         }
 
         public static BoidManager Instance
@@ -90,6 +83,28 @@ namespace BGE
             get
             {
                 return instance;
+            }
+        }
+
+        void ToggleBoidCam()
+        {
+            player = (GameObject)GameObject.FindGameObjectWithTag("Player");
+
+            Renderer[] renderers = cameraBoid.GetComponentsInChildren<Renderer>();
+            foreach (Renderer renderer in renderers)
+            {
+                renderer.enabled = ! boidCam;
+            }
+            if (boidCam)
+            {
+                player.transform.position = cameraBoid.transform.position;
+                //player.transform.parent = cameraBoid.transform;
+                player.GetComponent<Rigidbody>().isKinematic = true;
+            }
+            else
+            {
+                player.transform.parent = null;
+                player.GetComponent<Rigidbody>().isKinematic = false;
             }
         }
 
@@ -106,6 +121,11 @@ namespace BGE
 
             if (Event.current.type == EventType.KeyDown)
             {
+                if (Event.current.keyCode == KeyCode.F1)
+                {
+                    boidCam = !boidCam;
+                    ToggleBoidCam();
+                }
 
                 if (Event.current.keyCode == KeyCode.F4)
                 {
@@ -142,15 +162,13 @@ namespace BGE
             PrintFloat("FPS: ", (int)fps);
             PrintFloat("Avg FPS: ", (int)avgFPS);
             PrintFloat("Min FPS: ", (int)minFPS);
-            PrintFloat("Max FPS: ", (int)maxFPS);      
-            
-            if (player != null && cameraBoid != null)
+            PrintFloat("Max FPS: ", (int)maxFPS);
+
+            if (boidCam)
             {
                 player.transform.position = cameraBoid.transform.position;
-                player.transform.parent = cameraBoid.transform;
             }
         }
 
-        
     }
 }

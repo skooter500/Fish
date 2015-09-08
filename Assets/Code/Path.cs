@@ -13,6 +13,12 @@ namespace BGE
         private int next = 0;
         public bool draw;
 
+        public void Clear()
+        {
+            waypoints.Clear();
+            next = 0;
+        }
+
         public int Next
         {
             get { return next; }

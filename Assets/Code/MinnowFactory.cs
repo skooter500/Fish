@@ -45,8 +45,6 @@ namespace BGE
             int maxAudioBoids = 20;
             int audioBoids = 0;
 
-            
-
             for (int i = 0; i < boidCount; i++)
             {
                 GameObject boid = GameObject.Instantiate<GameObject>(boidPrefab);

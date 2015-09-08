@@ -23,7 +23,7 @@ public class RayFactory : MonoBehaviour {
             pos = Random.insideUnitSphere * width;
             pos.x += transform.position.x;
             pos.z += transform.position.z;
-            pos.y = transform.position.y - y;
+            pos.y = transform.position.y + y;
             ray.transform.position = pos;
             ray.transform.parent = transform;
         }

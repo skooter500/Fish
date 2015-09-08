@@ -33,7 +33,7 @@ public class ForceController : MonoBehaviour {
     void Yaw(float angle)
     {
         //rigidBody.AddTorque(Vector3.up * angle * 150);
-        Quaternion rot = Quaternion.AngleAxis(angle, transform.up);
+        Quaternion rot = Quaternion.AngleAxis(angle, Vector3.up);
         transform.rotation = rot * transform.rotation;
     }
 

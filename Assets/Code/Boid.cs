@@ -42,6 +42,7 @@ namespace BGE
         public bool seekEnabled;
         public Vector3 seekTargetPos;
         public float seekWeight;
+        public bool seekPlayer;
         
         [Header("Flee")]        
         public bool fleeEnabled;
@@ -592,7 +593,14 @@ namespace BGE
 
             if (seekEnabled)
             {
-                force = Seek(seekTargetPos) * seekWeight;
+                if (seekPlayer)
+                {
+                    force = Seek(Player.Instance.transform.position) * seekWeight;
+                }
+                else
+                {
+                    force = Seek(seekTargetPos) * seekWeight;
+                }
                 force *= forceMultiplier;
                 if (!accumulateForce(ref steeringForce, force))
                 {

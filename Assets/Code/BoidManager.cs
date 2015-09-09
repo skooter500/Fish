@@ -25,7 +25,7 @@ namespace BGE
         [HideInInspector]
         public GameObject cameraBoid;
         public GameObject player;
-        bool boidCam = true;
+        bool boidCam = false;
         
         public void OnDrawGizmos()
         {
@@ -76,6 +76,8 @@ namespace BGE
             style.normal.textColor = Color.white;
 
             obstacles = GameObject.FindObjectsOfType(typeof(Obstacle)) as Obstacle[];
+
+            player = (GameObject)GameObject.FindGameObjectWithTag("Player");
         }
 
         public static BoidManager Instance
@@ -88,7 +90,7 @@ namespace BGE
 
         void ToggleBoidCam()
         {
-            player = (GameObject)GameObject.FindGameObjectWithTag("Player");
+            
 
             Renderer[] renderers = cameraBoid.GetComponentsInChildren<Renderer>();
             foreach (Renderer renderer in renderers)

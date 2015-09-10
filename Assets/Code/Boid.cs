@@ -258,6 +258,7 @@ namespace BGE
             offsetPursuitWeight = 1.0f;
 
             sphereCentre = Vector3.zero;
+
             sphereConstrainWeight = 1.0f;
             centreOnPosition = true;
             sphereRadius = 1000.0f;

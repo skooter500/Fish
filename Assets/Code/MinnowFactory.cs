@@ -42,7 +42,7 @@ namespace BGE
         void Start()
         {
             flock = GetComponent<Flock>();
-            int maxAudioBoids = 20;
+            int maxAudioBoids = 5;
             int audioBoids = 0;
 
             for (int i = 0; i < boidCount; i++)

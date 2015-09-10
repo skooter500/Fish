@@ -24,7 +24,7 @@ public class GameOfLifeTextureGenerator : TextureGenerator
     {
         backGround = Color.blue;
         foreGround = Color.gray;
-        delay = 0.2f;
+        delay = 0.1f;
     }
 
     public void Clear()
@@ -81,6 +81,7 @@ public class GameOfLifeTextureGenerator : TextureGenerator
         texture = new Texture2D(boardWidth, boardHeight, TextureFormat.RGBAFloat, false);
         texture.filterMode = FilterMode.Point;
         StartCoroutine("UpdateBoard");
+        StartCoroutine("ResetBoard");
         return texture;
     }
 
@@ -167,6 +168,15 @@ public class GameOfLifeTextureGenerator : TextureGenerator
                     current[row, col] = true;
                 }
             }
+        }
+    }
+
+    System.Collections.IEnumerator ResetBoard()
+    {
+        while (true)
+        {
+            yield return new WaitForSeconds(delay * 50);
+            Randomise();
         }
     }
 

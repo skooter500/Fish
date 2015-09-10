@@ -100,7 +100,7 @@ public class ForceController : MonoBehaviour {
 
         if (Input.GetKey(KeyCode.LeftShift) || runAxis != 0)
         {
-            speed *= 10f;
+            speed *= 2f;
         }
 
         if (Input.GetKey(KeyCode.W))
@@ -151,12 +151,12 @@ public class ForceController : MonoBehaviour {
         Yaw(contYaw * Time.deltaTime * angularSpeed);
 
         // If in Rift mode, dont pitch
-        if (ovrCamera == null)
-        {
-            Pitch(-mouseY * Time.deltaTime * angularSpeed);
-            Pitch(contPitch * Time.deltaTime * angularSpeed);
-        }
-        else
+        //if (ovrCamera == null)
+        //{
+        //    Pitch(-mouseY * Time.deltaTime * angularSpeed);
+        //    Pitch(contPitch * Time.deltaTime * angularSpeed);
+        //}
+        //else
         {
             Fly(-contPitch * speed);
         }

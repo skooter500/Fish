@@ -22,9 +22,9 @@ public class ForceController : MonoBehaviour {
 
         rigidBody = GetComponent<Rigidbody>();
 
-        if (vrMode && GameObject.FindGameObjectWithTag("ovrplayer") != null)
+        if (vrMode && GameObject.FindGameObjectWithTag("Player") != null)
         {
-            ovrCamera = GameObject.FindGameObjectWithTag("ovrplayer").GetComponentInChildren<Camera>();
+            ovrCamera = GameObject.FindGameObjectWithTag("Player").GetComponentInChildren<Camera>();
         }
 
         rigidBody.freezeRotation = true;        
@@ -150,13 +150,13 @@ public class ForceController : MonoBehaviour {
         float contPitch = Input.GetAxis("Pitch Axis");
         Yaw(contYaw * Time.deltaTime * angularSpeed);
 
-        // If in Rift mode, dont pitch
-        //if (ovrCamera == null)
-        //{
-        //    Pitch(-mouseY * Time.deltaTime * angularSpeed);
-        //    Pitch(contPitch * Time.deltaTime * angularSpeed);
-        //}
-        //else
+         // If in Rift mode, dont pitch
+        if (ovrCamera == null)
+        {
+            Pitch(-mouseY * Time.deltaTime * angularSpeed);
+            Pitch(contPitch * Time.deltaTime * angularSpeed);
+        }
+        else
         {
             Fly(-contPitch * speed);
         }

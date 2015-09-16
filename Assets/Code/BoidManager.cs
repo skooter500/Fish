@@ -26,6 +26,7 @@ namespace BGE
         public GameObject cameraBoid;
         public GameObject player;
         bool boidCam = false;
+
         
         public void OnDrawGizmos()
         {

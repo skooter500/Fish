@@ -78,7 +78,7 @@ public class NoiseForm : MonoBehaviour {
                 tilePos.y = transform.position.y;
                 tile.transform.position = tilePos;
                 
-                GenerateTile(tile, new Vector2(x, z));
+                StartCoroutine(GenerateTile(tile, new Vector2(x, z)));
                 tile.GetComponent<MeshCollider>().sharedMesh = mesh;
                 tiles[tileIndex ++] = tile;
 
@@ -145,8 +145,7 @@ public class NoiseForm : MonoBehaviour {
     }
 
 
-
-    public void GenerateTile(GameObject tileGameObject, Vector2 tile)
+    System.Collections.IEnumerator GenerateTile(GameObject tileGameObject, Vector2 tile)
     {
         tileSize = new Vector2(size.x / samplesPerTile.x, size.z / samplesPerTile.y);
 
@@ -170,6 +169,8 @@ public class NoiseForm : MonoBehaviour {
         int vertex = 0;
         Deformation deformation = Deformation.none;
 
+        int maxCellsPerFrame = 5000;
+        int cellCount = 0;
         // What cell is the origin for this tile
         Vector2 tileCellOrigin = new Vector2(tile.x * samplesPerTile.x, tile.y * samplesPerTile.y);
         for (int z = 0; z < samplesPerTile.y; z++)
@@ -233,11 +234,16 @@ public class NoiseForm : MonoBehaviour {
                     //initialNormals[startVertex + i] = (i < 6) ? Vector3.forward : -Vector3.forward;
                     meshUv[startVertex + i] = uvSeq[i % 6];
                     meshTriangles[startVertex + i] = startVertex + i;
-                }                
-            }
-            tileGameObject.GetComponent<MeshCollider>().sharedMesh = mesh;
-
+                }
+                cellCount++;
+                if (cellCount % maxCellsPerFrame == 0)
+                {
+                    yield return null;
+                }
+            }            
         }
+
+        tileGameObject.GetComponent<MeshCollider>().sharedMesh = mesh;
 
         for (int i = 0; i < meshUv.Length; i++)
         {
@@ -377,10 +383,10 @@ public class NoiseForm : MonoBehaviour {
                 newTiles[6] = tiles[0]; newTiles[7] = tiles[1]; newTiles[8] = tiles[2];
                 tiles = newTiles;
                 // Move the sampler forward one tile
-                TraanslateSamplersByTile(0, 1); 
-                GenerateTile(tiles[6], new Vector2(0, 2));
-                GenerateTile(tiles[7], new Vector2(1, 2));
-                GenerateTile(tiles[8], new Vector2(2, 2));
+                TraanslateSamplersByTile(0, 1);
+                StartCoroutine(GenerateTile(tiles[6], new Vector2(0, 2)));
+                StartCoroutine(GenerateTile(tiles[7], new Vector2(1, 2)));
+                StartCoroutine(GenerateTile(tiles[8], new Vector2(2, 2)));
                 // Translate the tiles forward
                 tiles[6].transform.Translate(new Vector3(0, 0, size.z * 3.0f));
                 tiles[7].transform.Translate(new Vector3(0, 0, size.z * 3.0f));
@@ -398,9 +404,9 @@ public class NoiseForm : MonoBehaviour {
                 tiles = newTiles;
                 // Move the sampler backward one tile
                 TraanslateSamplersByTile(0, -1); 
-                GenerateTile(tiles[0], new Vector2(0, 0));
-                GenerateTile(tiles[1], new Vector2(1, 0));
-                GenerateTile(tiles[2], new Vector2(2, 0));
+                StartCoroutine(GenerateTile(tiles[0], new Vector2(0, 0)));
+                StartCoroutine(GenerateTile(tiles[1], new Vector2(1, 0)));
+                StartCoroutine(GenerateTile(tiles[2], new Vector2(2, 0)));
                 tiles[0].transform.Translate(new Vector3(0, 0, -size.z * 3.0f));
                 tiles[1].transform.Translate(new Vector3(0, 0, -size.z * 3.0f));
                 tiles[2].transform.Translate(new Vector3(0, 0, -size.z * 3.0f));                
@@ -415,9 +421,9 @@ public class NoiseForm : MonoBehaviour {
                 newTiles[6] = tiles[8]; newTiles[7] = tiles[6]; newTiles[8] = tiles[7];
                 tiles = newTiles;
                 TraanslateSamplersByTile(-1, 0); 
-                GenerateTile(tiles[0], new Vector2(0, 0));
-                GenerateTile(tiles[3], new Vector2(0, 1));
-                GenerateTile(tiles[6], new Vector2(0, 2));
+                StartCoroutine(GenerateTile(tiles[0], new Vector2(0, 0)));
+                StartCoroutine(GenerateTile(tiles[3], new Vector2(0, 1)));
+                StartCoroutine(GenerateTile(tiles[6], new Vector2(0, 2)));
                 tiles[0].transform.Translate(new Vector3(-size.x * 3.0f, 0, 0));
                 tiles[3].transform.Translate(new Vector3(-size.x * 3.0f, 0, 0));
                 tiles[6].transform.Translate(new Vector3(-size.x * 3.0f, 0, 0));
@@ -432,9 +438,9 @@ public class NoiseForm : MonoBehaviour {
                 newTiles[6] = tiles[7]; newTiles[7] = tiles[8]; newTiles[8] = tiles[6];
                 tiles = newTiles;
                 TraanslateSamplersByTile(1, 0); 
-                GenerateTile(tiles[2], new Vector2(2, 0));
-                GenerateTile(tiles[5], new Vector2(2, 1));
-                GenerateTile(tiles[8], new Vector2(2, 2));
+                StartCoroutine(GenerateTile(tiles[2], new Vector2(2, 0)));
+                StartCoroutine(GenerateTile(tiles[5], new Vector2(2, 1)));
+                StartCoroutine(GenerateTile(tiles[8], new Vector2(2, 2)));
                 tiles[2].transform.Translate(new Vector3(size.x * 3.0f, 0, 0));
                 tiles[5].transform.Translate(new Vector3(size.x * 3.0f, 0, 0));
                 tiles[8].transform.Translate(new Vector3(size.x * 3.0f, 0, 0));

@@ -45,6 +45,11 @@ namespace BGE
             int maxAudioBoids = 5;
             int audioBoids = 0;
 
+            NoiseForm noiseForm = FindObjectOfType<NoiseForm>();
+            float h = noiseForm.GetHeight(transform.position);
+            Vector3 hPos = transform.position;
+            hPos.y = h + 500;
+            transform.position = hPos;
             for (int i = 0; i < boidCount; i++)
             {
                 GameObject boid = GameObject.Instantiate<GameObject>(boidPrefab);

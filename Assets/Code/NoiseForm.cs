@@ -1,6 +1,8 @@
 ﻿using UnityEngine;
 using System.Collections.Generic;
 using BGE;
+using System.Threading;
+using com.youvisio;
 
 public class NoiseForm : MonoBehaviour {
 
@@ -15,11 +17,7 @@ public class NoiseForm : MonoBehaviour {
 
     Vector2 tileSize; // The size of each tile in cells
 
-    Vector3[] initialVertices;
-    Vector3[] initialNormals;
-    Vector2[] meshUv;
-    Color[] colours;
-    int[] meshTriangles;
+    
     Vector2[] uvSeq = new Vector2[] { new Vector2(0, 0), new Vector2(0, 1), new Vector2(1f, 1)
                                       , new Vector2(1f, 1), new Vector2(1f, 0), new Vector2(0, 0)
                                 };
@@ -42,7 +40,7 @@ public class NoiseForm : MonoBehaviour {
 
     public float GetHeight(Vector3 pos)
     {
-        pos.y = 20000;
+        pos.y = float.MaxValue;
         RaycastHit hitInfo;
         bool collided = Physics.Raycast(pos, Vector3.down, out hitInfo);
         if (collided)
@@ -78,7 +76,7 @@ public class NoiseForm : MonoBehaviour {
                 tilePos.y = transform.position.y;
                 tile.transform.position = tilePos;
                 
-                StartCoroutine(GenerateTile(tile, new Vector2(x, z)));
+                GenerateTile(tile, new Vector2(x, z));
                 tile.GetComponent<MeshCollider>().sharedMesh = mesh;
                 tiles[tileIndex ++] = tile;
 
@@ -144,25 +142,95 @@ public class NoiseForm : MonoBehaviour {
         }
     }
 
-
-    System.Collections.IEnumerator GenerateTile(GameObject tileGameObject, Vector2 tile)
+    class Arg
     {
-        tileSize = new Vector2(size.x / samplesPerTile.x, size.z / samplesPerTile.y);
+        public GameObject t;
+        public Vector2 tile;
+    }
+
+    class GeneratedMesh
+    {
+        public Vector3[] initialVertices;
+        public Vector3[] initialNormals;
+        public Vector2[] meshUv;
+        public Color[] colours;
+        public int[] meshTriangles;
+    }
+
+
+    List<BackgroundWorker> workers = new List<BackgroundWorker>();
+
+    void GenerateTile(GameObject tileGameObject, Vector2 tile)
+    {
+        BackgroundWorker backgroundWorker = new BackgroundWorker();
 
         MeshRenderer renderer = tileGameObject.GetComponent<MeshRenderer>();
         Mesh mesh = tileGameObject.GetComponent<MeshFilter>().mesh;
         mesh.Clear();
+        backgroundWorker.DoWork += (o, a) =>
+        {
+            Arg aa = (Arg)a.Argument;            
+            a.Result = GenerateTileAsync(aa.t, aa.tile);
+        };
+
+        backgroundWorker.RunWorkerCompleted += (o, a) =>
+        {
+            Debug.Log("Complete...");        
+            GeneratedMesh gm = (GeneratedMesh)a.Result;
+            tileGameObject.GetComponent<MeshCollider>().sharedMesh = mesh;
+
+            for (int i = 0; i < gm.meshUv.Length; i++)
+            {
+                Vector3 v = gm.initialVertices[i] + (size / 2.0f);
+                gm.meshUv[i] = new Vector2(v.x / size.x, v.z / size.z);
+            }
+
+            mesh.vertices = gm.initialVertices;
+            mesh.uv = gm.meshUv;
+            mesh.triangles = gm.meshTriangles;
+            mesh.RecalculateNormals();
+
+            //renderer.material.color = color;
+
+            Shader shader = Shader.Find("Diffuse");
+
+            Material material = null;
+            if (renderer.material == null)
+            {
+                material = new Material(shader);
+                renderer.material = material;
+            }
+
+            tileGameObject.GetComponent<MeshCollider>().sharedMesh = null;
+            tileGameObject.GetComponent<MeshCollider>().sharedMesh = mesh;
+        };
+
+        Arg args = new Arg();
+        args.t = tileGameObject;
+        args.tile = tile;
+
+        workers.Add(backgroundWorker);
+        backgroundWorker.RunWorkerAsync(args);
+    }
+    
+
+    GeneratedMesh GenerateTileAsync(GameObject tileGameObject, Vector2 tile)
+    {
+        Debug.Log("Generating tile:" + tile);
+        tileSize = new Vector2(size.x / samplesPerTile.x, size.z / samplesPerTile.y);
 
         int verticesPerSegment = 6;
 
         int vertexCount = verticesPerSegment * ((int)samplesPerTile.x) * ((int)samplesPerTile.y);
-        
-        initialVertices = new Vector3[vertexCount];
-        initialNormals = new Vector3[vertexCount];
-        meshUv = new Vector2[vertexCount];
-        meshTriangles = new int[vertexCount];
 
-        colours = new Color[vertexCount];
+        GeneratedMesh gm = new GeneratedMesh();
+
+        gm.initialVertices = new Vector3[vertexCount];
+        gm.initialNormals = new Vector3[vertexCount];
+        gm.meshUv = new Vector2[vertexCount];
+        gm.meshTriangles = new int[vertexCount];
+
+        gm.colours = new Color[vertexCount];
 
         Vector3 bottomLeft = -(size / 2);
 
@@ -195,7 +263,7 @@ public class NoiseForm : MonoBehaviour {
                     sliceBottomRight.y += sampler.SampleCell(cell.x + 1, cell.y);
                 }
 
-                int hashcode = tileGameObject.transform.position.GetHashCode();
+                //int hashcode = tileGameObject.transform.position.GetHashCode();
                 
 
                 //float deformHeight = (deformation == Deformation.mountain) ? noiseHeight * 3.0f : - noiseHeight * 3.0f;
@@ -221,54 +289,23 @@ public class NoiseForm : MonoBehaviour {
                 //}               
                     
                 // Make the vertices
-                initialVertices[vertex++] = sliceBottomLeft;
-                initialVertices[vertex++] = sliceTopLeft;
-                initialVertices[vertex++] = sliceTopRight;
-                initialVertices[vertex++] = sliceTopRight;
-                initialVertices[vertex++] = sliceBottomRight;
-                initialVertices[vertex++] = sliceBottomLeft;
+                gm.initialVertices[vertex++] = sliceBottomLeft;
+                gm.initialVertices[vertex++] = sliceTopLeft;
+                gm.initialVertices[vertex++] = sliceTopRight;
+                gm.initialVertices[vertex++] = sliceTopRight;
+                gm.initialVertices[vertex++] = sliceBottomRight;
+                gm.initialVertices[vertex++] = sliceBottomLeft;
 
                 // Make the normals, UV's and triangles                
                 for (int i = 0; i < 6; i++)
                 {
                     //initialNormals[startVertex + i] = (i < 6) ? Vector3.forward : -Vector3.forward;
-                    meshUv[startVertex + i] = uvSeq[i % 6];
-                    meshTriangles[startVertex + i] = startVertex + i;
-                }
-                cellCount++;
-                if (cellCount % maxCellsPerFrame == 0)
-                {
-                    yield return null;
+                    gm.meshUv[startVertex + i] = uvSeq[i % 6];
+                    gm.meshTriangles[startVertex + i] = startVertex + i;
                 }
             }            
         }
-
-        tileGameObject.GetComponent<MeshCollider>().sharedMesh = mesh;
-
-        for (int i = 0; i < meshUv.Length; i++)
-        {
-            Vector3 v = initialVertices[i] + (size / 2.0f);
-            meshUv[i] = new Vector2(v.x / size.x, v.z / size.z);
-        }
-
-        mesh.vertices = initialVertices;
-        mesh.uv = meshUv;
-        mesh.triangles = meshTriangles;
-        mesh.RecalculateNormals();
-
-        //renderer.material.color = color;
-
-        Shader shader = Shader.Find("Diffuse");
-
-        Material material = null;
-        if (renderer.material == null)
-        {
-            material = new Material(shader);
-            renderer.material = material;
-        }
-
-        tileGameObject.GetComponent<MeshCollider>().sharedMesh = null;
-        tileGameObject.GetComponent<MeshCollider>().sharedMesh = mesh;
+        return gm;
     }
     
     //private Deformation EnsureAdjacentAreNot(Vector2 noiseStart, Deformation deformation)
@@ -384,9 +421,9 @@ public class NoiseForm : MonoBehaviour {
                 tiles = newTiles;
                 // Move the sampler forward one tile
                 TraanslateSamplersByTile(0, 1);
-                StartCoroutine(GenerateTile(tiles[6], new Vector2(0, 2)));
-                StartCoroutine(GenerateTile(tiles[7], new Vector2(1, 2)));
-                StartCoroutine(GenerateTile(tiles[8], new Vector2(2, 2)));
+                GenerateTile(tiles[6], new Vector2(0, 2));
+                GenerateTile(tiles[7], new Vector2(1, 2));
+                GenerateTile(tiles[8], new Vector2(2, 2));
                 // Translate the tiles forward
                 tiles[6].transform.Translate(new Vector3(0, 0, size.z * 3.0f));
                 tiles[7].transform.Translate(new Vector3(0, 0, size.z * 3.0f));
@@ -404,9 +441,9 @@ public class NoiseForm : MonoBehaviour {
                 tiles = newTiles;
                 // Move the sampler backward one tile
                 TraanslateSamplersByTile(0, -1); 
-                StartCoroutine(GenerateTile(tiles[0], new Vector2(0, 0)));
-                StartCoroutine(GenerateTile(tiles[1], new Vector2(1, 0)));
-                StartCoroutine(GenerateTile(tiles[2], new Vector2(2, 0)));
+                GenerateTile(tiles[0], new Vector2(0, 0));
+                GenerateTile(tiles[1], new Vector2(1, 0));
+                GenerateTile(tiles[2], new Vector2(2, 0));
                 tiles[0].transform.Translate(new Vector3(0, 0, -size.z * 3.0f));
                 tiles[1].transform.Translate(new Vector3(0, 0, -size.z * 3.0f));
                 tiles[2].transform.Translate(new Vector3(0, 0, -size.z * 3.0f));                
@@ -421,9 +458,9 @@ public class NoiseForm : MonoBehaviour {
                 newTiles[6] = tiles[8]; newTiles[7] = tiles[6]; newTiles[8] = tiles[7];
                 tiles = newTiles;
                 TraanslateSamplersByTile(-1, 0); 
-                StartCoroutine(GenerateTile(tiles[0], new Vector2(0, 0)));
-                StartCoroutine(GenerateTile(tiles[3], new Vector2(0, 1)));
-                StartCoroutine(GenerateTile(tiles[6], new Vector2(0, 2)));
+                GenerateTile(tiles[0], new Vector2(0, 0));
+                GenerateTile(tiles[3], new Vector2(0, 1));
+                GenerateTile(tiles[6], new Vector2(0, 2));
                 tiles[0].transform.Translate(new Vector3(-size.x * 3.0f, 0, 0));
                 tiles[3].transform.Translate(new Vector3(-size.x * 3.0f, 0, 0));
                 tiles[6].transform.Translate(new Vector3(-size.x * 3.0f, 0, 0));
@@ -438,13 +475,24 @@ public class NoiseForm : MonoBehaviour {
                 newTiles[6] = tiles[7]; newTiles[7] = tiles[8]; newTiles[8] = tiles[6];
                 tiles = newTiles;
                 TraanslateSamplersByTile(1, 0); 
-                StartCoroutine(GenerateTile(tiles[2], new Vector2(2, 0)));
-                StartCoroutine(GenerateTile(tiles[5], new Vector2(2, 1)));
-                StartCoroutine(GenerateTile(tiles[8], new Vector2(2, 2)));
+                GenerateTile(tiles[2], new Vector2(2, 0));
+                GenerateTile(tiles[5], new Vector2(2, 1));
+                GenerateTile(tiles[8], new Vector2(2, 2));
                 tiles[2].transform.Translate(new Vector3(size.x * 3.0f, 0, 0));
                 tiles[5].transform.Translate(new Vector3(size.x * 3.0f, 0, 0));
                 tiles[8].transform.Translate(new Vector3(size.x * 3.0f, 0, 0));
                 break;
+            }
+        }
+        for(int i = workers.Count - 1 ; i >=  0 ; i --)
+        {
+            if (workers[i].IsBusy) 
+            {
+                workers[i].Update();
+            }
+            else
+            {
+                workers.Remove(workers[i]);
             }
         }
     }

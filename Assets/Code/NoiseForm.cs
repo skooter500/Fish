@@ -144,12 +144,10 @@ public class NoiseForm : MonoBehaviour {
         }
     }
 
+
+
     public void GenerateTile(GameObject tileGameObject, Vector2 tile)
     {
-        if (generated)
-        {
-            //return;
-        }
         tileSize = new Vector2(size.x / samplesPerTile.x, size.z / samplesPerTile.y);
 
         MeshRenderer renderer = tileGameObject.GetComponent<MeshRenderer>();
@@ -164,6 +162,7 @@ public class NoiseForm : MonoBehaviour {
         initialNormals = new Vector3[vertexCount];
         meshUv = new Vector2[vertexCount];
         meshTriangles = new int[vertexCount];
+
         colours = new Color[vertexCount];
 
         Vector3 bottomLeft = -(size / 2);

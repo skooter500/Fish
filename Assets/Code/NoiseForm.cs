@@ -201,8 +201,8 @@ public class NoiseForm : MonoBehaviour {
                 renderer.material = material;
             }
 
-            tileGameObject.GetComponent<MeshCollider>().sharedMesh = null;
-            tileGameObject.GetComponent<MeshCollider>().sharedMesh = mesh;
+            //tileGameObject.GetComponent<MeshCollider>().sharedMesh = null;
+            //tileGameObject.GetComponent<MeshCollider>().sharedMesh = mesh;
         };
 
         Arg args = new Arg();

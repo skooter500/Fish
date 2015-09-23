@@ -7,7 +7,9 @@ using com.youvisio;
 public class NoiseForm : MonoBehaviour {
 
     public Vector3 size; 
-    public Vector2 samplesPerTile; 
+    public Vector2 samplesPerTile;
+    public Vector2 collisionSamplesPerTile;
+    public float collisionMeshOffset;
     public Color color;
     [Range(0.0f, 1.0f)]
     public float probabilityOfMountains;
@@ -23,7 +25,6 @@ public class NoiseForm : MonoBehaviour {
                                 };
     [HideInInspector]
     public float maxY;
-
 
     private bool generated = false;
     TextureGenerator textureGenerator;
@@ -66,7 +67,7 @@ public class NoiseForm : MonoBehaviour {
                 tile.transform.parent = this.transform;
                 MeshRenderer renderer = tile.AddComponent<MeshRenderer>();
                 renderer.shadowCastingMode = UnityEngine.Rendering.ShadowCastingMode.Off;
-                renderer.receiveShadows = true;
+                renderer.receiveShadows = true;                
                 Mesh mesh = tile.AddComponent<MeshFilter>().mesh;
                 mesh.Clear();
                 tile.AddComponent<MeshCollider>();
@@ -77,7 +78,6 @@ public class NoiseForm : MonoBehaviour {
                 tile.transform.position = tilePos;
                 
                 GenerateTile(tile, new Vector2(x, z));
-                tile.GetComponent<MeshCollider>().sharedMesh = mesh;
                 tiles[tileIndex ++] = tile;
 
                 // Add Physics and colliders
@@ -127,6 +127,7 @@ public class NoiseForm : MonoBehaviour {
         probabilityOfCraters = 0.3f;
         probabilityOfMountains = 0.3f;
         color = HexToColor("0x2A59AD");
+        collisionMeshOffset = 100.0f;
     }
 
     public void OnDrawGizmos()
@@ -155,6 +156,9 @@ public class NoiseForm : MonoBehaviour {
         public Vector2[] meshUv;
         public Color[] colours;
         public int[] meshTriangles;
+
+        public Vector3[] collisionVertices;
+        public int[] collisionTriangles;
     }
 
 
@@ -177,8 +181,6 @@ public class NoiseForm : MonoBehaviour {
         {
             Debug.Log("Complete...");        
             GeneratedMesh gm = (GeneratedMesh)a.Result;
-            tileGameObject.GetComponent<MeshCollider>().sharedMesh = mesh;
-
             for (int i = 0; i < gm.meshUv.Length; i++)
             {
                 Vector3 v = gm.initialVertices[i] + (size / 2.0f);
@@ -201,8 +203,12 @@ public class NoiseForm : MonoBehaviour {
                 renderer.material = material;
             }
 
-            //tileGameObject.GetComponent<MeshCollider>().sharedMesh = null;
-            //tileGameObject.GetComponent<MeshCollider>().sharedMesh = mesh;
+            tileGameObject.GetComponent<MeshCollider>().sharedMesh = null;
+            Mesh cMesh = new Mesh();
+            cMesh.vertices = gm.collisionVertices;
+            cMesh.triangles = gm.collisionTriangles;
+
+            tileGameObject.GetComponent<MeshCollider>().sharedMesh = cMesh;
         };
 
         Arg args = new Arg();
@@ -222,23 +228,20 @@ public class NoiseForm : MonoBehaviour {
         int verticesPerSegment = 6;
 
         int vertexCount = verticesPerSegment * ((int)samplesPerTile.x) * ((int)samplesPerTile.y);
+        int collisionVertexCount = verticesPerSegment * ((int)collisionSamplesPerTile.x) * ((int)collisionSamplesPerTile.y);
 
         GeneratedMesh gm = new GeneratedMesh();
 
         gm.initialVertices = new Vector3[vertexCount];
         gm.initialNormals = new Vector3[vertexCount];
         gm.meshUv = new Vector2[vertexCount];
-        gm.meshTriangles = new int[vertexCount];
-
-        gm.colours = new Color[vertexCount];
-
+        gm.meshTriangles = new int[vertexCount];        
         Vector3 bottomLeft = -(size / 2);
 
         int vertex = 0;
+        
         Deformation deformation = Deformation.none;
 
-        int maxCellsPerFrame = 5000;
-        int cellCount = 0;
         // What cell is the origin for this tile
         Vector2 tileCellOrigin = new Vector2(tile.x * samplesPerTile.x, tile.y * samplesPerTile.y);
         for (int z = 0; z < samplesPerTile.y; z++)
@@ -289,6 +292,7 @@ public class NoiseForm : MonoBehaviour {
                 //}               
                     
                 // Make the vertices
+                
                 gm.initialVertices[vertex++] = sliceBottomLeft;
                 gm.initialVertices[vertex++] = sliceTopLeft;
                 gm.initialVertices[vertex++] = sliceTopRight;
@@ -305,6 +309,90 @@ public class NoiseForm : MonoBehaviour {
                 }
             }            
         }
+
+        // Make the collision vertices
+        gm.collisionVertices = new Vector3[collisionVertexCount];
+        gm.collisionTriangles = new int[collisionVertexCount];
+        Vector2 collisionMeshScale = new Vector2(
+                        samplesPerTile.x / collisionSamplesPerTile.x
+                        , samplesPerTile.y / collisionSamplesPerTile.y
+            );
+
+        int collisionVertex = 0;
+        Vector2 collisionTileSize = new Vector2(size.x / collisionSamplesPerTile.x, size.z / collisionSamplesPerTile.y);
+
+        for (int z = 0; z < collisionSamplesPerTile.y; z++)
+        {
+            for (int x = 0; x < collisionSamplesPerTile.x; x++)
+            {
+                int startVertex = collisionVertex;
+                // Calculate some stuff
+
+                float xScaled, zScaled;
+                xScaled = x * collisionMeshScale.x;
+                zScaled = z * collisionMeshScale.y;
+
+                Vector3 sliceBottomLeft = bottomLeft + new Vector3(x * collisionTileSize.x, collisionMeshOffset, z * collisionTileSize.y);
+                Vector3 sliceTopLeft = bottomLeft + new Vector3(x * collisionTileSize.x, collisionMeshOffset, (z + 1) * collisionTileSize.y);
+                Vector3 sliceTopRight = bottomLeft + new Vector3((x + 1) * collisionTileSize.x, collisionMeshOffset, (z + 1) * collisionTileSize.y);
+                Vector3 sliceBottomRight = bottomLeft + new Vector3((x + 1) * collisionTileSize.x, collisionMeshOffset, z * collisionTileSize.y);
+                MaxY(sliceTopLeft.y); MaxY(sliceTopRight.y);
+
+                // Add all the samplers together to make the height
+                // Scale the x and y coords of the sampler because this mesh has lower resolution
+                Vector2 cell = new Vector2(tileCellOrigin.x + xScaled, tileCellOrigin.y + zScaled);
+                foreach (Sampler sampler in samplers)
+                {
+                    sliceBottomLeft.y += sampler.SampleCell(cell.x, cell.y);
+                    sliceTopLeft.y += sampler.SampleCell(cell.x, cell.y + collisionMeshScale.y);
+                    sliceTopRight.y += sampler.SampleCell(cell.x + collisionMeshScale.x, cell.y + collisionMeshScale.y);
+                    sliceBottomRight.y += sampler.SampleCell(cell.x + collisionMeshScale.x, cell.y);
+                }
+
+                //int hashcode = tileGameObject.transform.position.GetHashCode();
+
+
+                //float deformHeight = (deformation == Deformation.mountain) ? noiseHeight * 3.0f : - noiseHeight * 3.0f;
+                //if (deformation == Deformation.mountain || deformation == Deformation.crater)
+                //{
+                //    float angle = Mathf.PI;
+                //    sliceBottomLeft.y +=
+                //    Mathf.Sin(Utilities.Map(x, 0, samplesPerTile.x, 0, angle))
+                //    * Mathf.Sin(Utilities.Map(z, 0, samplesPerTile.y, 0, angle))
+                //    * deformHeight;
+                //    sliceTopLeft.y +=
+                //        Mathf.Sin(Utilities.Map(x, 0, samplesPerTile.x, 0, angle))
+                //        * Mathf.Sin(Utilities.Map(z + 1, 0, samplesPerTile.y, 0, angle))
+                //        * deformHeight;
+                //    sliceTopRight.y +=
+                //        Mathf.Sin(Utilities.Map(x + 1, 0, samplesPerTile.x, 0, angle))
+                //        * Mathf.Sin(Utilities.Map(z + 1, 0, samplesPerTile.y, 0, angle))
+                //        * deformHeight;
+                //    sliceBottomRight.y +=
+                //        Mathf.Sin(Utilities.Map(x + 1, 0, samplesPerTile.x, 0, angle))
+                //        * Mathf.Sin(Utilities.Map(z, 0, samplesPerTile.y, 0, angle))
+                //        * deformHeight;
+                //}               
+
+                // Make the vertices
+
+                gm.collisionVertices[collisionVertex++] = sliceBottomLeft;
+                gm.collisionVertices[collisionVertex++] = sliceTopLeft;
+                gm.collisionVertices[collisionVertex++] = sliceTopRight;
+                gm.collisionVertices[collisionVertex++] = sliceTopRight;
+                gm.collisionVertices[collisionVertex++] = sliceBottomRight;
+                gm.collisionVertices[collisionVertex++] = sliceBottomLeft;
+
+                // Make the normals, UV's and triangles                
+                for (int i = 0; i < 6; i++)
+                {
+                    gm.collisionTriangles[startVertex + i] = startVertex + i;
+                }
+            }
+        }
+
+        //gm.collisionTriangles = gm.meshTriangles;
+        //gm.collisionVertices = gm.initialVertices;
         return gm;
     }
     

@@ -19,8 +19,8 @@ public class DolphinSchool : MonoBehaviour {
     PaletteGenerator pg;
 
     float fov = 45.0f;
-    float minDist = 5000;
-    float maxDist = 10000;
+    public float minDist = 5000;
+    public float maxDist = 10000;
 
     Vector3 dest;
 
@@ -51,7 +51,7 @@ public class DolphinSchool : MonoBehaviour {
         Boid boid = leader.GetComponent<Boid>();
         //boid.path.Clear();
         boid.followPathEnabled = true;
-        boid.drawGizmos = false;
+        boid.drawGizmos = true;
         Vector3 waypoint = oldDest;
         Vector3 toDest = (dest - oldDest).normalized;
         while(Vector3.Distance(waypoint, dest) > 200)
@@ -109,11 +109,10 @@ public class DolphinSchool : MonoBehaviour {
         leader.transform.position = leader.GetComponent<Boid>().path.Waypoints[0];
     }
 
+    System.Collections.IEnumerator SetUpDolphins()
+    {
+        yield return new WaitForSeconds(5);
 
-
-    // Use this for initialization
-    void Start () {
-        
         pg = GetComponent<PaletteGenerator>();
         noiseForm = FindObjectOfType<NoiseForm>();
         leader = Instantiate<GameObject>(dolphinPrefab);
@@ -122,7 +121,7 @@ public class DolphinSchool : MonoBehaviour {
         SetDolphinColors(leader);
 
         Vector3 lastPoint = leader.transform.position;
-        for (int i = 0; i < dolphinCount; i ++) 
+        for (int i = 0; i < dolphinCount; i++)
         {
             Vector3 newPoint;
             do
@@ -143,7 +142,14 @@ public class DolphinSchool : MonoBehaviour {
         }
         BoidManager.Instance.cameraBoid = leader;
 
+    }
 
+
+    // Use this for initialization
+    void Start () {
+
+        StartCoroutine("SetUpDolphins");
+       
 	}
 
     Color RandomFromPalette()
@@ -163,13 +169,15 @@ public class DolphinSchool : MonoBehaviour {
 	// Update is called once per frame
 	void Update () 
     {
-        float dist = Vector3.Distance(leader.transform.position, dest);
-        Debug.Log("Distance: " +  dist);        
-        if (dist < 2500)
+        if (leader != null)
         {
-            MakeNewPath(leader);
+            float dist = Vector3.Distance(leader.transform.position, dest);
+            Debug.Log("Distance: " + dist);
+            if (dist < 2500)
+            {
+                MakeNewPath(leader);
+            }
         }
-
         // Deactivate forms that are too far from the player to be perceived
         int formsActive = 0;
         float activateDistance = 5000;

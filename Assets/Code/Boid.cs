@@ -1271,6 +1271,7 @@ namespace BGE
         }
 
 
+
         Vector3 OffsetPursuit(Vector3 offset)
         {
             Vector3 target = Vector3.zero;

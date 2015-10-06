@@ -129,6 +129,7 @@ namespace BGE
         public bool offsetPursuitEnabled;
         public GameObject offsetPursuitTarget;        
         public float offsetPursuitWeight;
+        public bool offsetPursuitKeepY;
 
         [HideInInspector]
         public Vector3 offset;
@@ -256,6 +257,7 @@ namespace BGE
 
             offsetPursuitTarget = null;
             offsetPursuitWeight = 1.0f;
+            offsetPursuitKeepY = false;
 
             sphereCentre = Vector3.zero;
             sphereConstrainWeight = 1.0f;
@@ -1274,6 +1276,12 @@ namespace BGE
             Vector3 target = Vector3.zero;
 
             target = TransformPointNoScale(offsetPursuitTarget.transform, offset);
+
+            if (offsetPursuitKeepY)
+            {
+                // Translate the offset pursuit target to the Y of the target
+                target.y = offsetPursuitTarget.transform.position.y;
+            }
          
             float dist = (target - transform.position).magnitude;
 

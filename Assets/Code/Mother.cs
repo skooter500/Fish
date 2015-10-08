@@ -95,7 +95,7 @@ public class Mother : MonoBehaviour {
         }
         boid.followPathEnabled = true;
         boid.drawVectors = false;
-        boid.path.Looped = true;
+        boid.path.looped = true;
         boid.drawGizmos = false;
         boid.maxSpeed = 20.0f;
         boid.maxForce = 20.0f;

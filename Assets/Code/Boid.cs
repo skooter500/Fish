@@ -4,8 +4,10 @@ using System.Collections.Generic;
 using System;
 using BGE.Geom;
 
+// Hello world
+
 namespace BGE
-{
+{ 
     public class Boid:MonoBehaviour
     {
         // Variables required to implement the boid
@@ -23,6 +25,7 @@ namespace BGE
         public float radius;
         public float maxTurnDegrees;
         public bool applyBanking;
+        public float straighteningTendancy = 0.2f;
 
         [HideInInspector]
         public bool clamping;
@@ -100,7 +103,7 @@ namespace BGE
         public bool followPathEnabled;
         public float followPathWeight;
         public bool ignoreHeight = false;
-        public Path path = new Path();
+        public Path path;
 
         [Header("Pursuit")]
         public bool pursuitEnabled;
@@ -129,7 +132,8 @@ namespace BGE
         public bool offsetPursuitEnabled;
         public GameObject offsetPursuitTarget;        
         public float offsetPursuitWeight;
-        public bool offsetPursuitKeepY;
+        [Range(0.0f, 1.0f)]
+        public float pitchForceScale = 1.0f;
 
         [HideInInspector]
         public Vector3 offset;
@@ -156,9 +160,10 @@ namespace BGE
         [Header("Scene Avoidance")]
         public bool sceneAvoidanceEnabled;
         public float sceneAvoidanceWeight;
-        public float sceneAvoidanceFeelerDepth;
+        public float sceneAvoidanceForwardFeelerDepth = 30;
+        public float sceneAvoidanceSideFeelerDepth = 15;
 
-        
+
         [HideInInspector]        
         public Vector3 force;
         
@@ -170,7 +175,6 @@ namespace BGE
                         
         List<GameObject> tagged = new List<GameObject>();
         List<Vector3> PlaneAvoidanceFeelers = new List<Vector3>();
-        List<Vector3> SceneAvoidanceFeelers = new List<Vector3>();
 
         private Vector3 wanderTargetPos;        
         private Vector3 randomWalkTarget;
@@ -257,9 +261,9 @@ namespace BGE
 
             offsetPursuitTarget = null;
             offsetPursuitWeight = 1.0f;
-            offsetPursuitKeepY = false;
 
             sphereCentre = Vector3.zero;
+
             sphereConstrainWeight = 1.0f;
             centreOnPosition = true;
             sphereRadius = 1000.0f;
@@ -278,7 +282,6 @@ namespace BGE
 
             sceneAvoidanceEnabled = false;
             sceneAvoidanceWeight = 1.0f;
-            sceneAvoidanceFeelerDepth = 30.0f;
 
             minDistancePursuitEnabled = false;
             minDistancePursuitWeight = 1.0f;
@@ -298,6 +301,7 @@ namespace BGE
             if (offsetPursuitTarget != null)
             {
                 offset = transform.position - offsetPursuitTarget.transform.position;
+                offset = Quaternion.Inverse(transform.rotation) * offset;
             }
 
             wanderNoiseX = UnityEngine.Random.Range(0, 10000);
@@ -311,6 +315,11 @@ namespace BGE
             }
 
             myCollider = GetComponentInChildren<Collider>();
+
+            if (path == null)
+            {
+                path = GetComponent<Path>();
+            }
         }
 
         #region Flags
@@ -435,6 +444,8 @@ namespace BGE
             return Vector3.zero;
         }
 
+        Vector3 oldSeparation, oldAlignment, oldCohesion;
+
         private Vector3 CalculateWeightedPrioritised()
         {
             Vector3 force = Vector3.zero;
@@ -506,7 +517,7 @@ namespace BGE
             {
                 if (fleeTarget != null)
                 {
-                    force = Flee(fleeTarget.transform.position) * fleeWeight;
+                    force = Flee(fleeTarget.transform.position, fleeRange) * fleeWeight;
                     force *= forceMultiplier;
                     fleeForce = force;
                 }
@@ -517,7 +528,7 @@ namespace BGE
                     {
                         if (enemy != null)
                         {
-                            force += Flee(enemy.transform.position) * fleeWeight;
+                            force += Flee(enemy.transform.position, fleeRange) * fleeWeight;
                             force *= forceMultiplier;
                         }
                     }
@@ -528,7 +539,18 @@ namespace BGE
                 }
             }
 
-            if (separationEnabled || cohesionEnabled || alignmentEnabled)
+
+            bool calculateThisFrame = true;
+            if (flock != null)
+            {
+                float prob = UnityEngine.Random.Range(0.0f, 1.0f);
+                if (prob < flock.updateDither)
+                {
+                    calculateThisFrame = true;
+                }
+            }
+
+            if (calculateThisFrame && separationEnabled || cohesionEnabled || alignmentEnabled)
             {
                 if (flock != null)
                 {
@@ -556,11 +578,16 @@ namespace BGE
 
             if (separationEnabled && (tagged.Count > 0))
             {
-                Profiler.BeginSample("Separation");
-                force = Separation() * separationWeight;
-                force *= forceMultiplier;
-                Profiler.EndSample();
-                
+                if (calculateThisFrame)
+                {
+                    force = Separation() * separationWeight;
+                    oldSeparation = force;
+                }
+                else
+                {
+                    force = oldSeparation;
+                }
+                force *= forceMultiplier;                
                 if (!accumulateForce(ref steeringForce, force))
                 {
                     return steeringForce;
@@ -570,10 +597,16 @@ namespace BGE
 
             if (alignmentEnabled && (tagged.Count > 0))
             {
-                Profiler.BeginSample("ALignment");                
-                force = Alignment() * alignmentWeight;
+                if (calculateThisFrame)
+                {
+                    force = Alignment() * alignmentWeight;
+                    oldAlignment = force;
+                }
+                else
+                {
+                    force = oldAlignment;
+                }
                 force *= forceMultiplier;
-                Profiler.EndSample();
                 if (!accumulateForce(ref steeringForce, force))
                 {
                     return steeringForce;
@@ -582,11 +615,16 @@ namespace BGE
 
             if (cohesionEnabled && (tagged.Count > 0))
             {
-                Profiler.BeginSample("Cohesion");
-                
-                force = Cohesion() * cohesionWeight;
+                if (calculateThisFrame)
+                {
+                    force = Cohesion() * alignmentWeight;
+                    oldCohesion = force;
+                }
+                else
+                {
+                    force = oldCohesion;
+                }
                 force *= forceMultiplier;
-                Profiler.EndSample();
                 if (!accumulateForce(ref steeringForce, force))
                 {
                     return steeringForce;
@@ -597,7 +635,7 @@ namespace BGE
             {
                 if (seekPlayer)
                 {
-                    force = Seek(Player.Instance.transform.position) * seekWeight;
+                    //force = Seek(Player.Instance.transform.position) * seekWeight;
                 }
                 else
                 {
@@ -755,125 +793,83 @@ namespace BGE
             return Seek(worldTargetOnY);
         }
 
+        Vector3 CalculateIncidentForce(Vector3 point, Vector3 normal)
+        {
+            Vector3 desiredVelocity;
+            desiredVelocity = point - transform.position;
+            desiredVelocity.Normalize();
+            desiredVelocity *= maxSpeed;
+            Utilities.checkNaN(desiredVelocity);
+            
+            Vector3 force = Vector3.Reflect(desiredVelocity - velocity, -normal);
+            if (drawGizmos)
+            {
+                LineDrawer.DrawLine(transform.position, transform.position + (force), Color.yellow);
+            }
+            return force;
+        }
+
+        struct FeelerInfo
+        {
+            public Vector3 localDirection;
+            public float depth;
+            public FeelerInfo(Vector3 localDirection, float depth)
+            {
+                this.localDirection = localDirection;
+                this.depth = depth;
+            }
+        }
+
         Vector3 SceneAvoidance()
         {
             Vector3 force = Vector3.zero;
             RaycastHit info;
+            Vector3 feelerDirection;
+            bool collided = false;
+            List<FeelerInfo> feelers = new List<FeelerInfo>();
 
-            // Check the forward feeler and generate a up force
-            Vector3 feeler = Vector3.forward;
-            feeler = transform.TransformDirection(feeler);
-            bool collided = Physics.Raycast(transform.position, feeler, out info, sceneAvoidanceFeelerDepth);
-            if (collided && info.collider != myCollider)
+            feelers.Add(new FeelerInfo(Vector3.forward, sceneAvoidanceForwardFeelerDepth));
+
+            feelerDirection = Vector3.forward;
+            feelerDirection = Quaternion.AngleAxis(-45, Vector3.up) * feelerDirection; // Left feeler
+            feelers.Add(new FeelerInfo(feelerDirection, sceneAvoidanceSideFeelerDepth));
+
+            feelerDirection = Vector3.forward;
+            feelerDirection = Quaternion.AngleAxis(45, Vector3.up) * feelerDirection; // Right feeler
+            feelers.Add(new FeelerInfo(feelerDirection, sceneAvoidanceSideFeelerDepth));
+
+            feelerDirection = Vector3.forward;
+            feelerDirection = Quaternion.AngleAxis(45, Vector3.right) * feelerDirection; // Up feeler
+            feelers.Add(new FeelerInfo(feelerDirection, sceneAvoidanceSideFeelerDepth));
+
+            feelerDirection = Vector3.forward;
+            feelerDirection = Quaternion.AngleAxis(-45, Vector3.right) * feelerDirection; // Down feeler
+            feelers.Add(new FeelerInfo(feelerDirection, sceneAvoidanceSideFeelerDepth));
+
+            for (int i = 0;  i < feelers.Count; i ++)
             {
-                // Push me away in the direction of the up vector. 
-                // The deeper the penetration the bigger the force
-                float depth = (info.point - feeler).magnitude;
-                force = Vector3.up * depth;
+                Vector3 feelerDir = transform.TransformDirection(feelers[i].localDirection);
+                float feelerDepth = feelers[i].depth;
+                collided = Physics.Raycast(transform.position, feelerDir, out info, feelerDepth);
                 if (drawGizmos)
                 {
-                    LineDrawer.DrawLine(transform.position, transform.position + feeler * sceneAvoidanceFeelerDepth, Color.red);
+                    LineDrawer.DrawLine(transform.position, transform.position + feelerDir * feelerDepth, Color.cyan);
+                }
+                if (collided && info.collider != myCollider)
+                {
+                    force += CalculateIncidentForce(info.point, info.normal);
+                    if (drawGizmos)
+                    {
+                        LineDrawer.DrawLine(transform.position, transform.position + feelerDir * feelerDepth, Color.red);
+                    }
                 }
             }
             
-            // Check the bottom feeler and generate an upwards force
-            //feeler = Vector3.forward;
-            //feeler = Quaternion.AngleAxis(45, Vector3.right) * feeler;
-            //feeler = transform.TransformDirection(feeler);
-            //collided = Physics.Raycast(transform.position, feeler, out info, sceneAvoidanceFeelerDepth);
-            feeler = Vector3.down;
-            if (collided && info.collider != myCollider)
-            {
-                // Push me away in the direction of the up vector. 
-                // The deeper the penetration the bigger the force
-                float depth = (info.point - feeler).magnitude;
-                force += Vector3.up * depth;
-                if (drawGizmos)
-                {
-                    LineDrawer.DrawLine(transform.position, transform.position + feeler * sceneAvoidanceFeelerDepth, Color.red);
-                }
-            }
-
-            // Check the top feeler and generate a downward force            
-            feeler = Vector3.forward;
-            feeler = Quaternion.AngleAxis(-45, Vector3.right) * feeler;
-            feeler = transform.TransformDirection(feeler);
-            collided = Physics.Raycast(transform.position, feeler, out info, sceneAvoidanceFeelerDepth);
-            if (collided && info.collider != myCollider)
-            {
-                // Push me away in the direction of the up vector. 
-                // The deeper the penetration the bigger the force
-                float depth = (info.point - feeler).magnitude;
-                force -= transform.up * depth;
-                if (drawGizmos)
-                {
-                    LineDrawer.DrawLine(transform.position, transform.position + feeler * sceneAvoidanceFeelerDepth, Color.red);
-                }
-            }
-
-            // Check the left feeler and generate a right force            
-            feeler = Vector3.forward;
-            feeler = Quaternion.AngleAxis(45, Vector3.right) * feeler;
-            feeler = transform.TransformDirection(feeler);
-            collided = Physics.Raycast(transform.position, feeler, out info, sceneAvoidanceFeelerDepth);
-            if (collided && info.collider != myCollider)
-            {
-                // Push me away in the direction of the up vector. 
-                // The deeper the penetration the bigger the force
-                float depth = (info.point - feeler).magnitude;
-                force += transform.right * depth;
-                if (drawGizmos)
-                {
-                    LineDrawer.DrawLine(transform.position, transform.position + feeler * sceneAvoidanceFeelerDepth, Color.red);
-                }
-            }
-
-            // Check the right feeler and generate a left force            
-            feeler = Vector3.forward;
-            feeler = Quaternion.AngleAxis(-45, Vector3.right) * feeler;
-            feeler = transform.TransformDirection(feeler);
-            collided = Physics.Raycast(transform.position, feeler, out info, sceneAvoidanceFeelerDepth);
-            if (collided && info.collider != myCollider)
-            {
-                // Push me away in the direction of the up vector. 
-                // The deeper the penetration the bigger the force
-                float depth = (info.point - feeler).magnitude;
-                force -= transform.right * depth;
-                if (drawGizmos)
-                {
-                    LineDrawer.DrawLine(transform.position, transform.position + feeler * sceneAvoidanceFeelerDepth, Color.red);
-                }
-            }
             return force;
         }
 
-        /*
-        Vector3 SceneAvoidance()
-        {
-            Vector3 force = Vector3.zero;
-            makeFeelers();
-            float distance = 20;
-            
-            foreach(Vector3 feeler in PlaneAvoidanceFeelers)
-            {
-                RaycastHit info;
-                Vector3 direction = feeler - transform.position;
-                if (Physics.Raycast(transform.position, direction, out info, distance))
-                {
-                    // Push me away in the direction of the up vector. 
-                    // The deeper the penetration the bigger the force
-                    float depth = (info.point - feeler).magnitude;
-                    force = transform.up * depth * 10.0f;
-                }
-                if (force.magnitude > 0)
-                {
-                    DrawFeelers();
-                }
-            }
-            return force;
-        }
-        */
-
+      
+    
         float maxAngle = float.MinValue;
         [HideInInspector]
         public float bankAngle = 0.0f;
@@ -887,25 +883,12 @@ namespace BGE
             {
                 timeDelta *= flock.timeMultiplier;
             }
+            force = Calculate();
 
-            if (flock != null)
-            {
-                float prob = UnityEngine.Random.Range(0.0f, 1.0f);
-                if (prob > flock.updateDither)
-                {
-                    calculateThisFrame = false;                    
-                }
-            }
-
-            if (calculateThisFrame)
-            {
-                force = Calculate();
-            } // Otherwise use the value from the previous calculation
-            
             if (drawForces)
             {
                 Quaternion q = Quaternion.FromToRotation(Vector3.forward, force);
-                LineDrawer.DrawArrowLine(transform.position, transform.position + force * 5.0f, Color.magenta, q);
+                LineDrawer.DrawArrowLine(transform.position, transform.position + force * 1.0f, Color.magenta, q);
             }
             Utilities.checkNaN(force);
             Vector3 newAcceleration = force / mass;
@@ -940,9 +923,9 @@ namespace BGE
 
             // the length of this global-upward-pointing vector controls the vehicle's
             // tendency to right itself as it is rolled over from turning acceleration
-            Vector3 globalUp = new Vector3(0, 1.2f, 0);
+            Vector3 globalUp = new Vector3(0, straighteningTendancy, 0);
             // acceleration points toward the center of local path curvature, the
-            // length determines how much the vehicle will roll while turning
+            // length determines how much the vehicle will roll while ncy
             Vector3 accelUp = acceleration * 0.05f;
             // combined banking, sum of UP due to turning and global UP
             Vector3 bankUp = accelUp + globalUp;
@@ -967,13 +950,13 @@ namespace BGE
                 if (side < 0 ) // Angle < 90
                 {
                     bankAngle = -bankAngle;
-                } 
+                }
 
                 if (Mathf.Abs(bankAngle) > maxTurn)
                 {
                     clamping = true;
                     // Clamp the turn
-                    Vector3 axis = Vector3.Cross(transform.forward, velocity.normalized);
+                    BoidManager.PrintMessage("Clamping the turn"); Vector3 axis = Vector3.Cross(transform.forward, velocity.normalized);
                     Quaternion q = Quaternion.AngleAxis(maxTurnFrame, axis);
                     transform.forward = q * transform.forward;
                     velocity = transform.forward * velocity.magnitude;
@@ -1271,27 +1254,25 @@ namespace BGE
         }
 
 
-
-
         Vector3 OffsetPursuit(Vector3 offset)
         {
             Vector3 target = Vector3.zero;
 
             target = TransformPointNoScale(offsetPursuitTarget.transform, offset);
 
-            if (offsetPursuitKeepY)
-            {
-                // Translate the offset pursuit target to the Y of the target
-                target.y = offsetPursuitTarget.transform.position.y;
-            }
-         
+            
             float dist = (target - transform.position).magnitude;
 
             float lookAhead = (dist / maxSpeed);
 
             target = target + (lookAhead * offsetPursuitTarget.GetComponent<Boid>().velocity);
+
+            float pitchForce = target.y - transform.position.y;
+            pitchForce *= (1.0f - pitchForceScale);
+            target.y -= pitchForce;
+
             Utilities.checkNaN(target);
-            return Arrive(target);
+            return Seek(target);
         }
 
         Vector3 Pursue()
@@ -1310,7 +1291,7 @@ namespace BGE
             return Seek(targetPos);
         }
 
-        Vector3 Flee(Vector3 targetPos)
+        Vector3 Flee(Vector3 targetPos, float fleeRange)
         {
             Vector3 desiredVelocity;
             desiredVelocity = transform.position - targetPos;
@@ -1318,10 +1299,16 @@ namespace BGE
             {
                 return Vector3.zero;
             }
-            if (drawGizmos)
-            {
-                LineDrawer.DrawSphere(transform.position, fleeRange, 20, Color.yellow);
-            }
+            desiredVelocity.Normalize();
+            desiredVelocity *= maxSpeed;
+            Utilities.checkNaN(desiredVelocity);
+            return (desiredVelocity - velocity);
+        }
+
+        Vector3 Flee(Vector3 targetPos)
+        {
+            Vector3 desiredVelocity;
+            desiredVelocity = transform.position - targetPos;
             desiredVelocity.Normalize();
             desiredVelocity *= maxSpeed;
             Utilities.checkNaN(desiredVelocity);
@@ -1356,9 +1343,10 @@ namespace BGE
 
         Vector3 TransformPointNoScale(Transform transform, Vector3 localPoint)
         {
-            Vector3 p = transform.rotation * localPoint;
-            p += transform.position;
-            return p;
+            return transform.TransformPoint(localPoint);
+            //Vector3 p = transform.rotation * localPoint;
+            //p += transform.position;
+            //return p;
         }
 
         Vector3 Wander()
@@ -1497,7 +1485,7 @@ namespace BGE
 
         private Vector3 FollowPath()
         {
-            float epsilon = 200.0f;
+            float epsilon = 20.0f;
             float dist;
             Vector3 nextWayPoint = path.NextWaypoint();
 
@@ -1512,7 +1500,7 @@ namespace BGE
             {
                 path.AdvanceToNext();
             }
-            if ((!path.Looped) && path.IsLast())
+            if ((!path.looped) && path.IsLast())
             {
                 return Arrive(path.NextWaypoint());
             }

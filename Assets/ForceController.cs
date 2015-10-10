@@ -17,8 +17,6 @@ public class ForceController : MonoBehaviour {
     // Use this for initialization
     void Start()
     {
-        Cursor.visible = false;
-        Cursor.lockState = CursorLockMode.Locked;
 
         rigidBody = GetComponent<Rigidbody>();
 

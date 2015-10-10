@@ -4,9 +4,11 @@ using System.Collections.Generic;
 using System;
 using BGE.Geom;
 
+// Hello world
+
 namespace BGE
 {
-    public class Boid:MonoBehaviour
+    public class Boid : MonoBehaviour
     {
         // Variables required to implement the boid
         [Header("Boid Attributes")]
@@ -23,6 +25,7 @@ namespace BGE
         public float radius;
         public float maxTurnDegrees;
         public bool applyBanking;
+        public float straighteningTendancy = 0.2f;
 
         [HideInInspector]
         public bool clamping;
@@ -37,14 +40,14 @@ namespace BGE
         public bool drawForces;
         public bool drawVectors;
         public bool drawNeighbours;
-                
-        [Header("Seek")]        
+
+        [Header("Seek")]
         public bool seekEnabled;
         public Vector3 seekTargetPos;
         public float seekWeight;
         public bool seekPlayer;
-        
-        [Header("Flee")]        
+
+        [Header("Flee")]
         public bool fleeEnabled;
         public float fleeWeight;
         public GameObject fleeTarget;
@@ -52,7 +55,7 @@ namespace BGE
         [HideInInspector]
         public Vector3 fleeForce;
 
-        [Header("Arrive")]        
+        [Header("Arrive")]
         public bool arriveEnabled;
         public Vector3 arriveTargetPos;
         public float arriveWeight;
@@ -72,13 +75,13 @@ namespace BGE
         public float wanderNoiseDeltaX;
         private float wanderNoiseX;
         private float wanderNoiseY;
-       
 
-        [Header("Separation")]                
+
+        [Header("Separation")]
         public bool separationEnabled;
         public float separationWeight;
 
-        [Header("Alignment")]                
+        [Header("Alignment")]
         public bool alignmentEnabled;
         public float alignmentWeight;
 
@@ -86,37 +89,37 @@ namespace BGE
         public bool cohesionEnabled;
         public float cohesionWeight;
 
-        [Header("Obstacle Avoidance")]                
+        [Header("Obstacle Avoidance")]
         public bool obstacleAvoidanceEnabled;
         public float minBoxLength;
         public float obstacleAvoidanceWeight;
 
-        [Header("Plane Avoidance")]                
+        [Header("Plane Avoidance")]
         public bool planeAvoidanceEnabled;
         public float planeAvoidanceWeight;
         public float planeY;
 
-        [Header("Follow Path")]                        
+        [Header("Follow Path")]
         public bool followPathEnabled;
         public float followPathWeight;
         public bool ignoreHeight = false;
-        public Path path = new Path();
+        public Path path;
 
         [Header("Pursuit")]
         public bool pursuitEnabled;
         public GameObject pursuitTarget;
         public float pursuitWeight;
 
-        [Header("Evade")]                        
+        [Header("Evade")]
         public bool evadeEnabled;
         public GameObject evadeTarget;
         public float evadeWeight;
 
-        [Header("Interpose")]                                
+        [Header("Interpose")]
         public bool interposeEnabled;
         public float interposeWeight;
 
-        [Header("Hide")]                                
+        [Header("Hide")]
         public bool hideEnabled;
         public float hideWeight;
 
@@ -125,11 +128,12 @@ namespace BGE
         public float minDistancePursuitWeight;
         public float minDistance;
 
-        [Header("Offset Pursuit")]                                
+        [Header("Offset Pursuit")]
         public bool offsetPursuitEnabled;
-        public GameObject offsetPursuitTarget;        
+        public GameObject offsetPursuitTarget;
         public float offsetPursuitWeight;
-        public bool offsetPursuitKeepY;
+        [Range(0.0f, 1.0f)]
+        public float pitchForceScale = 1.0f;
 
         [HideInInspector]
         public Vector3 offset;
@@ -146,8 +150,8 @@ namespace BGE
         [HideInInspector]
         public Vector3 randomWalkCenter;
         public float randomWalkWaitMaxSeconds;
-        private float randomWalkWait; 
-        
+        private float randomWalkWait;
+
         public float randomWalkRadius;
         public bool randomWalkKeepY;
         public float randomWalkWeight;
@@ -156,25 +160,25 @@ namespace BGE
         [Header("Scene Avoidance")]
         public bool sceneAvoidanceEnabled;
         public float sceneAvoidanceWeight;
-        public float sceneAvoidanceFeelerDepth;
+        public float sceneAvoidanceForwardFeelerDepth = 30;
+        public float sceneAvoidanceSideFeelerDepth = 15;
 
-        
-        [HideInInspector]        
+
+        [HideInInspector]
         public Vector3 force;
-        
+
         [HideInInspector]
         public Vector3 velocity;
 
-        [HideInInspector]        
+        [HideInInspector]
         public Vector3 acceleration;
-                        
+
         List<GameObject> tagged = new List<GameObject>();
         List<Vector3> PlaneAvoidanceFeelers = new List<Vector3>();
-        List<Vector3> SceneAvoidanceFeelers = new List<Vector3>();
 
-        private Vector3 wanderTargetPos;        
+        private Vector3 wanderTargetPos;
         private Vector3 randomWalkTarget;
-        
+
         Color debugLineColour = Color.cyan;
         float timeDelta;
 
@@ -202,7 +206,7 @@ namespace BGE
             drawNeighbours = false;
             applyBanking = true;
             flock = null;
-        
+
             // Set default values
             force = Vector3.zero;
             velocity = Vector3.zero;
@@ -211,9 +215,9 @@ namespace BGE
             radius = 5.0f;
             forceMultiplier = 1.0f;
             timeMultiplier = 1.0f;
-           
+
             calculationMethod = CalculationMethods.WeightedTruncatedRunningSumWithPrioritisation;
-            
+
             seekTargetPos = Vector3.zero;
             seekWeight = 1.0f;
 
@@ -231,8 +235,8 @@ namespace BGE
             wanderDistance = 15.0f;
             wanderJitter = 20.0f;
             wanderWeight = 1.0f;
-            
-            
+
+
             wanderNoiseDeltaX = 0.01f;
 
             cohesionWeight = 1.0f;
@@ -257,9 +261,9 @@ namespace BGE
 
             offsetPursuitTarget = null;
             offsetPursuitWeight = 1.0f;
-            offsetPursuitKeepY = false;
 
             sphereCentre = Vector3.zero;
+
             sphereConstrainWeight = 1.0f;
             centreOnPosition = true;
             sphereRadius = 1000.0f;
@@ -278,7 +282,6 @@ namespace BGE
 
             sceneAvoidanceEnabled = false;
             sceneAvoidanceWeight = 1.0f;
-            sceneAvoidanceFeelerDepth = 30.0f;
 
             minDistancePursuitEnabled = false;
             minDistancePursuitWeight = 1.0f;
@@ -298,6 +301,7 @@ namespace BGE
             if (offsetPursuitTarget != null)
             {
                 offset = transform.position - offsetPursuitTarget.transform.position;
+                offset = Quaternion.Inverse(transform.rotation) * offset;
             }
 
             wanderNoiseX = UnityEngine.Random.Range(0, 10000);
@@ -311,37 +315,42 @@ namespace BGE
             }
 
             myCollider = GetComponentInChildren<Collider>();
+
+            if (path == null)
+            {
+                path = GetComponent<Path>();
+            }
         }
 
         #region Flags
 
         public void TurnOffAll()
         {
-            seekEnabled= false;
-            fleeEnabled= false;
-            arriveEnabled= false;
-            wanderEnabled= false;
-            cohesionEnabled= false;
-            separationEnabled= false;
-            alignmentEnabled= false;
-            obstacleAvoidanceEnabled= false;
-            planeAvoidanceEnabled= false;
-            followPathEnabled= false;
-            pursuitEnabled= false;
-            evadeEnabled= false;
-            interposeEnabled= false;
-            hideEnabled= false;
-            offsetPursuitEnabled= false;
-            sphereConstrainEnabled= false;
-            randomWalkEnabled= false;
+            seekEnabled = false;
+            fleeEnabled = false;
+            arriveEnabled = false;
+            wanderEnabled = false;
+            cohesionEnabled = false;
+            separationEnabled = false;
+            alignmentEnabled = false;
+            obstacleAvoidanceEnabled = false;
+            planeAvoidanceEnabled = false;
+            followPathEnabled = false;
+            pursuitEnabled = false;
+            evadeEnabled = false;
+            interposeEnabled = false;
+            hideEnabled = false;
+            offsetPursuitEnabled = false;
+            sphereConstrainEnabled = false;
+            randomWalkEnabled = false;
             wiggleEnabled = false;
             minDistancePursuitEnabled = false;
         }
 
-        
-#endregion
 
-#region Utilities        
+        #endregion
+
+        #region Utilities        
         private void makeFeelers()
         {
             PlaneAvoidanceFeelers.Clear();
@@ -374,8 +383,8 @@ namespace BGE
 
         // These feelers are normals       
 
-#endregion
-#region Integration
+        #endregion
+        #region Integration
 
         private bool accumulateForce(ref Vector3 runningTotal, Vector3 force)
         {
@@ -406,7 +415,7 @@ namespace BGE
         private void EnforceNonPenetrationConstraint()
         {
             Profiler.BeginSample("Non penetration");
-            
+
             foreach (GameObject boid in tagged)
             {
                 if (boid == gameObject)
@@ -434,6 +443,8 @@ namespace BGE
 
             return Vector3.zero;
         }
+
+        Vector3 oldSeparation, oldAlignment, oldCohesion;
 
         private Vector3 CalculateWeightedPrioritised()
         {
@@ -513,7 +524,7 @@ namespace BGE
                 if (flock != null)
                 {
                     force = Vector3.zero;
-                    foreach(GameObject enemy in flock.enemies)
+                    foreach (GameObject enemy in flock.enemies)
                     {
                         if (enemy != null)
                         {
@@ -532,7 +543,7 @@ namespace BGE
             {
                 if (flock != null)
                 {
-                    Profiler.BeginSample("Tagging neighbours");   
+                    Profiler.BeginSample("Tagging neighbours");
                     if (flock.UseCellSpacePartitioning)
                     {
                         TagNeighboursPartitioned(flock.neighbourDistance);
@@ -549,8 +560,8 @@ namespace BGE
                     {
                         TagNeighboursSimple(flock.neighbourDistance);
                     }
-                    Profiler.EndSample();   
-                    
+                    Profiler.EndSample();
+
                 }
             }
 
@@ -560,7 +571,7 @@ namespace BGE
                 force = Separation() * separationWeight;
                 force *= forceMultiplier;
                 Profiler.EndSample();
-                
+
                 if (!accumulateForce(ref steeringForce, force))
                 {
                     return steeringForce;
@@ -570,7 +581,7 @@ namespace BGE
 
             if (alignmentEnabled && (tagged.Count > 0))
             {
-                Profiler.BeginSample("ALignment");                
+                Profiler.BeginSample("ALignment");
                 force = Alignment() * alignmentWeight;
                 force *= forceMultiplier;
                 Profiler.EndSample();
@@ -583,7 +594,7 @@ namespace BGE
             if (cohesionEnabled && (tagged.Count > 0))
             {
                 Profiler.BeginSample("Cohesion");
-                
+
                 force = Cohesion() * cohesionWeight;
                 force *= forceMultiplier;
                 Profiler.EndSample();
@@ -637,7 +648,7 @@ namespace BGE
                 }
             }
 
-            
+
             if (pursuitEnabled)
             {
                 force = Pursue() * pursuitWeight;
@@ -668,7 +679,7 @@ namespace BGE
                 }
             }
 
-            
+
 
             if (followPathEnabled)
             {
@@ -693,10 +704,9 @@ namespace BGE
             return steeringForce;
         }
 
-
         float wiggleTheta = 0;
 
-        [Header("Wiggle")]        
+        [Header("Wiggle")]
         public float wiggleAngularSpeedDegrees = 30;
         public float wiggleLowDegrees = -30;
         public float wiggleHighDegrees = 30;
@@ -755,128 +765,87 @@ namespace BGE
             return Seek(worldTargetOnY);
         }
 
+        Vector3 CalculateIncidentForce(Vector3 point, Vector3 normal)
+        {
+            Vector3 desiredVelocity;
+            desiredVelocity = point - transform.position;
+            desiredVelocity.Normalize();
+            desiredVelocity *= maxSpeed;
+            Utilities.checkNaN(desiredVelocity);
+
+            Vector3 force = Vector3.Reflect(desiredVelocity - velocity, -normal);
+            if (drawGizmos)
+            {
+                LineDrawer.DrawLine(transform.position, transform.position + (force), Color.yellow);
+            }
+            return force;
+        }
+
+        struct FeelerInfo
+        {
+            public Vector3 localDirection;
+            public float depth;
+            public FeelerInfo(Vector3 localDirection, float depth)
+            {
+                this.localDirection = localDirection;
+                this.depth = depth;
+            }
+        }
+
         Vector3 SceneAvoidance()
         {
             Vector3 force = Vector3.zero;
             RaycastHit info;
+            Vector3 feelerDirection;
+            bool collided = false;
+            List<FeelerInfo> feelers = new List<FeelerInfo>();
 
-            // Check the forward feeler and generate a up force
-            Vector3 feeler = Vector3.forward;
-            feeler = transform.TransformDirection(feeler);
-            bool collided = Physics.Raycast(transform.position, feeler, out info, sceneAvoidanceFeelerDepth);
-            if (collided && info.collider != myCollider)
-            {
-                // Push me away in the direction of the up vector. 
-                // The deeper the penetration the bigger the force
-                float depth = (info.point - feeler).magnitude;
-                force = Vector3.up * depth;
-                if (drawGizmos)
-                {
-                    LineDrawer.DrawLine(transform.position, transform.position + feeler * sceneAvoidanceFeelerDepth, Color.red);
-                }
-            }
-            
-            // Check the bottom feeler and generate an upwards force
-            //feeler = Vector3.forward;
-            //feeler = Quaternion.AngleAxis(45, Vector3.right) * feeler;
-            //feeler = transform.TransformDirection(feeler);
-            //collided = Physics.Raycast(transform.position, feeler, out info, sceneAvoidanceFeelerDepth);
-            feeler = Vector3.down;
-            if (collided && info.collider != myCollider)
-            {
-                // Push me away in the direction of the up vector. 
-                // The deeper the penetration the bigger the force
-                float depth = (info.point - feeler).magnitude;
-                force += Vector3.up * depth;
-                if (drawGizmos)
-                {
-                    LineDrawer.DrawLine(transform.position, transform.position + feeler * sceneAvoidanceFeelerDepth, Color.red);
-                }
-            }
+            feelers.Add(new FeelerInfo(Vector3.forward, sceneAvoidanceForwardFeelerDepth));
 
-            // Check the top feeler and generate a downward force            
-            feeler = Vector3.forward;
-            feeler = Quaternion.AngleAxis(-45, Vector3.right) * feeler;
-            feeler = transform.TransformDirection(feeler);
-            collided = Physics.Raycast(transform.position, feeler, out info, sceneAvoidanceFeelerDepth);
-            if (collided && info.collider != myCollider)
+            feelerDirection = Vector3.forward;
+            feelerDirection = Quaternion.AngleAxis(-45, Vector3.up) * feelerDirection; // Left feeler
+            feelers.Add(new FeelerInfo(feelerDirection, sceneAvoidanceSideFeelerDepth));
+
+            feelerDirection = Vector3.forward;
+            feelerDirection = Quaternion.AngleAxis(45, Vector3.up) * feelerDirection; // Right feeler
+            feelers.Add(new FeelerInfo(feelerDirection, sceneAvoidanceSideFeelerDepth));
+
+            feelerDirection = Vector3.forward;
+            feelerDirection = Quaternion.AngleAxis(45, Vector3.right) * feelerDirection; // Up feeler
+            feelers.Add(new FeelerInfo(feelerDirection, sceneAvoidanceSideFeelerDepth));
+
+            feelerDirection = Vector3.forward;
+            feelerDirection = Quaternion.AngleAxis(-45, Vector3.right) * feelerDirection; // Down feeler
+            feelers.Add(new FeelerInfo(feelerDirection, sceneAvoidanceSideFeelerDepth));
+
+            for (int i = 0; i < feelers.Count; i++)
             {
-                // Push me away in the direction of the up vector. 
-                // The deeper the penetration the bigger the force
-                float depth = (info.point - feeler).magnitude;
-                force -= transform.up * depth;
+                Vector3 feelerDir = transform.TransformDirection(feelers[i].localDirection);
+                float feelerDepth = feelers[i].depth;
+                collided = Physics.Raycast(transform.position, feelerDir, out info, feelerDepth);
                 if (drawGizmos)
                 {
-                    LineDrawer.DrawLine(transform.position, transform.position + feeler * sceneAvoidanceFeelerDepth, Color.red);
+                    LineDrawer.DrawLine(transform.position, transform.position + feelerDir * feelerDepth, Color.cyan);
+                }
+                if (collided && info.collider != myCollider)
+                {
+                    force += CalculateIncidentForce(info.point, info.normal);
+                    if (drawGizmos)
+                    {
+                        LineDrawer.DrawLine(transform.position, transform.position + feelerDir * feelerDepth, Color.red);
+                    }
                 }
             }
 
-            // Check the left feeler and generate a right force            
-            feeler = Vector3.forward;
-            feeler = Quaternion.AngleAxis(45, Vector3.right) * feeler;
-            feeler = transform.TransformDirection(feeler);
-            collided = Physics.Raycast(transform.position, feeler, out info, sceneAvoidanceFeelerDepth);
-            if (collided && info.collider != myCollider)
-            {
-                // Push me away in the direction of the up vector. 
-                // The deeper the penetration the bigger the force
-                float depth = (info.point - feeler).magnitude;
-                force += transform.right * depth;
-                if (drawGizmos)
-                {
-                    LineDrawer.DrawLine(transform.position, transform.position + feeler * sceneAvoidanceFeelerDepth, Color.red);
-                }
-            }
-
-            // Check the right feeler and generate a left force            
-            feeler = Vector3.forward;
-            feeler = Quaternion.AngleAxis(-45, Vector3.right) * feeler;
-            feeler = transform.TransformDirection(feeler);
-            collided = Physics.Raycast(transform.position, feeler, out info, sceneAvoidanceFeelerDepth);
-            if (collided && info.collider != myCollider)
-            {
-                // Push me away in the direction of the up vector. 
-                // The deeper the penetration the bigger the force
-                float depth = (info.point - feeler).magnitude;
-                force -= transform.right * depth;
-                if (drawGizmos)
-                {
-                    LineDrawer.DrawLine(transform.position, transform.position + feeler * sceneAvoidanceFeelerDepth, Color.red);
-                }
-            }
             return force;
         }
 
-        /*
-        Vector3 SceneAvoidance()
-        {
-            Vector3 force = Vector3.zero;
-            makeFeelers();
-            float distance = 20;
-            
-            foreach(Vector3 feeler in PlaneAvoidanceFeelers)
-            {
-                RaycastHit info;
-                Vector3 direction = feeler - transform.position;
-                if (Physics.Raycast(transform.position, direction, out info, distance))
-                {
-                    // Push me away in the direction of the up vector. 
-                    // The deeper the penetration the bigger the force
-                    float depth = (info.point - feeler).magnitude;
-                    force = transform.up * depth * 10.0f;
-                }
-                if (force.magnitude > 0)
-                {
-                    DrawFeelers();
-                }
-            }
-            return force;
-        }
-        */
+
 
         float maxAngle = float.MinValue;
         [HideInInspector]
         public float bankAngle = 0.0f;
+
         void Update()
         {
             bool calculateThisFrame = true;
@@ -893,7 +862,7 @@ namespace BGE
                 float prob = UnityEngine.Random.Range(0.0f, 1.0f);
                 if (prob > flock.updateDither)
                 {
-                    calculateThisFrame = false;                    
+                    calculateThisFrame = false;
                 }
             }
 
@@ -901,7 +870,7 @@ namespace BGE
             {
                 force = Calculate();
             } // Otherwise use the value from the previous calculation
-            
+
             if (drawForces)
             {
                 Quaternion q = Quaternion.FromToRotation(Vector3.forward, force);
@@ -914,7 +883,7 @@ namespace BGE
                 LineDrawer.DrawVectors(transform);
             }
 
-            
+
             if (timeDelta > 0.0f)
             {
                 smoothRate = Utilities.Clip(9.0f * timeDelta, 0.15f, 0.4f) / 2.0f;
@@ -940,7 +909,7 @@ namespace BGE
 
             // the length of this global-upward-pointing vector controls the vehicle's
             // tendency to right itself as it is rolled over from turning acceleration
-            Vector3 globalUp = new Vector3(0, 1.2f, 0);
+            Vector3 globalUp = new Vector3(0, straighteningTendancy, 0);
             // acceleration points toward the center of local path curvature, the
             // length determines how much the vehicle will roll while turning
             Vector3 accelUp = acceleration * 0.05f;
@@ -950,7 +919,7 @@ namespace BGE
             smoothRate = timeDelta;// * 3.0f;
             Vector3 tempUp = transform.up;
             Utilities.BlendIntoAccumulator(smoothRate, bankUp, ref tempUp);
-            
+
             if (speed > 0.01f)
             {
                 float maxTurnFrame = maxTurnDegrees * Time.deltaTime;
@@ -964,10 +933,10 @@ namespace BGE
                 }
 
                 float side = Vector3.Dot(transform.right, velocity.normalized);
-                if (side < 0 ) // Angle < 90
+                if (side < 0) // Angle < 90
                 {
                     bankAngle = -bankAngle;
-                } 
+                }
 
                 if (Mathf.Abs(bankAngle) > maxTurn)
                 {
@@ -993,9 +962,9 @@ namespace BGE
                 //BoidManager.PrintFloat("Max angle: ", maxAngle * Mathf.Rad2Deg);
                 if (applyBanking)
                 {
-                    transform.LookAt(transform.position + transform.forward, tempUp);               
+                    transform.LookAt(transform.position + transform.forward, tempUp);
                 }
-                 // Apply damping
+                // Apply damping
                 velocity *= (1.0f - damping);
             }
 
@@ -1263,14 +1232,12 @@ namespace BGE
 
             //var target = _quarry.PredictFuturePosition(etl);
             Vector3 target = offsetPursuitTarget.GetComponent<Boid>().transform.position + (et * offsetPursuitTarget.GetComponent<Boid>().velocity);
-            
+
             // estimated position of quarry at intercept
 
             //force = Vehicle.GetSeekVector(target, _slowDownOnApproach);
             return Seek(target);
         }
-
-
 
 
         Vector3 OffsetPursuit(Vector3 offset)
@@ -1279,19 +1246,19 @@ namespace BGE
 
             target = TransformPointNoScale(offsetPursuitTarget.transform, offset);
 
-            if (offsetPursuitKeepY)
-            {
-                // Translate the offset pursuit target to the Y of the target
-                target.y = offsetPursuitTarget.transform.position.y;
-            }
-         
+
             float dist = (target - transform.position).magnitude;
 
             float lookAhead = (dist / maxSpeed);
 
             target = target + (lookAhead * offsetPursuitTarget.GetComponent<Boid>().velocity);
+
+            float pitchForce = target.y - transform.position.y;
+            pitchForce *= (1.0f - pitchForceScale);
+            target.y -= pitchForce;
+
             Utilities.checkNaN(target);
-            return Arrive(target);
+            return Seek(target);
         }
 
         Vector3 Pursue()
@@ -1310,7 +1277,7 @@ namespace BGE
             return Seek(targetPos);
         }
 
-        Vector3 Flee(Vector3 targetPos)
+        Vector3 Flee(Vector3 targetPos, float fleeRange)
         {
             Vector3 desiredVelocity;
             desiredVelocity = transform.position - targetPos;
@@ -1318,10 +1285,16 @@ namespace BGE
             {
                 return Vector3.zero;
             }
-            if (drawGizmos)
-            {
-                LineDrawer.DrawSphere(transform.position, fleeRange, 20, Color.yellow);
-            }
+            desiredVelocity.Normalize();
+            desiredVelocity *= maxSpeed;
+            Utilities.checkNaN(desiredVelocity);
+            return (desiredVelocity - velocity);
+        }
+
+        Vector3 Flee(Vector3 targetPos)
+        {
+            Vector3 desiredVelocity;
+            desiredVelocity = transform.position - targetPos;
             desiredVelocity.Normalize();
             desiredVelocity *= maxSpeed;
             Utilities.checkNaN(desiredVelocity);
@@ -1337,12 +1310,12 @@ namespace BGE
                 float sphereRadius = (flock != null) ? flock.radius : randomWalkRadius;
                 Vector3 r = UnityEngine.Random.insideUnitSphere;
                 r.y = Mathf.Abs(r.y);
-                randomWalkTarget = randomWalkTarget = randomWalkCenter +  r * randomWalkRadius;
+                randomWalkTarget = randomWalkTarget = randomWalkCenter + r * randomWalkRadius;
             }
             if (randomWalkKeepY)
             {
                 randomWalkTarget.y = transform.position.y;
-            } 
+            }
             return Seek(randomWalkTarget);
         }
 
@@ -1356,9 +1329,10 @@ namespace BGE
 
         Vector3 TransformPointNoScale(Transform transform, Vector3 localPoint)
         {
-            Vector3 p = transform.rotation * localPoint;
-            p += transform.position;
-            return p;
+            return transform.TransformPoint(localPoint);
+            //Vector3 p = transform.rotation * localPoint;
+            //p += transform.position;
+            //return p;
         }
 
         Vector3 Wander()
@@ -1378,7 +1352,7 @@ namespace BGE
             }
             return (worldTarget - transform.position);
         }
-               
+
         Vector3 NoiseWander()
         {
             float n = Mathf.PerlinNoise(wanderNoiseX, 0);
@@ -1388,7 +1362,7 @@ namespace BGE
 
             n = Mathf.PerlinNoise(wanderNoiseX, 0);
             theta = Utilities.Map(n, 0.0f, 1.0f, 0, Mathf.PI * 2.0f);
-           
+
             wanderTargetPos.y = 0;
             wanderTargetPos *= wanderRadius;
             Vector3 localTarget = wanderTargetPos + (Vector3.forward * wanderDistance);
@@ -1407,7 +1381,7 @@ namespace BGE
             //return Vector3.zero;
             return desired - velocity;
         }
-         
+
 
         // Wander with quaternions
         /*
@@ -1436,7 +1410,7 @@ namespace BGE
         {
             makeFeelers();
 
-            Plane worldPlane = new Plane(new Vector3(0, 1, 0), -planeY);           
+            Plane worldPlane = new Plane(new Vector3(0, 1, 0), -planeY);
             Vector3 force = Vector3.zero;
             foreach (Vector3 feeler in PlaneAvoidanceFeelers)
             {
@@ -1462,7 +1436,7 @@ namespace BGE
                 {
                     LineDrawer.DrawLine(transform.position, feeler, Color.green);
                 }
-            }            
+            }
         }
 
         public Vector3 Arrive(Vector3 target)
@@ -1480,7 +1454,7 @@ namespace BGE
             if (distance < 1.0f)
             {
                 return Vector3.zero;
-            }            
+            }
             float desiredSpeed = 0;
             if (distance < arriveSlowingDistance)
             {
@@ -1497,7 +1471,7 @@ namespace BGE
 
         private Vector3 FollowPath()
         {
-            float epsilon = 200.0f;
+            float epsilon = 20.0f;
             float dist;
             Vector3 nextWayPoint = path.NextWaypoint();
 
@@ -1505,14 +1479,14 @@ namespace BGE
             {
                 nextWayPoint.y = transform.position.y;
             }
-            
+
             dist = (transform.position - path.NextWaypoint()).magnitude;
-            
+
             if (dist < epsilon)
             {
                 path.AdvanceToNext();
             }
-            if ((!path.Looped) && path.IsLast())
+            if ((!path.looped) && path.IsLast())
             {
                 return Arrive(path.NextWaypoint());
             }
@@ -1573,12 +1547,12 @@ namespace BGE
                     LineDrawer.DrawCircle(neighbour.transform.position, 5, 10, color);
                 }
                 LineDrawer.DrawCircle(transform.position, 5, 10, Color.red);
-            }            
+            }
         }
 
         private int TagNeighboursPartitioned(float inRange)
         {
-            
+
             Bounds expanded = new Bounds();
             expanded.min = new Vector3(transform.position.x - inRange, 0, transform.position.z - inRange);
             expanded.max = new Vector3(transform.position.x + inRange, 0, transform.position.z + inRange);
@@ -1633,7 +1607,7 @@ namespace BGE
                                 if (Vector3.SqrMagnitude(transform.position - neighbour.transform.position) < rangeSquared)
                                 {
                                     tagged.Add(neighbour);
-                                    
+
                                 }
                             }
                         }
@@ -1647,7 +1621,7 @@ namespace BGE
         }
 
         public Vector3 Separation()
-        {            
+        {
             Vector3 steeringForce = Vector3.zero;
             foreach (GameObject entity in tagged)
             {

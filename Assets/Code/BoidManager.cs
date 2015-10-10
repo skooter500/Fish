@@ -71,7 +71,6 @@ namespace BGE
         void Start()
         {
             instance = this;
-            Cursor.visible = false;
 
             style.fontSize = 18;
             style.normal.textColor = Color.white;

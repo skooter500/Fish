@@ -103,7 +103,7 @@ public class DolphinSchool : MonoBehaviour {
             
             theta += thetaInc;
             boid.path.Waypoints.Add(waypoint);
-            boid.path.Looped = true;
+            boid.path.looped = true;
             //boid.drawGizmos = true;
         }
         leader.transform.position = leader.GetComponent<Boid>().path.Waypoints[0];

@@ -12,8 +12,6 @@ namespace BGE
         // Use this for initialization
         void Start()
         {
-            Cursor.visible = false;
-            Cursor.lockState = CursorLockMode.Locked;
 
             if (GameObject.FindGameObjectWithTag("ovrplayer") != null)
             {

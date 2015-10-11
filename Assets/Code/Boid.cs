@@ -857,14 +857,7 @@ namespace BGE
                 timeDelta *= flock.timeMultiplier;
             }
 
-            if (flock != null)
-            {
-                float prob = UnityEngine.Random.Range(0.0f, 1.0f);
-                if (prob > flock.updateDither)
-                {
-                    calculateThisFrame = false;
-                }
-            }
+            
 
             if (calculateThisFrame)
             {
@@ -1518,17 +1511,28 @@ namespace BGE
         #region Flocking
         private int TagNeighboursSimple(float inRange)
         {
+            if (flock != null)
+            {
+                float prob = UnityEngine.Random.Range(0.0f, 1.0f);
+                if (prob > flock.updateDither)
+                {
+                    return tagged.Count;
+                }
+            }
+
             tagged.Clear();
 
+            float inRangeSq = inRange * inRange;
             foreach (GameObject boid in flock.boids)
             {
+                
                 if (boid != gameObject)
                 {
                     if (drawNeighbours)
                     {
                         LineDrawer.DrawLine(transform.position, boid.transform.position, Color.cyan);
                     }
-                    if ((transform.position - boid.transform.position).magnitude < inRange)
+                    if ((transform.position - boid.transform.position).sqrMagnitude < inRangeSq)
                     {
                         tagged.Add(boid);
                     }

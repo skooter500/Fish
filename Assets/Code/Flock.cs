@@ -29,7 +29,10 @@ namespace BGE
      
         [Header("Debug")]
         public bool drawGizmos;        
-        public float updateDither;
+
+        [Header("Performance")]
+        public float tagDither;
+        public int maxTagged = 100;
 
         [HideInInspector]
         public Vector3 flockCenter;
@@ -48,7 +51,7 @@ namespace BGE
             timeMultiplier = 1.0f;
             boids = new List<GameObject>();
             enemies = new List<GameObject>();           
-            updateDither = 1.0f;
+            tagDither = 1.0f;
             numCells = 50;
         
         }

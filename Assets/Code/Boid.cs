@@ -27,6 +27,7 @@ namespace BGE
         public bool applyBanking;
         public float straighteningTendancy = 0.2f;
 
+        
         [HideInInspector]
         public bool clamping;
 
@@ -517,7 +518,7 @@ namespace BGE
             {
                 if (fleeTarget != null)
                 {
-                    force = Flee(fleeTarget.transform.position) * fleeWeight;
+                    force = Flee(fleeTarget.transform.position, fleeRange) * fleeWeight;
                     force *= forceMultiplier;
                     fleeForce = force;
                 }
@@ -528,7 +529,7 @@ namespace BGE
                     {
                         if (enemy != null)
                         {
-                            force += Flee(enemy.transform.position) * fleeWeight;
+                            force += Flee(enemy.transform.position, fleeRange) * fleeWeight;
                             force *= forceMultiplier;
                         }
                     }
@@ -1514,7 +1515,7 @@ namespace BGE
             if (flock != null)
             {
                 float prob = UnityEngine.Random.Range(0.0f, 1.0f);
-                if (prob > flock.updateDither)
+                if (prob > flock.tagDither)
                 {
                     return tagged.Count;
                 }
@@ -1536,6 +1537,10 @@ namespace BGE
                     {
                         tagged.Add(boid);
                     }
+                }
+                if (tagged.Count > flock.maxTagged)
+                {
+                    break;
                 }
             }
             DrawNeighbours(Color.white);

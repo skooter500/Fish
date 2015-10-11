@@ -102,7 +102,8 @@ namespace BGE
 
         public static void DrawLine(Vector3 start, Vector3 end, Color colour)
         {
-            lines.Add(new Line(start, end, colour, false));
+            Debug.DrawLine(start, end, colour);
+            //lines.Add(new Line(start, end, colour, false));
         }
 
         public static void DrawTarget(Vector3 target, Color colour)

@@ -775,10 +775,6 @@ namespace BGE
             Utilities.checkNaN(desiredVelocity);
 
             Vector3 force = Vector3.Reflect(desiredVelocity - velocity, -normal);
-            if (drawGizmos)
-            {
-                LineDrawer.DrawLine(transform.position, transform.position + (force), Color.yellow);
-            }
             return force;
         }
 
@@ -801,23 +797,26 @@ namespace BGE
             bool collided = false;
             List<FeelerInfo> feelers = new List<FeelerInfo>();
 
-            feelers.Add(new FeelerInfo(Vector3.forward, sceneAvoidanceForwardFeelerDepth));
+            float forwardFeelerDepth = sceneAvoidanceForwardFeelerDepth + ((velocity.magnitude / maxSpeed) * sceneAvoidanceForwardFeelerDepth);
+            float sideFeelerDepth = sceneAvoidanceSideFeelerDepth + ((velocity.magnitude / maxSpeed) * sceneAvoidanceSideFeelerDepth);
+
+            feelers.Add(new FeelerInfo(Vector3.forward, forwardFeelerDepth));
 
             feelerDirection = Vector3.forward;
             feelerDirection = Quaternion.AngleAxis(-45, Vector3.up) * feelerDirection; // Left feeler
-            feelers.Add(new FeelerInfo(feelerDirection, sceneAvoidanceSideFeelerDepth));
+            feelers.Add(new FeelerInfo(feelerDirection, sideFeelerDepth));
 
             feelerDirection = Vector3.forward;
             feelerDirection = Quaternion.AngleAxis(45, Vector3.up) * feelerDirection; // Right feeler
-            feelers.Add(new FeelerInfo(feelerDirection, sceneAvoidanceSideFeelerDepth));
+            feelers.Add(new FeelerInfo(feelerDirection, sideFeelerDepth));
 
             feelerDirection = Vector3.forward;
             feelerDirection = Quaternion.AngleAxis(45, Vector3.right) * feelerDirection; // Up feeler
-            feelers.Add(new FeelerInfo(feelerDirection, sceneAvoidanceSideFeelerDepth));
+            feelers.Add(new FeelerInfo(feelerDirection, sideFeelerDepth));
 
             feelerDirection = Vector3.forward;
             feelerDirection = Quaternion.AngleAxis(-45, Vector3.right) * feelerDirection; // Down feeler
-            feelers.Add(new FeelerInfo(feelerDirection, sceneAvoidanceSideFeelerDepth));
+            feelers.Add(new FeelerInfo(feelerDirection, sideFeelerDepth));
 
             for (int i = 0; i < feelers.Count; i++)
             {
@@ -834,9 +833,15 @@ namespace BGE
                     if (drawGizmos)
                     {
                         LineDrawer.DrawLine(transform.position, transform.position + feelerDir * feelerDepth, Color.red);
+                        if (drawGizmos)
+                        {
+                            LineDrawer.DrawLine(info.point, info.point + force, Color.magenta);
+                        }
                     }
                 }
             }
+
+            
 
             return force;
         }
@@ -868,7 +873,7 @@ namespace BGE
             if (drawForces)
             {
                 Quaternion q = Quaternion.FromToRotation(Vector3.forward, force);
-                LineDrawer.DrawArrowLine(transform.position, transform.position + force * 5.0f, Color.magenta, q);
+                LineDrawer.DrawArrowLine(transform.position, transform.position + force, Color.magenta, q);
             }
             Utilities.checkNaN(force);
             Vector3 newAcceleration = force / mass;

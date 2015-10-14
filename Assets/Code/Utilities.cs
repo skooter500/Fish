@@ -18,6 +18,22 @@ namespace BGE
     {
         public static float TWO_PI = Mathf.PI * 2.0f;
 
+        private static System.Random Random = new System.Random(42);
+
+        // Cant use the Unity one on a thread
+        public static float RandomRange(float min, float max)
+        {
+            return Map((float)Random.NextDouble(), 0.0f, 1.0f, min, max);
+        }
+
+
+        public static Vector3 RandomInsideUnitSphere()
+        {
+            Vector3 p = new Vector3((float)Random.NextDouble(), (float)Random.NextDouble(), (float)Random.NextDouble());
+            p.Normalize();
+            return p;
+        }
+
         public static float RadToDegrees(float rads)
         {
             return rads * Mathf.Rad2Deg;

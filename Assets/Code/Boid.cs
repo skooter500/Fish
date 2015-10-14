@@ -10,8 +10,22 @@ namespace BGE
 {
     public class Boid : MonoBehaviour
     {
+
+        public int threadCount = 0;
         // Variables required to implement the boid
         [Header("Boid Attributes")]
+
+        // Need these cause we are running ona thread and cant touch the transform
+        public Vector3 position = Vector3.zero;
+        public Vector3 forward = Vector3.forward;
+        public Vector3 up = Vector3.up;
+        public Vector3 right = Vector3.right;
+        public Quaternion rotation = Quaternion.identity;
+
+        private Vector3 tempUp;
+
+        private bool dirty = false;
+
         public float mass;
         public float maxSpeed;
         public float maxForce;
@@ -174,7 +188,7 @@ namespace BGE
         [HideInInspector]
         public Vector3 acceleration;
 
-        List<GameObject> tagged = new List<GameObject>();
+        List<Boid> tagged = new List<Boid>();
         List<Vector3> PlaneAvoidanceFeelers = new List<Vector3>();
 
         private Vector3 wanderTargetPos;
@@ -293,26 +307,26 @@ namespace BGE
 
         void Start()
         {
-            randomWalkCenter = transform.position;
-            randomWalkTarget = transform.position;
+            randomWalkCenter = position;
+            randomWalkTarget = position;
             //if (randomWalkKeepY)
             //{
-            //    randomWalkTarget.y = transform.position.y;
+            //    randomWalkTarget.y = position.y;
             //}
             if (offsetPursuitTarget != null)
             {
-                offset = transform.position - offsetPursuitTarget.transform.position;
-                offset = Quaternion.Inverse(transform.rotation) * offset;
+                offset = position - offsetPursuitTarget.GetComponent<Boid>().position;
+                offset = Quaternion.Inverse(rotation) * offset;
             }
 
-            wanderNoiseX = UnityEngine.Random.Range(0, 10000);
-            wanderNoiseY = UnityEngine.Random.Range(0, 10000);
+            wanderNoiseX = Utilities.RandomRange(0, 10000);
+            wanderNoiseY = Utilities.RandomRange(0, 10000);
 
-            randomWalkWait = UnityEngine.Random.Range(0, randomWalkWaitMaxSeconds);
+            randomWalkWait = Utilities.RandomRange(0, randomWalkWaitMaxSeconds);
 
             if (centreOnPosition)
             {
-                sphereCentre = transform.position;
+                sphereCentre = position;
             }
 
             myCollider = GetComponentInChildren<Collider>();
@@ -354,32 +368,33 @@ namespace BGE
         #region Utilities        
         private void makeFeelers()
         {
-            PlaneAvoidanceFeelers.Clear();
+            /*PlaneAvoidanceFeelers.Clear();
             float feelerDistance = 50.0f;
             // Make the forward feeler
             Vector3 newFeeler = Vector3.forward * feelerDistance;
-            newFeeler = transform.TransformPoint(newFeeler);
+            newFeeler = TransformPoint(newFeeler);
             PlaneAvoidanceFeelers.Add(newFeeler);
 
             newFeeler = Vector3.forward * feelerDistance;
             newFeeler = Quaternion.AngleAxis(45, Vector3.up) * newFeeler;
-            newFeeler = transform.TransformPoint(newFeeler);
+            newFeeler = TransformPoint(newFeeler);
             PlaneAvoidanceFeelers.Add(newFeeler);
 
             newFeeler = Vector3.forward * feelerDistance;
             newFeeler = Quaternion.AngleAxis(-45, Vector3.up) * newFeeler;
-            newFeeler = transform.TransformPoint(newFeeler);
+            newFeeler = TransformPoint(newFeeler);
             PlaneAvoidanceFeelers.Add(newFeeler);
 
             newFeeler = Vector3.forward * feelerDistance;
             newFeeler = Quaternion.AngleAxis(45, Vector3.right) * newFeeler;
-            newFeeler = transform.TransformPoint(newFeeler);
+            newFeeler = TransformPoint(newFeeler);
             PlaneAvoidanceFeelers.Add(newFeeler);
 
             newFeeler = Vector3.forward * feelerDistance;
             newFeeler = Quaternion.AngleAxis(-45, Vector3.right) * newFeeler;
-            newFeeler = transform.TransformPoint(newFeeler);
+            newFeeler = TransformPoint(newFeeler);
             PlaneAvoidanceFeelers.Add(newFeeler);
+            */
         }
 
         // These feelers are normals       
@@ -415,24 +430,21 @@ namespace BGE
 
         private void EnforceNonPenetrationConstraint()
         {
-            Profiler.BeginSample("Non penetration");
-
-            foreach (GameObject boid in tagged)
+            foreach (Boid boid in tagged)
             {
-                if (boid == gameObject)
+                if (boid == this)
                 {
                     continue;
                 }
-                Vector3 toOther = boid.transform.position - gameObject.transform.position;
+                Vector3 toOther = boid.position - position;
                 float distance = toOther.magnitude;
-                float overlap = radius + boid.GetComponent<Boid>().radius - distance;
+                float overlap = radius + boid.radius - distance;
                 if (overlap >= 0)
                 {
-                    boid.transform.position = (boid.transform.position + (toOther / distance) *
+                    boid.position = (boid.position + (toOther / distance) *
                      overlap);
                 }
             }
-            Profiler.EndSample();
         }
 
         public Vector3 Calculate()
@@ -518,7 +530,7 @@ namespace BGE
             {
                 if (fleeTarget != null)
                 {
-                    force = Flee(fleeTarget.transform.position, fleeRange) * fleeWeight;
+                    force = Flee(fleeTarget.GetComponent<Boid>().position, fleeRange) * fleeWeight;
                     force *= forceMultiplier;
                     fleeForce = force;
                 }
@@ -529,7 +541,7 @@ namespace BGE
                     {
                         if (enemy != null)
                         {
-                            force += Flee(enemy.transform.position, fleeRange) * fleeWeight;
+                            force += Flee(enemy.GetComponent<Boid>().position, fleeRange) * fleeWeight;
                             force *= forceMultiplier;
                         }
                     }
@@ -544,7 +556,6 @@ namespace BGE
             {
                 if (flock != null)
                 {
-                    Profiler.BeginSample("Tagging neighbours");
                     if (flock.UseCellSpacePartitioning)
                     {
                         TagNeighboursPartitioned(flock.neighbourDistance);
@@ -561,17 +572,13 @@ namespace BGE
                     {
                         TagNeighboursSimple(flock.neighbourDistance);
                     }
-                    Profiler.EndSample();
-
                 }
             }
 
             if (separationEnabled && (tagged.Count > 0))
             {
-                Profiler.BeginSample("Separation");
                 force = Separation() * separationWeight;
                 force *= forceMultiplier;
-                Profiler.EndSample();
 
                 if (!accumulateForce(ref steeringForce, force))
                 {
@@ -582,10 +589,8 @@ namespace BGE
 
             if (alignmentEnabled && (tagged.Count > 0))
             {
-                Profiler.BeginSample("ALignment");
                 force = Alignment() * alignmentWeight;
                 force *= forceMultiplier;
-                Profiler.EndSample();
                 if (!accumulateForce(ref steeringForce, force))
                 {
                     return steeringForce;
@@ -594,11 +599,8 @@ namespace BGE
 
             if (cohesionEnabled && (tagged.Count > 0))
             {
-                Profiler.BeginSample("Cohesion");
-
                 force = Cohesion() * cohesionWeight;
                 force *= forceMultiplier;
-                Profiler.EndSample();
                 if (!accumulateForce(ref steeringForce, force))
                 {
                     return steeringForce;
@@ -729,12 +731,12 @@ namespace BGE
 
 
             wanderTargetPos *= wanderRadius;
-            Vector3 yawRoll = transform.rotation.eulerAngles;
+            Vector3 yawRoll = rotation.eulerAngles;
             yawRoll.x = 0;
             Vector3 localTarget = wanderTargetPos + (Vector3.forward * wanderDistance);
-            Vector3 worldTarget = TransformPointNoScale(transform, localTarget);
+            Vector3 worldTarget = TransformPoint(localTarget);
 
-            Vector3 worldTargetOnY = transform.position + Quaternion.Euler(yawRoll) * localTarget;
+            Vector3 worldTargetOnY = position + Quaternion.Euler(yawRoll) * localTarget;
 
             BoidManager.PrintVector("World target: ", worldTarget);
             BoidManager.PrintVector("World target on y: ", worldTargetOnY);
@@ -744,7 +746,7 @@ namespace BGE
                 LineDrawer.DrawTarget(worldTarget, Color.red);
                 LineDrawer.DrawTarget(worldTargetOnY, Color.yellow);
 
-                Vector3 worldCenter = TransformPointNoScale(transform, Vector3.forward * wanderDistance);
+                Vector3 worldCenter = TransformPoint(Vector3.forward * wanderDistance);
                 LineDrawer.DrawSphere(worldCenter, wanderRadius, 10, Color.yellow);
             }
 
@@ -760,7 +762,7 @@ namespace BGE
         Vector3 CalculateIncidentForce(Vector3 point, Vector3 normal)
         {
             Vector3 desiredVelocity;
-            desiredVelocity = point - transform.position;
+            desiredVelocity = point - position;
             desiredVelocity.Normalize();
             desiredVelocity *= maxSpeed;
             Utilities.checkNaN(desiredVelocity);
@@ -778,6 +780,11 @@ namespace BGE
                 this.localDirection = localDirection;
                 this.depth = depth;
             }
+        }
+
+        Vector3 TransformDirection(Vector3 direction)
+        {
+            return rotation * direction;
         }
 
         Vector3 SceneAvoidance()
@@ -811,19 +818,19 @@ namespace BGE
 
             for (int i = 0; i < feelers.Count; i++)
             {
-                Vector3 feelerDir = transform.TransformDirection(feelers[i].localDirection);
+                Vector3 feelerDir = TransformDirection(feelers[i].localDirection);
                 float feelerDepth = feelers[i].depth;
-                collided = Physics.Raycast(transform.position, feelerDir, out info, feelerDepth);
+                collided = Physics.Raycast(position, feelerDir, out info, feelerDepth);
                 if (drawGizmos)
                 {
-                    LineDrawer.DrawLine(transform.position, transform.position + feelerDir * feelerDepth, Color.cyan);
+                    LineDrawer.DrawLine(position, position + feelerDir * feelerDepth, Color.cyan);
                 }
                 if (collided && info.collider != myCollider)
                 {
                     force += CalculateIncidentForce(info.point, info.normal);
                     if (drawGizmos)
                     {
-                        LineDrawer.DrawLine(transform.position, transform.position + feelerDir * feelerDepth, Color.red);
+                        LineDrawer.DrawLine(position, position + feelerDir * feelerDepth, Color.red);
                         if (drawGizmos)
                         {
                             LineDrawer.DrawLine(info.point, info.point + force, Color.magenta);
@@ -841,14 +848,41 @@ namespace BGE
 
         void Update()
         {
+            //BoidManager.PrintMessage("Dirty: " + dirty);
+
+            if (dirty)
+            {                
+                // timeDelta = Time.deltaTime * timeMultiplier;
+
+                if (applyBanking)
+                {
+                    transform.LookAt(position + forward, tempUp);
+                }
+                else
+                {
+                    transform.LookAt(position + forward, up);
+                }
+                BoidManager.PrintVector("Position: ", position);
+
+                transform.position = position;
+                dirty = false;
+                //UpdateOnThread();
+            }            
         }
+
+
+        long lastTime = DateTime.Now.Ticks / TimeSpan.TicksPerMillisecond;
 
         public void UpdateOnThread()
         {
+            threadCount++;
+            long milliseconds = DateTime.Now.Ticks / TimeSpan.TicksPerMillisecond;
+            timeDelta = ((float)(milliseconds - lastTime)) / 1000.0f;
+            lastTime = milliseconds;
+            
             bool calculateThisFrame = true;
             float smoothRate;
 
-            timeDelta = Time.deltaTime * timeMultiplier;
             if (flock != null)
             {
                 timeDelta *= flock.timeMultiplier;
@@ -862,7 +896,7 @@ namespace BGE
             if (drawForces)
             {
                 Quaternion q = Quaternion.FromToRotation(Vector3.forward, force);
-                LineDrawer.DrawArrowLine(transform.position, transform.position + force, Color.magenta, q);
+                LineDrawer.DrawArrowLine(position, position + force, Color.magenta, q);
             }
             Utilities.checkNaN(force);
             Vector3 newAcceleration = force / mass;
@@ -892,7 +926,7 @@ namespace BGE
                 velocity *= maxSpeed;
             }
             Utilities.checkNaN(velocity);
-            transform.position += velocity * timeDelta;
+            position += velocity * timeDelta;
 
 
             // the length of this global-upward-pointing vector controls the vehicle's
@@ -905,14 +939,14 @@ namespace BGE
             Vector3 bankUp = accelUp + globalUp;
             // blend bankUp into vehicle's UP basis vector
             smoothRate = timeDelta;// * 3.0f;
-            Vector3 tempUp = transform.up;
+            tempUp = up;
             Utilities.BlendIntoAccumulator(smoothRate, bankUp, ref tempUp);
 
             if (speed > 0.01f)
             {
-                float maxTurnFrame = maxTurnDegrees * Time.deltaTime;
+                float maxTurnFrame = maxTurnDegrees * timeDelta;
                 float maxTurn = maxTurnFrame * Mathf.Deg2Rad; // Max turn in rads
-                float dot = Vector3.Dot(transform.forward, velocity.normalized);
+                float dot = Vector3.Dot(forward, velocity.normalized);
                 bankAngle = Mathf.Acos(dot);
 
                 if (float.IsNaN(bankAngle))
@@ -920,7 +954,7 @@ namespace BGE
                     bankAngle = 0.0f;
                 }
 
-                float side = Vector3.Dot(transform.right, velocity.normalized);
+                float side = Vector3.Dot(right, velocity.normalized);
                 if (side < 0) // Angle < 90
                 {
                     bankAngle = -bankAngle;
@@ -930,26 +964,21 @@ namespace BGE
                 {
                     clamping = true;
                     // Clamp the turn
-                    Vector3 axis = Vector3.Cross(transform.forward, velocity.normalized);
+                    Vector3 axis = Vector3.Cross(forward, velocity.normalized);
                     Quaternion q = Quaternion.AngleAxis(maxTurnFrame, axis);
-                    transform.forward = q * transform.forward;
-                    velocity = transform.forward * velocity.magnitude;
+                    forward = q * forward;
+                    velocity = forward * velocity.magnitude;
                 }
                 else
                 {
                     clamping = false;
-                    transform.forward = velocity;
-                    transform.forward.Normalize();
+                    forward = velocity;
+                    forward.Normalize();
                 }
                 if (Mathf.Abs(bankAngle) > maxAngle)
                 {
                     maxAngle = Mathf.Abs(bankAngle);
-                }
-
-                if (applyBanking)
-                {
-                    transform.LookAt(transform.position + transform.forward, tempUp);
-                }
+                }                
                 velocity *= (1.0f - damping);
             }
 
@@ -962,8 +991,9 @@ namespace BGE
             if (calculateThisFrame && enforceNonPenetrationConstraint)
             {
                 EnforceNonPenetrationConstraint();
-            }
-
+            }            
+            dirty = true;
+            
         }
 
         #endregion
@@ -974,7 +1004,7 @@ namespace BGE
         {
             Vector3 desiredVelocity;
 
-            desiredVelocity = targetPos - transform.position;
+            desiredVelocity = targetPos - position;
             desiredVelocity.Normalize();
             desiredVelocity *= maxSpeed;
             if (drawGizmos)
@@ -986,16 +1016,20 @@ namespace BGE
 
         Vector3 Evade()
         {
-            float dist = (evadeTarget.transform.position - transform.position).magnitude;
+            float dist = (evadeTarget.GetComponent<Boid>().position - position).magnitude;
             float lookAhead = maxSpeed;
 
-            Vector3 targetPos = evadeTarget.transform.position + (lookAhead * evadeTarget.GetComponent<Boid>().velocity);
+            Vector3 targetPos = evadeTarget.GetComponent<Boid>().position + (lookAhead * evadeTarget.GetComponent<Boid>().velocity);
             return Flee(targetPos);
         }
 
         Vector3 ObstacleAvoidance()
         {
+            
             Vector3 force = Vector3.zero;
+            /*
+            
+            
             //makeFeelers();
             List<Obstacle> tagged = new List<Obstacle>();
             float boxLength = minBoxLength + ((velocity.magnitude / maxSpeed) * minBoxLength * 2.0f);
@@ -1021,7 +1055,7 @@ namespace BGE
                     continue;
                 }
 
-                Vector3 toCentre = transform.position - obstacle.transform.position;
+                Vector3 toCentre = position - obstacle.position;
                 float dist = toCentre.magnitude;
                 if (dist < boxLength)
                 {
@@ -1036,7 +1070,7 @@ namespace BGE
 
             foreach (Obstacle o in tagged)
             {
-                Vector3 localPos = transform.InverseTransformPoint(o.transform.position);
+                Vector3 localPos = InverseTransformPoint(o.position);
 
                 // If the local position has a positive Z value then it must lay
                 // behind the agent. (in which case it can be ignored)
@@ -1046,7 +1080,7 @@ namespace BGE
                     // than its radius + half the width of the detection box then there
                     // is a potential intersection.
 
-                    //float obstacleRadius = o.transform.localScale.x / 2;
+                    //float obstacleRadius = o.localScale.x / 2;
                     float obstacleRadius = o.radius;
                     float expandedRadius = radius + obstacleRadius;
                     if ((Math.Abs(localPos.y) < expandedRadius) && (Math.Abs(localPos.x) < expandedRadius))
@@ -1104,7 +1138,7 @@ namespace BGE
 
                 if (drawGizmos)
                 {
-                    LineDrawer.DrawLine(transform.position, transform.position + transform.forward * boxLength, Color.grey);
+                    LineDrawer.DrawLine(position, position + forward * boxLength, Color.grey);
                 }
                 //apply a braking force proportional to the obstacle's distance from
                 //the vehicle.
@@ -1115,16 +1149,17 @@ namespace BGE
 
                 //finally, convert the steering vector from local to world space
                 // Dont include position!                    
-                force = transform.TransformDirection(force);
+                force = TransformDirection(force);
             }
 
-
+            */
             return force;
         }
 
 
         Vector3 MinDistancePursuit(float acceptableDistance)
         {
+            /*
             acceptableDistance = 1;
             GameObject _quarry = offsetPursuitTarget;
 
@@ -1135,7 +1170,7 @@ namespace BGE
             }
 
             var force = Vector3.zero;
-            var offset = _quarry.transform.position - transform.position;
+            var offset = _quarry.position - position;
             var distance = offset.magnitude;
             var radius = this.radius + _quarry.GetComponent<Boid>().radius + acceptableDistance;
 
@@ -1147,11 +1182,11 @@ namespace BGE
 
             // how parallel are the paths of "this" and the quarry
             // (1 means parallel, 0 is pependicular, -1 is anti-parallel)
-            var parallelness = Vector3.Dot(transform.forward, _quarry.transform.forward);
+            var parallelness = Vector3.Dot(forward, _quarry.forward);
 
             // how "forward" is the direction to the quarry#
             // (1 means dead ahead, 0 is directly to the side, -1 is straight back)
-            var forwardness = Vector3.Dot(transform.forward, unitOffset);
+            var forwardness = Vector3.Dot(forward, unitOffset);
 
             //var directTravelTime = distance / velocity.magnitude;
             var directTravelTime = distance / maxSpeed;
@@ -1216,12 +1251,14 @@ namespace BGE
             //var etl = (et > _maxPredictionTime) ? _maxPredictionTime : et;
 
             //var target = _quarry.PredictFuturePosition(etl);
-            Vector3 target = offsetPursuitTarget.GetComponent<Boid>().transform.position + (et * offsetPursuitTarget.GetComponent<Boid>().velocity);
+            Vector3 target = offsetPursuitTarget.GetComponent<Boid>().position + (et * offsetPursuitTarget.GetComponent<Boid>().velocity);
 
             // estimated position of quarry at intercept
 
             //force = Vehicle.GetSeekVector(target, _slowDownOnApproach);
             return Seek(target);
+            */
+            return Vector3.zero;
         }
 
 
@@ -1229,16 +1266,16 @@ namespace BGE
         {
             Vector3 target = Vector3.zero;
 
-            target = TransformPointNoScale(offsetPursuitTarget.transform, offset);
+            target = offsetPursuitTarget.GetComponent<Boid>().TransformPoint(offset);
 
 
-            float dist = (target - transform.position).magnitude;
+            float dist = (target - position).magnitude;
 
             float lookAhead = (dist / maxSpeed);
 
             target = target + (lookAhead * offsetPursuitTarget.GetComponent<Boid>().velocity);
 
-            float pitchForce = target.y - transform.position.y;
+            float pitchForce = target.y - position.y;
             pitchForce *= (1.0f - pitchForceScale);
             target.y -= pitchForce;
 
@@ -1248,15 +1285,15 @@ namespace BGE
 
         Vector3 Pursue()
         {
-            Vector3 toTarget = pursuitTarget.transform.position - transform.position;
+            Vector3 toTarget = pursuitTarget.GetComponent<Boid>().position - position;
             float dist = toTarget.magnitude;
             float time = dist / maxSpeed;
 
-            Vector3 targetPos = pursuitTarget.transform.position + (time * pursuitTarget.GetComponent<Boid>().velocity);
+            Vector3 targetPos = pursuitTarget.GetComponent<Boid>().position + (time * pursuitTarget.GetComponent<Boid>().velocity);
             if (drawGizmos)
             {
                 LineDrawer.DrawTarget(targetPos, Color.red);
-                LineDrawer.DrawLine(transform.position, targetPos, Color.cyan);
+                LineDrawer.DrawLine(position, targetPos, Color.cyan);
             }
 
             return Seek(targetPos);
@@ -1265,7 +1302,7 @@ namespace BGE
         Vector3 Flee(Vector3 targetPos, float fleeRange)
         {
             Vector3 desiredVelocity;
-            desiredVelocity = transform.position - targetPos;
+            desiredVelocity = position - targetPos;
             if (desiredVelocity.magnitude > fleeRange)
             {
                 return Vector3.zero;
@@ -1279,7 +1316,7 @@ namespace BGE
         Vector3 Flee(Vector3 targetPos)
         {
             Vector3 desiredVelocity;
-            desiredVelocity = transform.position - targetPos;
+            desiredVelocity = position - targetPos;
             desiredVelocity.Normalize();
             desiredVelocity *= maxSpeed;
             Utilities.checkNaN(desiredVelocity);
@@ -1288,18 +1325,18 @@ namespace BGE
 
         Vector3 RandomWalk()
         {
-            float dist = (transform.position - randomWalkTarget).magnitude;
+            float dist = (position - randomWalkTarget).magnitude;
             if (dist < 30)
             {
                 StartCoroutine("RandomWalkWait");
                 float sphereRadius = (flock != null) ? flock.radius : randomWalkRadius;
-                Vector3 r = UnityEngine.Random.insideUnitSphere;
+                Vector3 r = Utilities.RandomInsideUnitSphere();
                 r.y = Mathf.Abs(r.y);
                 randomWalkTarget = randomWalkTarget = randomWalkCenter + r * randomWalkRadius;
             }
             if (randomWalkKeepY)
             {
-                randomWalkTarget.y = transform.position.y;
+                randomWalkTarget.y = position.y;
             }
             return Seek(randomWalkTarget);
         }
@@ -1309,33 +1346,33 @@ namespace BGE
             randomWalkEnabled = false;
             yield return new WaitForSeconds(randomWalkWait);
             randomWalkEnabled = true;
-            randomWalkWait = UnityEngine.Random.Range(0, randomWalkWaitMaxSeconds);
+            randomWalkWait = Utilities.RandomRange(0, randomWalkWaitMaxSeconds);
         }
 
-        Vector3 TransformPointNoScale(Transform transform, Vector3 localPoint)
+        Vector3 TransformPoint(Vector3 localPoint)
         {
-            return transform.TransformPoint(localPoint);
-            //Vector3 p = transform.rotation * localPoint;
-            //p += transform.position;
-            //return p;
+            // return TransformPoint(localPoint);
+            Vector3 p = rotation * localPoint;
+            p += position;
+            return p;
         }
 
         Vector3 Wander()
         {
             float jitterTimeSlice = wanderJitter * timeDelta;
 
-            Vector3 toAdd = UnityEngine.Random.insideUnitSphere * jitterTimeSlice;
+            Vector3 toAdd = Utilities.RandomInsideUnitSphere() * jitterTimeSlice;
             wanderTargetPos += toAdd;
             wanderTargetPos.Normalize();
             wanderTargetPos *= wanderRadius;
 
             Vector3 localTarget = wanderTargetPos + Vector3.forward * wanderDistance;
-            Vector3 worldTarget = transform.TransformPoint(localTarget);
+            Vector3 worldTarget = TransformPoint(localTarget);
             if (drawGizmos)
             {
                 LineDrawer.DrawTarget(worldTarget, Color.blue);
             }
-            return (worldTarget - transform.position);
+            return (worldTarget - position);
         }
 
         Vector3 NoiseWander()
@@ -1351,16 +1388,16 @@ namespace BGE
             wanderTargetPos.y = 0;
             wanderTargetPos *= wanderRadius;
             Vector3 localTarget = wanderTargetPos + (Vector3.forward * wanderDistance);
-            Vector3 worldTarget = TransformPointNoScale(transform, localTarget);
+            Vector3 worldTarget = TransformPoint(localTarget);
 
             if (drawGizmos)
             {
                 LineDrawer.DrawTarget(worldTarget, Color.red);
-                Vector3 worldCenter = TransformPointNoScale(transform, Vector3.forward * wanderDistance);
+                Vector3 worldCenter = TransformPoint(Vector3.forward * wanderDistance);
                 LineDrawer.DrawSphere(worldCenter, wanderRadius, 10, Color.yellow);
             }
             wanderNoiseX += wanderNoiseDeltaX;
-            Vector3 desired = worldTarget - transform.position;
+            Vector3 desired = worldTarget - position;
             desired.Normalize();
             desired *= maxSpeed;
             //return Vector3.zero;
@@ -1375,20 +1412,20 @@ namespace BGE
             // Rotate the wandertargetpos a little each frame
             float jitterTimeSlice = wanderJitter * timeDelta;
 
-            Quaternion q = Quaternion.AngleAxis(jitterTimeSlice, UnityEngine.Random.insideUnitSphere);
+            Quaternion q = Quaternion.AngleAxis(jitterTimeSlice, Utilities.RandomInsideUnitSphere());
             wanderTargetPos = q * wanderTargetPos;
             wanderTargetPos = wanderTargetPos.normalized * wanderRadius;
             Vector3 localTarget = wanderTargetPos + (Vector3.forward * wanderDistance);
-            Vector3 worldTarget = transform.TransformPoint(localTarget);
+            Vector3 worldTarget = TransformPoint(localTarget);
                         
             if (drawGizmos)
             {
                 LineDrawer.DrawTarget(worldTarget, Color.red);
-                Vector3 worldCenter = transform.TransformPoint(Vector3.forward * wanderDistance);
+                Vector3 worldCenter = TransformPoint(Vector3.forward * wanderDistance);
                 LineDrawer.DrawSphere(worldCenter, wanderRadius, 10, Color.yellow);
             }
             //return Vector3.zero;
-            return (worldTarget - transform.position);
+            return (worldTarget - position);
         }
         */
         public Vector3 PlaneAvoidance()
@@ -1419,14 +1456,14 @@ namespace BGE
             {
                 foreach (Vector3 feeler in PlaneAvoidanceFeelers)
                 {
-                    LineDrawer.DrawLine(transform.position, feeler, Color.green);
+                    LineDrawer.DrawLine(position, feeler, Color.green);
                 }
             }
         }
 
         public Vector3 Arrive(Vector3 target)
         {
-            Vector3 desired = target - transform.position;
+            Vector3 desired = target - position;
 
             float distance = desired.magnitude;
             //toTarget.Normalize();
@@ -1462,10 +1499,10 @@ namespace BGE
 
             if (ignoreHeight)
             {
-                nextWayPoint.y = transform.position.y;
+                nextWayPoint.y = position.y;
             }
 
-            dist = (transform.position - path.NextWaypoint()).magnitude;
+            dist = (position - path.NextWaypoint()).magnitude;
 
             if (dist < epsilon)
             {
@@ -1483,7 +1520,7 @@ namespace BGE
 
         public Vector3 SphereConstrain(float radius)
         {
-            Vector3 toTarget = transform.position -
+            Vector3 toTarget = position -
                 ((flock != null) ? flock.flockCenter : sphereCentre);
             float sphereRadius = (flock != null) ? flock.radius : radius;
             Vector3 steeringForce = Vector3.zero;
@@ -1505,7 +1542,7 @@ namespace BGE
         {
             if (flock != null)
             {
-                float prob = UnityEngine.Random.Range(0.0f, 1.0f);
+                float prob = Utilities.RandomRange(0.0f, 1.0f);
                 if (prob > flock.tagDither)
                 {
                     return tagged.Count;
@@ -1515,16 +1552,16 @@ namespace BGE
             tagged.Clear();
 
             float inRangeSq = inRange * inRange;
-            foreach (GameObject boid in flock.boids)
+            foreach (Boid boid in flock.boids)
             {
                 
-                if (boid != gameObject)
+                if (boid != this)
                 {
                     if (drawNeighbours)
                     {
-                        LineDrawer.DrawLine(transform.position, boid.transform.position, Color.cyan);
+                        LineDrawer.DrawLine(position, boid.position, Color.cyan);
                     }
-                    if ((transform.position - boid.transform.position).sqrMagnitude < inRangeSq)
+                    if ((position - boid.position).sqrMagnitude < inRangeSq)
                     {
                         tagged.Add(boid);
                     }
@@ -1542,11 +1579,11 @@ namespace BGE
         {
             if (drawNeighbours)
             {
-                foreach (GameObject neighbour in tagged)
+                foreach (Boid neighbour in tagged)
                 {
-                    LineDrawer.DrawCircle(neighbour.transform.position, 5, 10, color);
+                    LineDrawer.DrawCircle(neighbour.position, 5, 10, color);
                 }
-                LineDrawer.DrawCircle(transform.position, 5, 10, Color.red);
+                LineDrawer.DrawCircle(position, 5, 10, Color.red);
             }
         }
 
@@ -1554,8 +1591,8 @@ namespace BGE
         {
 
             Bounds expanded = new Bounds();
-            expanded.min = new Vector3(transform.position.x - inRange, 0, transform.position.z - inRange);
-            expanded.max = new Vector3(transform.position.x + inRange, 0, transform.position.z + inRange);
+            expanded.min = new Vector3(position.x - inRange, 0, position.z - inRange);
+            expanded.max = new Vector3(position.x + inRange, 0, position.z + inRange);
 
             if (drawNeighbours)
             {
@@ -1564,7 +1601,7 @@ namespace BGE
 
             List<Cell> cells = flock.space.cells;
             tagged.Clear();
-            int myCellIndex = flock.space.FindCell(transform.position);
+            int myCellIndex = flock.space.FindCell(position);
             if (myCellIndex == -1)
             {
                 //Debug.Log("Not found in space");
@@ -1593,18 +1630,18 @@ namespace BGE
                         {
                             LineDrawer.DrawSquare(cell.bounds.min, cell.bounds.max, Color.magenta);
                         }
-                        List<GameObject> cellNeighbourBoids = cell.contained;
+                        List<Boid> cellNeighbourBoids = cell.contained;
                         float rangeSquared = inRange * inRange;
-                        foreach (GameObject neighbour in cellNeighbourBoids)
+                        foreach (Boid neighbour in cellNeighbourBoids)
                         {
-                            if (neighbour != gameObject)
+                            if (neighbour != this)
                             {
 
                                 if (drawNeighbours)
                                 {
-                                    LineDrawer.DrawLine(transform.position, neighbour.transform.position, Color.blue);
+                                    LineDrawer.DrawLine(position, neighbour.position, Color.blue);
                                 }
-                                if (Vector3.SqrMagnitude(transform.position - neighbour.transform.position) < rangeSquared)
+                                if (Vector3.SqrMagnitude(position - neighbour.position) < rangeSquared)
                                 {
                                     tagged.Add(neighbour);
 
@@ -1623,11 +1660,11 @@ namespace BGE
         public Vector3 Separation()
         {
             Vector3 steeringForce = Vector3.zero;
-            foreach (GameObject entity in tagged)
+            foreach (Boid boid in tagged)
             {
-                if (entity != gameObject)
+                if (boid != this)
                 {
-                    Vector3 toEntity = transform.position - entity.transform.position;
+                    Vector3 toEntity = position - boid.position;
                     steeringForce += (Vector3.Normalize(toEntity) / toEntity.magnitude);
                 }
             }
@@ -1640,11 +1677,11 @@ namespace BGE
             Vector3 steeringForce = Vector3.zero;
             Vector3 centreOfMass = Vector3.zero;
             int taggedCount = 0;
-            foreach (GameObject entity in tagged)
+            foreach (Boid boid in tagged)
             {
-                if (entity != gameObject)
+                if (boid != this)
                 {
-                    centreOfMass += entity.transform.position;
+                    centreOfMass += boid.position;
                     taggedCount++;
                 }
             }
@@ -1669,11 +1706,11 @@ namespace BGE
         {
             Vector3 steeringForce = Vector3.zero;
             int taggedCount = 0;
-            foreach (GameObject entity in tagged)
+            foreach (Boid boid in tagged)
             {
-                if (entity != gameObject)
+                if (boid != this)
                 {
-                    steeringForce += entity.transform.forward;
+                    steeringForce += boid.forward;
                     taggedCount++;
                 }
             }
@@ -1681,7 +1718,7 @@ namespace BGE
             if (taggedCount > 0)
             {
                 steeringForce /= (float)taggedCount;
-                steeringForce -= transform.forward;
+                steeringForce -= forward;
             }
             return steeringForce;
 

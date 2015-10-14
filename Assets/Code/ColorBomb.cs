@@ -24,9 +24,9 @@ public class ColorBomb : MonoBehaviour {
     {
         Vector3 center = Vector3.zero;
 
-        foreach(GameObject boid in flock.boids)
+        foreach(Boid boid in flock.boids)
         {
-            center += boid.transform.position;
+            center += boid.position;
         }
         center /= flock.boids.Count;
         return center;
@@ -47,7 +47,7 @@ public class ColorBomb : MonoBehaviour {
             {
                 //LineDrawer.DrawSphere(flock.flockCenter, radius, 20, color);   
                 boidsTagged = 0;
-                foreach (GameObject boid in flock.boids)
+                foreach (Boid boid in flock.boids)
                 {
                     if (Vector3.Distance(center, boid.transform.position) < radius)
                     {

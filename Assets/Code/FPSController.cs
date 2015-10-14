@@ -8,7 +8,7 @@ namespace BGE
     public class FPSController : MonoBehaviour
     {
         Camera ovrCamera;
-        float speed = 500.0f;
+        float speed = 200.0f;
         // Use this for initialization
         void Start()
         {
@@ -85,7 +85,7 @@ namespace BGE
 
             if (Input.GetKey(KeyCode.LeftShift) || runAxis != 0)
             {
-                speed *= 10.0f;
+                speed *= 5.0f;
             }
 
             if (Input.GetKey(KeyCode.W))

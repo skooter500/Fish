@@ -13,9 +13,9 @@ namespace BGE
         Vector3 numCells = new Vector3();
         Vector3 celSize = new Vector3();
         
-        public List<GameObject> boids;
+        public List<Boid> boids;
 
-        public Space(Vector3 center, float w, float h, float d, float numCells1, List<GameObject> boids)
+        public Space(Vector3 center, float w, float h, float d, float numCells1, List<Boid> boids)
         {
             this.boids = boids;
             bounds = new Bounds(center, new Vector3(w, h, d));
@@ -147,12 +147,12 @@ namespace BGE
             {
                 cell.contained.Clear();
             }
-            foreach (GameObject boid in boids)
+            foreach (Boid boid in boids)
             {
-                int cell = FindCell(boid.transform.position);
+                int cell = FindCell(boid.position);
                 if (cell != -1)
                 {
-                    cells[cell].contained.Add(boid.gameObject);
+                    cells[cell].contained.Add(boid);
                }
             }
         }

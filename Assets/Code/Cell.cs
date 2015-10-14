@@ -12,7 +12,7 @@ namespace BGE
         public int number;
         public int row;
         public int col;
-        public List<GameObject> contained = new List<GameObject>(500);
+        public List<Boid> contained = new List<Boid>(500);
         public List<Cell> adjacent = new List<Cell>();
 
         public bool Contains(Vector3 pos)

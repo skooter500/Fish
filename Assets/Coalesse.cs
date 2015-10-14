@@ -16,9 +16,8 @@ public class Coalesse : MonoBehaviour {
         {
             yield return new WaitForSeconds(Random.Range(20.0f, 20.0f));
             Debug.Log("Coalessing");
-            foreach (GameObject boidGO in flock.boids)
+            foreach (Boid boid in flock.boids)
             {
-                Boid boid = boidGO.GetComponent<Boid>();
                 boid.separationEnabled = false;                
                 boid.alignmentEnabled = false;                
                 boid.wanderEnabled = false;                
@@ -29,9 +28,8 @@ public class Coalesse : MonoBehaviour {
             }
             yield return new WaitForSeconds(20.0f);
             Debug.Log("Flocking");
-            foreach (GameObject boidGO in flock.boids)
+            foreach (Boid boid in flock.boids)
             {
-                Boid boid = boidGO.GetComponent<Boid>();
                 boid.separationEnabled = true;
                 boid.cohesionEnabled = true;
                 boid.alignmentEnabled = true;
@@ -40,9 +38,8 @@ public class Coalesse : MonoBehaviour {
             }
             yield return new WaitForSeconds(20.0f);
             Debug.Log("Seek player");
-            foreach (GameObject boidGO in flock.boids)
+            foreach (Boid boid in flock.boids)
             {
-                Boid boid = boidGO.GetComponent<Boid>();
                 boid.separationEnabled = true;
                 boid.cohesionEnabled = true;
                 boid.alignmentEnabled = true;
@@ -52,9 +49,8 @@ public class Coalesse : MonoBehaviour {
             }            
             yield return new WaitForSeconds(20.0f);
             Debug.Log("Flocking");
-            foreach (GameObject boidGO in flock.boids)
+            foreach (Boid boid in flock.boids)
             {
-                Boid boid = boidGO.GetComponent<Boid>();
                 boid.separationEnabled = true;
                 boid.cohesionEnabled = true;
                 boid.alignmentEnabled = true;

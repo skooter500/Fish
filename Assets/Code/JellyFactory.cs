@@ -42,7 +42,7 @@ public class JellyFactory : MonoBehaviour {
             boid.applyBanking = false;
            
             boid.flock = flock;
-            flock.boids.Add(boidGameObject);
+            flock.boids.Add(boid);
             GameObject jelly = GameObject.Instantiate<GameObject>(jellyPrefab);
             Vector3 offset = Random.insideUnitSphere * width;
             offset.y = 0;

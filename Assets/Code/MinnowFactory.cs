@@ -8,8 +8,7 @@ using UnityEngine;
 namespace BGE
 {
     public class MinnowFactory : MonoBehaviour
-    {
-
+    {        
         public float radius;
         public int boidCount;
         public GameObject boidPrefab;
@@ -27,7 +26,7 @@ namespace BGE
 
         Queue<Boid> jobQueue = new Queue<Boid>();
 
-        public int numThreads = 4;
+        public int numThreads = 1;
 
         void OnDrawGizmos()
         {
@@ -42,8 +41,12 @@ namespace BGE
 
             spread = 1.0f;
         }
-        
 
+        void Update()
+        {
+            //Debug.Log(thread.IsAlive);
+        }
+        
         void Start()
         {
             flock = GetComponent<Flock>();
@@ -52,7 +55,7 @@ namespace BGE
 
             for (int i = 0; i < boidCount; i++)
             {
-                GameObject boid = GameObject.Instantiate<GameObject>(boidPrefab);
+                Boid boid = GameObject.Instantiate<GameObject>(boidPrefab).GetComponent<Boid>();
                 flock.boids.Add(boid);
                 
                 bool inside = false;
@@ -63,13 +66,13 @@ namespace BGE
                     {
                         unit.y = Mathf.Abs(unit.y);
                     }
-                    boid.transform.position = transform.position + unit * UnityEngine.Random.Range(0, radius * spread);
+                    boid.position = transform.position + unit * UnityEngine.Random.Range(0, radius * spread);
 
-                    Vector3 p = boid.transform.position;                    
+                    Vector3 p = boid.position;                    
                     inside = false;
                     foreach (Obstacle obstacle in BoidManager.Instance.obstacles)
                     {
-                        if (Vector3.Distance(obstacle.transform.position, boid.transform.position) < obstacle.radius + boid.GetComponent<Boid>().minBoxLength)
+                        if (Vector3.Distance(obstacle.transform.position, boid.position) < obstacle.radius + boid.minBoxLength)
                         {
                             inside = true;
                             break;
@@ -78,9 +81,9 @@ namespace BGE
                 }
                 while (inside);
                 boid.transform.parent = flock.transform;
-                boid.GetComponent<Boid>().flock = flock;
-                boid.GetComponent<Boid>().sphereConstrainEnabled = true;
-                boid.GetComponent<Boid>().sphereRadius = radius;
+                boid.flock = flock;
+                boid.sphereConstrainEnabled = true;
+                boid.sphereRadius = radius;
                 AudioSource audioSource = boid.GetComponent<AudioSource>();
                 if (audioSource != null)
                 {
@@ -100,8 +103,8 @@ namespace BGE
                 {
                     if (drawGizmos)
                     {
-                        boid.GetComponent<Boid>().drawGizmos = drawGizmos;
-                        boid.GetComponent<Boid>().drawNeighbours = false;
+                        boid.drawGizmos = drawGizmos;
+                        boid.drawNeighbours = false;
                     }
                 }
             }
@@ -109,23 +112,43 @@ namespace BGE
             StartUpdateThreads();
         }
 
+        bool running = false;
+
         void UpdateThread()
         {
-            while (true)
+            foreach(Boid boid in flock.boids)
+            {
+                jobQueue.Enqueue(boid);
+            }
+
+            int i = 0;
+            while (running)
             {
                 // Take one off the queue, update it and then enque it again
                 Boid boid = jobQueue.Dequeue();
                 boid.UpdateOnThread();
-                Thread.Sleep(100);
+
+
+                Thread.Sleep(10);
                 jobQueue.Enqueue(boid);
+                
+                //Boid boid = flock.boids[0];
+                Thread.Sleep(10);
+                Debug.Log("Doing thread" + (++ i));
             }
+        }
+
+        void OnApplicationQuit()
+        {
+            running = false;
         }
 
         void StartUpdateThreads()
         {
+            running = true;
             for (int i = 0; i < numThreads; i++)
             {
-                Thread thread = new Thread(new ThreadStart(this.UpdateThread));
+                Thread thread = new Thread(UpdateThread);
                 thread.Start();
             }
         }

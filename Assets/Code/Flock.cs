@@ -18,42 +18,33 @@ namespace BGE
 
         public float neighbourDistance;
 
-        public float radius;
+        public float radius = 100;
 
         [HideInInspector]
-        public List<GameObject> boids;
-        public List<GameObject> enemies;       
+        public List<Boid> boids = new List<Boid>();
+        public List<GameObject> enemies = new List<GameObject>();       
      
         [Range(0, 2)]
-        public float timeMultiplier;
+        public float timeMultiplier = 1.0f;
      
         [Header("Debug")]
         public bool drawGizmos;        
 
         [Header("Performance")]
-        public float tagDither;
-        public int maxTagged = 100;
+        public float tagDither = 1.0f;
+        public int maxTagged = 50;
 
         [HideInInspector]
         public Vector3 flockCenter;
         [HideInInspector]
-        public Vector3 oldFlockCenter;
+        public Vector3 oldFlockCenter;        
+
         void OnDrawGizmos()
         {
             Gizmos.color = Color.yellow;
             Gizmos.DrawWireSphere(flockCenter, radius);
         }
 
-        Flock()
-        {
-            radius = 100;
-            timeMultiplier = 1.0f;
-            boids = new List<GameObject>();
-            enemies = new List<GameObject>();           
-            tagDither = 1.0f;
-            numCells = 50;
-        
-        }
 
         void Start()
         {

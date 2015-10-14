@@ -38,7 +38,6 @@ namespace BGE
         public Vector3 flockCenter;
         [HideInInspector]
         public Vector3 oldFlockCenter;
-
         void OnDrawGizmos()
         {
             Gizmos.color = Color.yellow;

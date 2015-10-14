@@ -49,7 +49,7 @@ public class NoiseForm : MonoBehaviour {
         }
         else
         {
-            return 0;
+            return hitInfo.point.y; //  SampleCell(pos);
         }
     }
     
@@ -175,7 +175,6 @@ public class NoiseForm : MonoBehaviour {
 
         backgroundWorker.RunWorkerCompleted += (o, a) =>
         {
-            Debug.Log("Complete...");        
             GeneratedMesh gm = (GeneratedMesh)a.Result;
             for (int i = 0; i < gm.meshUv.Length; i++)
             {
@@ -210,11 +209,23 @@ public class NoiseForm : MonoBehaviour {
         workers.Add(backgroundWorker);
         backgroundWorker.RunWorkerAsync(args);
     }
+
+    float SampleCoords(Vector2 coords)
+    {
+
+        //Vector2 tileCellOrigin = new Vector2(tile.x * samplesPerTile.x, tile.y * samplesPerTile.y);
+        float sample = 0;
+        // Add all the samplers together to make the height
+        foreach (Sampler sampler in samplers)
+        {
+            //sample += sampler.SampleCell(cell.x, cell.y);
+        }
+        return sample;
+    }
     
 
     GeneratedMesh GenerateTileAsync(GameObject tileGameObject, Vector2 tile)
     {
-        Debug.Log("Generating tile:" + tile);
         tileSize = new Vector2(size.x / samplesPerTile.x, size.z / samplesPerTile.y);
 
         int verticesPerSegment = 6;

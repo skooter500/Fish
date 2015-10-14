@@ -149,12 +149,12 @@ public class ForceController : MonoBehaviour {
         Yaw(contYaw * Time.deltaTime * angularSpeed);
 
         // If in Rift mode, dont pitch
-        //if (ovrCamera == null)
-        //{
-        //    Pitch(-mouseY * Time.deltaTime * angularSpeed);
-        //    Pitch(contPitch * Time.deltaTime * angularSpeed);
-        //}
-        //else
+        if (!vrMode)
+        {
+            Pitch(-mouseY * Time.deltaTime * angularSpeed);
+            Pitch(contPitch * Time.deltaTime * angularSpeed);
+        }
+        else
         {
             Fly(-contPitch * speed);
         }

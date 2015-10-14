@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
+using System.Threading;
 using UnityEngine;
 
 namespace BGE
@@ -24,6 +25,10 @@ namespace BGE
         [Header("Debug")]
         public bool drawGizmos;
 
+        Queue<Boid> jobQueue = new Queue<Boid>();
+
+        public int numThreads = 4;
+
         void OnDrawGizmos()
         {
             Gizmos.color = Color.yellow;
@@ -45,7 +50,6 @@ namespace BGE
             int maxAudioBoids = 5;
             int audioBoids = 0;
 
-            NoiseForm noiseForm = FindObjectOfType<NoiseForm>();
             for (int i = 0; i < boidCount; i++)
             {
                 GameObject boid = GameObject.Instantiate<GameObject>(boidPrefab);
@@ -102,6 +106,28 @@ namespace BGE
                 }
             }
 
+            StartUpdateThreads();
+        }
+
+        void UpdateThread()
+        {
+            while (true)
+            {
+                // Take one off the queue, update it and then enque it again
+                Boid boid = jobQueue.Dequeue();
+                boid.UpdateOnThread();
+                Thread.Sleep(100);
+                jobQueue.Enqueue(boid);
+            }
+        }
+
+        void StartUpdateThreads()
+        {
+            for (int i = 0; i < numThreads; i++)
+            {
+                Thread thread = new Thread(new ThreadStart(this.UpdateThread));
+                thread.Start();
+            }
         }
     }     
 }

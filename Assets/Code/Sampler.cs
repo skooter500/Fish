@@ -33,7 +33,7 @@ public abstract class Sampler : MonoBehaviour
 
     public void TranslateOriginByTile(float x, float y)
     {
-        origin.x = origin.x + samplesPerTile.x * delta.x * x;
-        origin.y = origin.y + samplesPerTile.y * delta.y * y;
+        origin.x += samplesPerTile.x * delta.x * x;
+        origin.y += samplesPerTile.y * delta.y * y;
     }
 }

@@ -10,9 +10,6 @@ namespace BGE
     {
 
         Camera[] cameras;
-
-        GameObject ovrCameraController;
-
         struct Line
         {
             public Vector3 start;
@@ -40,17 +37,8 @@ namespace BGE
         // Use this for initialization
         void Start()
         {
-            ovrCameraController = (GameObject)GameObject.FindGameObjectWithTag("ovrplayer");
-            if (ovrCameraController != null)
-            {
-                cameras = (Camera[])ovrCameraController.GetComponentsInChildren<Camera>();
-            }
-            else
-            {
-                cameras = new Camera[1];
-                cameras = GameObject.FindObjectsOfType<Camera>();
-            }
-
+            cameras = new Camera[1];
+            cameras = GameObject.FindObjectsOfType<Camera>();
         }
 
         void Awake()
@@ -102,8 +90,8 @@ namespace BGE
 
         public static void DrawLine(Vector3 start, Vector3 end, Color colour)
         {
-            Debug.DrawLine(start, end, colour);
-            //lines.Add(new Line(start, end, colour, false));
+            //Debug.DrawLine(start, end, colour);
+            lines.Add(new Line(start, end, colour, false));
         }
 
         public static void DrawTarget(Vector3 target, Color colour)

@@ -607,14 +607,7 @@ namespace BGE
 
             if (seekEnabled)
             {
-                if (seekPlayer)
-                {
-                    force = Seek(Player.Instance.transform.position) * seekWeight;
-                }
-                else
-                {
-                    force = Seek(seekTargetPos) * seekWeight;
-                }
+                force = Seek(seekTargetPos) * seekWeight;
                 force *= forceMultiplier;
                 if (!accumulateForce(ref steeringForce, force))
                 {
@@ -678,9 +671,7 @@ namespace BGE
                 {
                     return steeringForce;
                 }
-            }
-
-
+            }            
 
             if (followPathEnabled)
             {
@@ -839,20 +830,20 @@ namespace BGE
                         }
                     }
                 }
-            }
-
-            
+            }            
 
             return force;
-        }
-
-
+        }        
 
         float maxAngle = float.MinValue;
         [HideInInspector]
         public float bankAngle = 0.0f;
 
         void Update()
+        {
+        }
+
+        public void UpdateOnThread()
         {
             bool calculateThisFrame = true;
             float smoothRate;
@@ -862,9 +853,7 @@ namespace BGE
             {
                 timeDelta *= flock.timeMultiplier;
             }
-
             
-
             if (calculateThisFrame)
             {
                 force = Calculate();
@@ -957,13 +946,10 @@ namespace BGE
                     maxAngle = Mathf.Abs(bankAngle);
                 }
 
-                //BoidManager.PrintFloat("Rotation angle: ", angle * Mathf.Rad2Deg);
-                //BoidManager.PrintFloat("Max angle: ", maxAngle * Mathf.Rad2Deg);
                 if (applyBanking)
                 {
                     transform.LookAt(transform.position + transform.forward, tempUp);
                 }
-                // Apply damping
                 velocity *= (1.0f - damping);
             }
 

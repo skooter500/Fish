@@ -112,10 +112,8 @@ namespace BGE
 
         void OnGUI()
         {
-            if (showMessages)
-            {
-                GUI.Label(new Rect(0, 0, Screen.width, Screen.height), "" + message, style);
-            }
+        
+            GUI.Label(new Rect(0, 0, Screen.width, Screen.height), "" + message, style);            
             if (Event.current.type == EventType.Repaint)
             {
                 message.Length = 0;

@@ -29,7 +29,7 @@ namespace BGE
 
         public static Vector3 RandomInsideUnitSphere()
         {
-            Vector3 p = new Vector3((float)Random.NextDouble(), (float)Random.NextDouble(), (float)Random.NextDouble());
+            Vector3 p = new Vector3(RandomRange(-1, 1), RandomRange(-1, 1), RandomRange(-1, 1));
             p.Normalize();
             return p;
         }

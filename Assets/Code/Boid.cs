@@ -195,7 +195,7 @@ namespace BGE
         private Vector3 randomWalkTarget;
 
         Color debugLineColour = Color.cyan;
-        float timeDelta;
+        public float threadTimeDelta;
 
         Collider myCollider;
 
@@ -447,23 +447,13 @@ namespace BGE
             }
         }
 
-        public Vector3 Calculate()
-        {
-            if (calculationMethod == CalculationMethods.WeightedTruncatedRunningSumWithPrioritisation)
-            {
-                return CalculateWeightedPrioritised();
-            }
-
-            return Vector3.zero;
-        }
-
         Vector3 oldSeparation, oldAlignment, oldCohesion;
 
-        private Vector3 CalculateWeightedPrioritised()
+        private Vector3 Calculate()
         {
             Vector3 force = Vector3.zero;
             Vector3 steeringForce = Vector3.zero;
-
+                
             if (obstacleAvoidanceEnabled)
             {
                 force = ObstacleAvoidance() * obstacleAvoidanceWeight;
@@ -558,15 +548,7 @@ namespace BGE
                 {
                     if (flock.UseCellSpacePartitioning)
                     {
-                        TagNeighboursPartitioned(flock.neighbourDistance);
-                        /*
-                        int testTagged = TagNeighboursSimple(neighbourDistance);
-                        Debug.Log(tagged + "\t" + testTagged); // These numbers should be the same
-                        if (tagged != testTagged)
-                        {
-                            Debug.Log("Different!!"); // These numbers should be the same                                          
-                        }
-                         */
+                        TagNeighboursPartitioned(flock.neighbourDistance);                                                
                     }
                     else
                     {
@@ -616,6 +598,7 @@ namespace BGE
                     return steeringForce;
                 }
             }
+
 
             if (arriveEnabled)
             {
@@ -693,9 +676,9 @@ namespace BGE
                 {
                     return steeringForce;
                 }
-            }
-
+            }                
             return steeringForce;
+
         }
 
         float wiggleTheta = 0;
@@ -750,7 +733,7 @@ namespace BGE
                 LineDrawer.DrawSphere(worldCenter, wanderRadius, 10, Color.yellow);
             }
 
-            wiggleTheta += timeDelta * wiggleAngularSpeedDegrees * Mathf.Deg2Rad;
+            wiggleTheta += threadTimeDelta * wiggleAngularSpeedDegrees * Mathf.Deg2Rad;
             if (wiggleTheta > Utilities.TWO_PI)
             {
                 wiggleTheta = 0;
@@ -848,152 +831,141 @@ namespace BGE
 
         void Update()
         {
-            //BoidManager.PrintMessage("Dirty: " + dirty);
+            //float smoothRate;
 
-            if (dirty)
-            {                
-                // timeDelta = Time.deltaTime * timeMultiplier;
+            //if (drawForces)
+            //{
+            //    Quaternion q = Quaternion.FromToRotation(Vector3.forward, force);
+            //    LineDrawer.DrawArrowLine(position, position + force, Color.magenta, q);
+            //}
+            //Utilities.checkNaN(force);
+            //Vector3 newAcceleration = force / mass;
+            //if (drawVectors)
+            //{
+            //    LineDrawer.DrawVectors(transform);
+            //}
 
-                if (applyBanking)
-                {
-                    transform.LookAt(position + forward, tempUp);
-                }
-                else
-                {
-                    transform.LookAt(position + forward, up);
-                }
-                BoidManager.PrintVector("Position: ", position);
 
-                transform.position = position;
-                dirty = false;
-                //UpdateOnThread();
-            }            
+            //if (Time.deltaTime> 0.0f)
+            //{
+            //    smoothRate = Utilities.Clip(9.0f * Time.deltaTime, 0.15f, 0.4f) / 2.0f;
+            //    Utilities.BlendIntoAccumulator(smoothRate, newAcceleration, ref acceleration);
+            //}
+
+            //if (applyGravity)
+            //{
+            //    acceleration += gravity;
+            //}
+
+            //velocity += acceleration * Time.deltaTime;
+
+            //float speed = velocity.magnitude;
+            //if (speed > maxSpeed)
+            //{
+            //    velocity.Normalize();
+            //    velocity *= maxSpeed;
+            //}
+            //Utilities.checkNaN(velocity);
+            //position += velocity * Time.deltaTime;
+
+
+            //// the length of this global-upward-pointing vector controls the vehicle's
+            //// tendency to right itself as it is rolled over from turning acceleration
+            //Vector3 globalUp = new Vector3(0, straighteningTendancy, 0);
+            //// acceleration points toward the center of local path curvature, the
+            //// length determines how much the vehicle will roll while turning
+            //Vector3 accelUp = acceleration * 0.05f;
+            //// combined banking, sum of UP due to turning and global UP
+            //Vector3 bankUp = accelUp + globalUp;
+            //// blend bankUp into vehicle's UP basis vector
+            //smoothRate = Time.deltaTime;// * 3.0f;
+            //tempUp = up;
+            //Utilities.BlendIntoAccumulator(smoothRate, bankUp, ref tempUp);
+
+            //if (speed > 0.01f)
+            //{
+            //    float maxTurnFrame = maxTurnDegrees * Time.deltaTime;
+            //    float maxTurn = maxTurnFrame * Mathf.Deg2Rad; // Max turn in rads
+            //    float dot = Vector3.Dot(forward, velocity.normalized);
+            //    bankAngle = Mathf.Acos(dot);
+
+            //    if (float.IsNaN(bankAngle))
+            //    {
+            //        bankAngle = 0.0f;
+            //    }
+
+            //    float side = Vector3.Dot(right, velocity.normalized);
+            //    if (side < 0) // Angle < 90
+            //    {
+            //        bankAngle = -bankAngle;
+            //    }
+
+            //    if (Mathf.Abs(bankAngle) > maxTurn)
+            //    {
+            //        clamping = true;
+            //        // Clamp the turn
+            //        Vector3 axis = Vector3.Cross(forward, velocity.normalized);
+            //        Quaternion q = Quaternion.AngleAxis(maxTurnFrame, axis);
+            //        forward = q * forward;
+            //        velocity = forward * velocity.magnitude;
+            //    }
+            //    else
+            //    {
+            //        clamping = false;
+            //        forward = velocity;
+            //        forward.Normalize();
+            //    }
+            //    if (Mathf.Abs(bankAngle) > maxAngle)
+            //    {
+            //        maxAngle = Mathf.Abs(bankAngle);
+            //    }
+            //    velocity *= (1.0f - damping);
+            //}
+
+            //if (path != null && drawGizmos)
+            //{
+            //    path.draw = true;
+            //    path.Draw();
+            //}
+
+            //if (applyBanking)
+            //{
+            //    transform.LookAt(position + forward, tempUp);
+            //}
+            //else
+            //{
+            //    transform.LookAt(position + forward, up);
+            //}
+            
+            //transform.position = position;
+
+            dirty = true;
         }
 
 
-        long lastTime = DateTime.Now.Ticks / TimeSpan.TicksPerMillisecond;
+        
 
         public void UpdateOnThread()
         {
             threadCount++;
-            long milliseconds = DateTime.Now.Ticks / TimeSpan.TicksPerMillisecond;
-            timeDelta = ((float)(milliseconds - lastTime)) / 1000.0f;
-            lastTime = milliseconds;
             
             bool calculateThisFrame = true;
-            float smoothRate;
-
+            
             if (flock != null)
             {
-                timeDelta *= flock.timeMultiplier;
+                //timeDelta *= flock.timeMultiplier;
             }
             
             if (calculateThisFrame)
             {
                 force = Calculate();
             } // Otherwise use the value from the previous calculation
-
-            if (drawForces)
-            {
-                Quaternion q = Quaternion.FromToRotation(Vector3.forward, force);
-                LineDrawer.DrawArrowLine(position, position + force, Color.magenta, q);
-            }
-            Utilities.checkNaN(force);
-            Vector3 newAcceleration = force / mass;
-            if (drawVectors)
-            {
-                LineDrawer.DrawVectors(transform);
-            }
-
-
-            if (timeDelta > 0.0f)
-            {
-                smoothRate = Utilities.Clip(9.0f * timeDelta, 0.15f, 0.4f) / 2.0f;
-                Utilities.BlendIntoAccumulator(smoothRate, newAcceleration, ref acceleration);
-            }
-
-            if (applyGravity)
-            {
-                acceleration += gravity;
-            }
-
-            velocity += acceleration * timeDelta;
-
-            float speed = velocity.magnitude;
-            if (speed > maxSpeed)
-            {
-                velocity.Normalize();
-                velocity *= maxSpeed;
-            }
-            Utilities.checkNaN(velocity);
-            position += velocity * timeDelta;
-
-
-            // the length of this global-upward-pointing vector controls the vehicle's
-            // tendency to right itself as it is rolled over from turning acceleration
-            Vector3 globalUp = new Vector3(0, straighteningTendancy, 0);
-            // acceleration points toward the center of local path curvature, the
-            // length determines how much the vehicle will roll while turning
-            Vector3 accelUp = acceleration * 0.05f;
-            // combined banking, sum of UP due to turning and global UP
-            Vector3 bankUp = accelUp + globalUp;
-            // blend bankUp into vehicle's UP basis vector
-            smoothRate = timeDelta;// * 3.0f;
-            tempUp = up;
-            Utilities.BlendIntoAccumulator(smoothRate, bankUp, ref tempUp);
-
-            if (speed > 0.01f)
-            {
-                float maxTurnFrame = maxTurnDegrees * timeDelta;
-                float maxTurn = maxTurnFrame * Mathf.Deg2Rad; // Max turn in rads
-                float dot = Vector3.Dot(forward, velocity.normalized);
-                bankAngle = Mathf.Acos(dot);
-
-                if (float.IsNaN(bankAngle))
-                {
-                    bankAngle = 0.0f;
-                }
-
-                float side = Vector3.Dot(right, velocity.normalized);
-                if (side < 0) // Angle < 90
-                {
-                    bankAngle = -bankAngle;
-                }
-
-                if (Mathf.Abs(bankAngle) > maxTurn)
-                {
-                    clamping = true;
-                    // Clamp the turn
-                    Vector3 axis = Vector3.Cross(forward, velocity.normalized);
-                    Quaternion q = Quaternion.AngleAxis(maxTurnFrame, axis);
-                    forward = q * forward;
-                    velocity = forward * velocity.magnitude;
-                }
-                else
-                {
-                    clamping = false;
-                    forward = velocity;
-                    forward.Normalize();
-                }
-                if (Mathf.Abs(bankAngle) > maxAngle)
-                {
-                    maxAngle = Mathf.Abs(bankAngle);
-                }                
-                velocity *= (1.0f - damping);
-            }
-
-            if (path != null && drawGizmos)
-            {
-                path.draw = true;
-                path.Draw();
-            }
-
-            if (calculateThisFrame && enforceNonPenetrationConstraint)
-            {
-                EnforceNonPenetrationConstraint();
-            }            
-            dirty = true;
             
+            //if (calculateThisFrame && enforceNonPenetrationConstraint)
+            //{
+            //    EnforceNonPenetrationConstraint();
+            //}            
+            dirty = false;            
         }
 
         #endregion
@@ -1009,7 +981,7 @@ namespace BGE
             desiredVelocity *= maxSpeed;
             if (drawGizmos)
             {
-                //LineDrawer.DrawTarget(targetPos, Color.red);
+                LineDrawer.DrawTarget(targetPos, Color.red);
             }
             return (desiredVelocity - velocity);
         }
@@ -1359,7 +1331,7 @@ namespace BGE
 
         Vector3 Wander()
         {
-            float jitterTimeSlice = wanderJitter * timeDelta;
+            float jitterTimeSlice = wanderJitter * threadTimeDelta;
 
             Vector3 toAdd = Utilities.RandomInsideUnitSphere() * jitterTimeSlice;
             wanderTargetPos += toAdd;

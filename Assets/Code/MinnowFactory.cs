@@ -1,4 +1,5 @@
 ﻿
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
@@ -116,26 +117,22 @@ namespace BGE
 
         void UpdateThread()
         {
-            foreach(Boid boid in flock.boids)
-            {
-                jobQueue.Enqueue(boid);
-            }
-
-            int i = 0;
+            //long lastTime = DateTime.Now.Ticks / TimeSpan.TicksPerMillisecond;
+            DateTime lastTime = DateTime.Now;
             while (running)
             {
-                // Take one off the queue, update it and then enque it again
-                Boid boid = jobQueue.Dequeue();
-                boid.UpdateOnThread();
-
-
-                Thread.Sleep(10);
-                jobQueue.Enqueue(boid);
-                
-                //Boid boid = flock.boids[0];
-                Thread.Sleep(10);
-                Debug.Log("Doing thread" + (++ i));
-            }
+                DateTime now = DateTime.Now;
+                TimeSpan ts = now - lastTime;
+                float timeDelta = (float) ts.TotalMilliseconds / 1000.0f;
+                for (int i = 0; i < flock.boids.Count; i ++)
+                {
+                    Boid boid = flock.boids[i];
+                    boid.threadTimeDelta = timeDelta;
+                    boid.UpdateOnThread();
+                }
+                Thread.Sleep(20);
+                lastTime = now;
+            }                
         }
 
         void OnApplicationQuit()
@@ -146,11 +143,10 @@ namespace BGE
         void StartUpdateThreads()
         {
             running = true;
-            for (int i = 0; i < numThreads; i++)
-            {
-                Thread thread = new Thread(UpdateThread);
-                thread.Start();
-            }
+
+            // Enque all the boids            
+            Thread thread = new Thread(UpdateThread);
+            thread.Start();            
         }
     }     
 }

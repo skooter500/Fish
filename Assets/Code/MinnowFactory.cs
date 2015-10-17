@@ -64,10 +64,9 @@ namespace BGE
                 for (int i = 0; i < flock.boids.Count; i++)
                 {
                     Boid boid = flock.boids[i];
-                    boid.UpdateOnThread();
+                    boid.CalculateForces();
                 }
                 threadCount++;
-                //Thread.Sleep(10);
             }
         }
 

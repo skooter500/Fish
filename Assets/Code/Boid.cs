@@ -8,6 +8,20 @@ using BGE.Geom;
 
 namespace BGE
 {
+
+    struct SceneAvoidanceFeelerInfo
+    {
+        public Vector3 point;
+        public Vector3 normal;
+        public bool collided;
+        public SceneAvoidanceFeelerInfo(Vector3 point, Vector3 normal, bool collided)
+        {
+            this.point = point;
+            this.normal = normal;
+            this.collided = collided;
+        }
+    }
+
     public class Boid : MonoBehaviour
     {
         // Variables required to implement the boid
@@ -173,10 +187,12 @@ namespace BGE
         private Vector3 randomWalkForce;
 
         [Header("Scene Avoidance")]
-        public bool sceneAvoidanceEnabled;
-        public float sceneAvoidanceWeight;
-        public float sceneAvoidanceForwardFeelerDepth = 30;
+        public bool sceneAvoidanceEnabled = true;
+        public float sceneAvoidanceWeight = 100.0f;
+        public float sceneAvoidanceForwardFeelerDepth = 40;
         public float sceneAvoidanceSideFeelerDepth = 15;
+        public float sceneAvoidanceDither = 0.05f;
+
         
         [HideInInspector]
         public Vector3 force;
@@ -189,6 +205,7 @@ namespace BGE
 
         List<Boid> tagged = new List<Boid>();
         List<Vector3> PlaneAvoidanceFeelers = new List<Vector3>();
+        SceneAvoidanceFeelerInfo[] sceneAvoidanceFeelers = new SceneAvoidanceFeelerInfo[5];
 
         private Vector3 wanderTargetPos;
         private Vector3 randomWalkTarget;
@@ -769,71 +786,62 @@ namespace BGE
             return force;
         }
 
-        struct FeelerInfo
-        {
-            public Vector3 localDirection;
-            public float depth;
-            public FeelerInfo(Vector3 localDirection, float depth)
-            {
-                this.localDirection = localDirection;
-                this.depth = depth;
-            }
-        }
+        
 
         Vector3 TransformDirection(Vector3 direction)
         {
             return rotation * direction;
         }
 
-        Vector3 SceneAvoidance()
+
+        void UpdateSceneAvoidanceFeelers()
         {
-            Vector3 force = Vector3.zero;
-            RaycastHit info;
             Vector3 feelerDirection;
-            bool collided = false;
-            List<FeelerInfo> feelers = new List<FeelerInfo>();
+            RaycastHit info;
 
             float forwardFeelerDepth = sceneAvoidanceForwardFeelerDepth + ((velocity.magnitude / maxSpeed) * sceneAvoidanceForwardFeelerDepth);
             float sideFeelerDepth = sceneAvoidanceSideFeelerDepth + ((velocity.magnitude / maxSpeed) * sceneAvoidanceSideFeelerDepth);
 
-            feelers.Add(new FeelerInfo(Vector3.forward, forwardFeelerDepth));
+            // Forward feeler
+            bool collided = Physics.Raycast(transform.position, TransformDirection(Vector3.forward), out info, forwardFeelerDepth);
+            sceneAvoidanceFeelers[0] = new SceneAvoidanceFeelerInfo(info.point, info.normal, collided && info.collider != myCollider);
 
+            // Left feeler
             feelerDirection = Vector3.forward;
-            feelerDirection = Quaternion.AngleAxis(-45, Vector3.up) * feelerDirection; // Left feeler
-            feelers.Add(new FeelerInfo(feelerDirection, sideFeelerDepth));
+            feelerDirection = Quaternion.AngleAxis(-45, Vector3.up) * feelerDirection;
+            collided = Physics.Raycast(transform.position, TransformDirection(feelerDirection), out info, sideFeelerDepth);
+            sceneAvoidanceFeelers[1] = new SceneAvoidanceFeelerInfo(info.point, info.normal, collided && info.collider != myCollider);
 
+            // Right feeler
             feelerDirection = Vector3.forward;
-            feelerDirection = Quaternion.AngleAxis(45, Vector3.up) * feelerDirection; // Right feeler
-            feelers.Add(new FeelerInfo(feelerDirection, sideFeelerDepth));
+            feelerDirection = Quaternion.AngleAxis(-45, Vector3.up) * feelerDirection;
+            collided = Physics.Raycast(transform.position, TransformDirection(feelerDirection), out info, sideFeelerDepth);
+            sceneAvoidanceFeelers[2] = new SceneAvoidanceFeelerInfo(info.point, info.normal, collided && info.collider != myCollider);
 
+            // Up feeler
             feelerDirection = Vector3.forward;
-            feelerDirection = Quaternion.AngleAxis(45, Vector3.right) * feelerDirection; // Up feeler
-            feelers.Add(new FeelerInfo(feelerDirection, sideFeelerDepth));
+            feelerDirection = Quaternion.AngleAxis(45, Vector3.right) * feelerDirection;
+            collided = Physics.Raycast(transform.position, TransformDirection(feelerDirection), out info, sideFeelerDepth);
+            sceneAvoidanceFeelers[3] = new SceneAvoidanceFeelerInfo(info.point, info.normal, collided && info.collider != myCollider);
 
+
+            // Down feeler
             feelerDirection = Vector3.forward;
-            feelerDirection = Quaternion.AngleAxis(-45, Vector3.right) * feelerDirection; // Down feeler
-            feelers.Add(new FeelerInfo(feelerDirection, sideFeelerDepth));
+            feelerDirection = Quaternion.AngleAxis(-45, Vector3.right) * feelerDirection;
+            collided = Physics.Raycast(transform.position, TransformDirection(feelerDirection), out info, sideFeelerDepth);
+            sceneAvoidanceFeelers[4] = new SceneAvoidanceFeelerInfo(info.point, info.normal, collided && info.collider != myCollider);
+        }
 
-            for (int i = 0; i < feelers.Count; i++)
-            {
-                Vector3 feelerDir = TransformDirection(feelers[i].localDirection);
-                float feelerDepth = feelers[i].depth;
-                collided = Physics.Raycast(position, feelerDir, out info, feelerDepth);
-                if (drawGizmos)
-                {
-                    LineDrawer.DrawLine(position, position + feelerDir * feelerDepth, Color.cyan);
-                }
-                if (collided && info.collider != myCollider)
+        Vector3 SceneAvoidance()
+        {
+            Vector3 force = Vector3.zero;
+
+            for (int i = 0; i < sceneAvoidanceFeelers.Length; i++)
+            {                                                
+                SceneAvoidanceFeelerInfo info = sceneAvoidanceFeelers[i];
+                if (info.collided)
                 {
                     force += CalculateIncidentForce(info.point, info.normal);
-                    if (drawGizmos)
-                    {
-                        LineDrawer.DrawLine(position, position + feelerDir * feelerDepth, Color.red);
-                        if (drawGizmos)
-                        {
-                            LineDrawer.DrawLine(info.point, info.point + force, Color.magenta);
-                        }
-                    }
                 }
             }            
 
@@ -847,6 +855,11 @@ namespace BGE
         void Update()
         {
             float smoothRate;
+
+            if (!multiThreadingEnabled)
+            {
+                CalculateForces();
+            }
 
             float timeDelta = Time.deltaTime * timeMultiplier;
             if (flock != null)
@@ -955,16 +968,17 @@ namespace BGE
             // Update the thread..
             UpdateLocalFromTransform();
 
+            if (sceneAvoidanceEnabled && (UnityEngine.Random.Range(0.0f, 1.0f) < sceneAvoidanceDither))
+            {
+                // raycast the scene
+                UpdateSceneAvoidanceFeelers();
+            }
+
             dirty = true;
         }
-
-
         
-
-        public void UpdateOnThread()
+        public void CalculateForces()
         {
-            
-            
             force = Calculate();
             
             //if (calculateThisFrame && enforceNonPenetrationConstraint)

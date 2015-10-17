@@ -81,6 +81,7 @@ namespace BGE
             {
                 space.bounds.center = transform.position;
             }
+
             if (drawGizmos)
             {
                 LineDrawer.DrawSphere(flockCenter, radius, 20, Color.magenta);
@@ -88,7 +89,8 @@ namespace BGE
                 {
                     space.Draw();
                 }
-            }            
+            }
+            UpdateEnemyPositions();
         }
 
         void LateUpdate()

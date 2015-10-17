@@ -10,17 +10,15 @@ namespace BGE
 {
     public class Boid : MonoBehaviour
     {
-
-        public int threadCount = 0;
         // Variables required to implement the boid
         [Header("Boid Attributes")]
 
         // Need these cause we are running ona thread and cant touch the transform
-        public Vector3 position = Vector3.zero;
-        public Vector3 forward = Vector3.forward;
-        public Vector3 up = Vector3.up;
-        public Vector3 right = Vector3.right;
-        public Quaternion rotation = Quaternion.identity;
+        private Vector3 position = Vector3.zero;
+        private Vector3 forward = Vector3.forward;
+        private Vector3 up = Vector3.up;
+        private Vector3 right = Vector3.right;
+        private Quaternion rotation = Quaternion.identity;
 
         private Vector3 tempUp;
 
@@ -66,6 +64,8 @@ namespace BGE
         public bool fleeEnabled;
         public float fleeWeight;
         public GameObject fleeTarget;
+        private Vector3 fleeTargetPosition = Vector3.zero;
+
         public float fleeRange;
         [HideInInspector]
         public Vector3 fleeForce;
@@ -177,8 +177,7 @@ namespace BGE
         public float sceneAvoidanceWeight;
         public float sceneAvoidanceForwardFeelerDepth = 30;
         public float sceneAvoidanceSideFeelerDepth = 15;
-
-
+        
         [HideInInspector]
         public Vector3 force;
 
@@ -194,9 +193,7 @@ namespace BGE
         private Vector3 wanderTargetPos;
         private Vector3 randomWalkTarget;
 
-        Color debugLineColour = Color.cyan;
-        public float threadTimeDelta;
-
+        Color debugLineColour = Color.cyan;        
         Collider myCollider;
 
         [Header("Gravity")]
@@ -210,7 +207,16 @@ namespace BGE
         }
 
 
+        [HideInInspector]
+        public bool multiThreadingEnabled = false;
 
+        private float ThreadTimeDelta()
+        {
+            float flockMultiplier = (flock == null) ? 0 : flock.timeMultiplier;
+            float timeDelta = multiThreadingEnabled ? flock.threadTimeDelta : Time.deltaTime;
+            return timeDelta * flockMultiplier * timeMultiplier;
+        }
+        
         public Boid()
         {
             TurnOffAll();
@@ -449,12 +455,23 @@ namespace BGE
 
         Vector3 oldSeparation, oldAlignment, oldCohesion;
 
+        public void UpdateLocalFromTransform()
+        {
+            position = transform.position;
+            up = transform.up;
+            right = transform.right;
+            forward = transform.forward;
+            rotation = transform.rotation;
+
+            fleeTargetPosition = (fleeTarget == null) ? Vector3.zero : transform.position;
+        }
+
         private Vector3 Calculate()
         {
             Vector3 force = Vector3.zero;
             Vector3 steeringForce = Vector3.zero;
-                
-            if (obstacleAvoidanceEnabled)
+
+           if (obstacleAvoidanceEnabled)
             {
                 force = ObstacleAvoidance() * obstacleAvoidanceWeight;
                 force *= forceMultiplier;
@@ -520,22 +537,21 @@ namespace BGE
             {
                 if (fleeTarget != null)
                 {
-                    force = Flee(fleeTarget.GetComponent<Boid>().position, fleeRange) * fleeWeight;
+                    force = Flee(fleeTargetPosition, fleeRange) * fleeWeight;
                     force *= forceMultiplier;
                     fleeForce = force;
                 }
+
                 if (flock != null)
                 {
                     force = Vector3.zero;
-                    foreach (GameObject enemy in flock.enemies)
+                    foreach (Vector3 enemyPosition in flock.enemyPositions)
                     {
-                        if (enemy != null)
-                        {
-                            force += Flee(enemy.GetComponent<Boid>().position, fleeRange) * fleeWeight;
-                            force *= forceMultiplier;
-                        }
+                        force += Flee(enemyPosition, fleeRange) * fleeWeight;
+                        force *= forceMultiplier;
                     }
                 }
+
                 if (!accumulateForce(ref steeringForce, force))
                 {
                     return steeringForce;
@@ -678,7 +694,7 @@ namespace BGE
                 }
             }                
             return steeringForce;
-
+         
         }
 
         float wiggleTheta = 0;
@@ -711,8 +727,7 @@ namespace BGE
                 wanderTargetPos.z = Mathf.Cos(theta);
                 wanderTargetPos.x = 0;
             }
-
-
+            
             wanderTargetPos *= wanderRadius;
             Vector3 yawRoll = rotation.eulerAngles;
             yawRoll.x = 0;
@@ -733,7 +748,7 @@ namespace BGE
                 LineDrawer.DrawSphere(worldCenter, wanderRadius, 10, Color.yellow);
             }
 
-            wiggleTheta += threadTimeDelta * wiggleAngularSpeedDegrees * Mathf.Deg2Rad;
+            wiggleTheta += ThreadTimeDelta() * wiggleAngularSpeedDegrees * Mathf.Deg2Rad;
             if (wiggleTheta > Utilities.TWO_PI)
             {
                 wiggleTheta = 0;
@@ -831,113 +846,114 @@ namespace BGE
 
         void Update()
         {
-            //float smoothRate;
+            float smoothRate;
 
-            //if (drawForces)
-            //{
-            //    Quaternion q = Quaternion.FromToRotation(Vector3.forward, force);
-            //    LineDrawer.DrawArrowLine(position, position + force, Color.magenta, q);
-            //}
-            //Utilities.checkNaN(force);
-            //Vector3 newAcceleration = force / mass;
-            //if (drawVectors)
-            //{
-            //    LineDrawer.DrawVectors(transform);
-            //}
-
-
-            //if (Time.deltaTime> 0.0f)
-            //{
-            //    smoothRate = Utilities.Clip(9.0f * Time.deltaTime, 0.15f, 0.4f) / 2.0f;
-            //    Utilities.BlendIntoAccumulator(smoothRate, newAcceleration, ref acceleration);
-            //}
-
-            //if (applyGravity)
-            //{
-            //    acceleration += gravity;
-            //}
-
-            //velocity += acceleration * Time.deltaTime;
-
-            //float speed = velocity.magnitude;
-            //if (speed > maxSpeed)
-            //{
-            //    velocity.Normalize();
-            //    velocity *= maxSpeed;
-            //}
-            //Utilities.checkNaN(velocity);
-            //position += velocity * Time.deltaTime;
-
-
-            //// the length of this global-upward-pointing vector controls the vehicle's
-            //// tendency to right itself as it is rolled over from turning acceleration
-            //Vector3 globalUp = new Vector3(0, straighteningTendancy, 0);
-            //// acceleration points toward the center of local path curvature, the
-            //// length determines how much the vehicle will roll while turning
-            //Vector3 accelUp = acceleration * 0.05f;
-            //// combined banking, sum of UP due to turning and global UP
-            //Vector3 bankUp = accelUp + globalUp;
-            //// blend bankUp into vehicle's UP basis vector
-            //smoothRate = Time.deltaTime;// * 3.0f;
-            //tempUp = up;
-            //Utilities.BlendIntoAccumulator(smoothRate, bankUp, ref tempUp);
-
-            //if (speed > 0.01f)
-            //{
-            //    float maxTurnFrame = maxTurnDegrees * Time.deltaTime;
-            //    float maxTurn = maxTurnFrame * Mathf.Deg2Rad; // Max turn in rads
-            //    float dot = Vector3.Dot(forward, velocity.normalized);
-            //    bankAngle = Mathf.Acos(dot);
-
-            //    if (float.IsNaN(bankAngle))
-            //    {
-            //        bankAngle = 0.0f;
-            //    }
-
-            //    float side = Vector3.Dot(right, velocity.normalized);
-            //    if (side < 0) // Angle < 90
-            //    {
-            //        bankAngle = -bankAngle;
-            //    }
-
-            //    if (Mathf.Abs(bankAngle) > maxTurn)
-            //    {
-            //        clamping = true;
-            //        // Clamp the turn
-            //        Vector3 axis = Vector3.Cross(forward, velocity.normalized);
-            //        Quaternion q = Quaternion.AngleAxis(maxTurnFrame, axis);
-            //        forward = q * forward;
-            //        velocity = forward * velocity.magnitude;
-            //    }
-            //    else
-            //    {
-            //        clamping = false;
-            //        forward = velocity;
-            //        forward.Normalize();
-            //    }
-            //    if (Mathf.Abs(bankAngle) > maxAngle)
-            //    {
-            //        maxAngle = Mathf.Abs(bankAngle);
-            //    }
-            //    velocity *= (1.0f - damping);
-            //}
-
-            //if (path != null && drawGizmos)
-            //{
-            //    path.draw = true;
-            //    path.Draw();
-            //}
-
-            //if (applyBanking)
-            //{
-            //    transform.LookAt(position + forward, tempUp);
-            //}
-            //else
-            //{
-            //    transform.LookAt(position + forward, up);
-            //}
+            float timeDelta = Time.deltaTime * timeMultiplier;
+            if (flock != null)
+            {
+                timeDelta *= flock.timeMultiplier;
+            }           
             
-            //transform.position = position;
+            if (drawForces)
+            {
+                Quaternion q = Quaternion.FromToRotation(Vector3.forward, force);
+                LineDrawer.DrawArrowLine(transform.position, transform.position + force, Color.magenta, q);
+            }
+            Utilities.checkNaN(force);
+            Vector3 newAcceleration = force / mass;
+            if (drawVectors)
+            {
+                LineDrawer.DrawVectors(transform);
+            }
+
+            if (timeDelta > 0.0f)
+            {
+                smoothRate = Utilities.Clip(9.0f * timeDelta, 0.15f, 0.4f) / 2.0f;
+                Utilities.BlendIntoAccumulator(smoothRate, newAcceleration, ref acceleration);
+            }
+
+            if (applyGravity)
+            {
+                acceleration += gravity;
+            }
+
+            velocity += acceleration * timeDelta;
+
+            float speed = velocity.magnitude;
+            if (speed > maxSpeed)
+            {
+                velocity.Normalize();
+                velocity *= maxSpeed;
+            }
+            Utilities.checkNaN(velocity);
+            transform.position += velocity * timeDelta;
+
+            // the length of this global-upward-pointing vector controls the vehicle's
+            // tendency to right itself as it is rolled over from turning acceleration
+            Vector3 globalUp = new Vector3(0, straighteningTendancy, 0);
+            // acceleration points toward the center of local path curvature, the
+            // length determines how much the vehicle will roll while turning
+            Vector3 accelUp = acceleration * 0.05f;
+            // combined banking, sum of UP due to turning and global UP
+            Vector3 bankUp = accelUp + globalUp;
+            // blend bankUp into vehicle's UP basis vector
+            smoothRate = timeDelta;// * 3.0f;
+            Vector3 tempUp = transform.up;
+            Utilities.BlendIntoAccumulator(smoothRate, bankUp, ref tempUp);
+
+            if (speed > 0.01f)
+            {
+                float maxTurnFrame = maxTurnDegrees * Time.deltaTime;
+                float maxTurn = maxTurnFrame * Mathf.Deg2Rad; // Max turn in rads
+                float dot = Vector3.Dot(transform.forward, velocity.normalized);
+                bankAngle = Mathf.Acos(dot);
+
+                if (float.IsNaN(bankAngle))
+                {
+                    bankAngle = 0.0f;
+                }
+
+                float side = Vector3.Dot(transform.right, velocity.normalized);
+                if (side < 0) // Angle < 90
+                {
+                    bankAngle = -bankAngle;
+                }
+
+                if (Mathf.Abs(bankAngle) > maxTurn)
+                {
+                    clamping = true;
+                    // Clamp the turn
+                    Vector3 axis = Vector3.Cross(transform.forward, velocity.normalized);
+                    Quaternion q = Quaternion.AngleAxis(maxTurnFrame, axis);
+                    transform.forward = q * transform.forward;
+                    velocity = transform.forward * velocity.magnitude;
+                }
+                else
+                {
+                    clamping = false;
+                    transform.forward = velocity;
+                    transform.forward.Normalize();
+                }
+                if (Mathf.Abs(bankAngle) > maxAngle)
+                {
+                    maxAngle = Mathf.Abs(bankAngle);
+                }
+
+                if (applyBanking)
+                {
+                    transform.LookAt(transform.position + transform.forward, tempUp);
+                }
+                velocity *= (1.0f - damping);
+            }
+
+            if (path != null && drawGizmos)
+            {
+                path.draw = true;
+                path.Draw();
+            }
+
+            // Update the thread..
+            UpdateLocalFromTransform();
 
             dirty = true;
         }
@@ -947,19 +963,9 @@ namespace BGE
 
         public void UpdateOnThread()
         {
-            threadCount++;
             
-            bool calculateThisFrame = true;
             
-            if (flock != null)
-            {
-                //timeDelta *= flock.timeMultiplier;
-            }
-            
-            if (calculateThisFrame)
-            {
-                force = Calculate();
-            } // Otherwise use the value from the previous calculation
+            force = Calculate();
             
             //if (calculateThisFrame && enforceNonPenetrationConstraint)
             //{
@@ -1331,7 +1337,7 @@ namespace BGE
 
         Vector3 Wander()
         {
-            float jitterTimeSlice = wanderJitter * threadTimeDelta;
+            float jitterTimeSlice = wanderJitter * ThreadTimeDelta();
 
             Vector3 toAdd = Utilities.RandomInsideUnitSphere() * jitterTimeSlice;
             wanderTargetPos += toAdd;
@@ -1512,21 +1518,11 @@ namespace BGE
         #region Flocking
         private int TagNeighboursSimple(float inRange)
         {
-            if (flock != null)
-            {
-                float prob = Utilities.RandomRange(0.0f, 1.0f);
-                if (prob > flock.tagDither)
-                {
-                    return tagged.Count;
-                }
-            }
-
             tagged.Clear();
 
             float inRangeSq = inRange * inRange;
             foreach (Boid boid in flock.boids)
-            {
-                
+            {                
                 if (boid != this)
                 {
                     if (drawNeighbours)
@@ -1537,10 +1533,6 @@ namespace BGE
                     {
                         tagged.Add(boid);
                     }
-                }
-                if (tagged.Count > flock.maxTagged)
-                {
-                    break;
                 }
             }
             DrawNeighbours(Color.white);

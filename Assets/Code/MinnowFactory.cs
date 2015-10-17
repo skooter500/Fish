@@ -9,7 +9,8 @@ using UnityEngine;
 namespace BGE
 {
     public class MinnowFactory : MonoBehaviour
-    {        
+    {
+        private long threadCount = 0;
         public float radius;
         public int boidCount;
         public GameObject boidPrefab;
@@ -29,6 +30,9 @@ namespace BGE
 
         public int numThreads = 1;
 
+        [HideInInspector]
+        public float threadTimeDelta;
+
         void OnDrawGizmos()
         {
             Gizmos.color = Color.yellow;
@@ -45,9 +49,40 @@ namespace BGE
 
         void Update()
         {
-            //Debug.Log(thread.IsAlive);
+            BoidManager.PrintFloat("Boid FPS: ", threadFPS);
+            BoidManager.PrintFloat("ThreadCount: ", (int) threadCount);
+            BoidManager.PrintFloat("Thread TimeDelta", flock.threadTimeDelta);
         }
-        
+
+        long lastThreadCount = 0;
+        float threadFPS;
+
+        void UpdateThread()
+        {
+            while (running)
+            {
+                for (int i = 0; i < flock.boids.Count; i++)
+                {
+                    Boid boid = flock.boids[i];
+                    boid.UpdateOnThread();
+                }
+                threadCount++;
+                //Thread.Sleep(10);
+            }
+        }
+
+        System.Collections.IEnumerator UpdateThreadTimeDelta()
+        {
+            while (true)
+            {
+                long newThreadCount = threadCount;
+                threadFPS = newThreadCount - lastThreadCount;
+                flock.threadTimeDelta = 1.0f / threadFPS;
+                lastThreadCount = newThreadCount;
+                yield return new WaitForSeconds(1.0f);
+            }
+        }
+
         void Start()
         {
             flock = GetComponent<Flock>();
@@ -67,13 +102,13 @@ namespace BGE
                     {
                         unit.y = Mathf.Abs(unit.y);
                     }
-                    boid.position = transform.position + unit * UnityEngine.Random.Range(0, radius * spread);
+                    boid.transform.position = transform.position + unit * UnityEngine.Random.Range(0, radius * spread);
 
-                    Vector3 p = boid.position;                    
+                    Vector3 p = boid.transform.position;                    
                     inside = false;
                     foreach (Obstacle obstacle in BoidManager.Instance.obstacles)
                     {
-                        if (Vector3.Distance(obstacle.transform.position, boid.position) < obstacle.radius + boid.minBoxLength)
+                        if (Vector3.Distance(obstacle.transform.position, boid.transform.position) < obstacle.radius + boid.minBoxLength)
                         {
                             inside = true;
                             break;
@@ -83,6 +118,7 @@ namespace BGE
                 while (inside);
                 boid.transform.parent = flock.transform;
                 boid.flock = flock;
+                boid.multiThreadingEnabled = true;
                 boid.sphereConstrainEnabled = true;
                 boid.sphereRadius = radius;
                 AudioSource audioSource = boid.GetComponent<AudioSource>();
@@ -111,29 +147,12 @@ namespace BGE
             }
 
             StartUpdateThreads();
+            StartCoroutine("UpdateThreadTimeDelta");
         }
 
         bool running = false;
 
-        void UpdateThread()
-        {
-            //long lastTime = DateTime.Now.Ticks / TimeSpan.TicksPerMillisecond;
-            DateTime lastTime = DateTime.Now;
-            while (running)
-            {
-                DateTime now = DateTime.Now;
-                TimeSpan ts = now - lastTime;
-                float timeDelta = (float) ts.TotalMilliseconds / 1000.0f;
-                for (int i = 0; i < flock.boids.Count; i ++)
-                {
-                    Boid boid = flock.boids[i];
-                    boid.threadTimeDelta = timeDelta;
-                    boid.UpdateOnThread();
-                }
-                Thread.Sleep(20);
-                lastTime = now;
-            }                
-        }
+        
 
         void OnApplicationQuit()
         {
@@ -144,6 +163,12 @@ namespace BGE
         {
             running = true;
 
+            for (int i = 0; i < flock.boids.Count; i++)
+            {
+                Boid boid = flock.boids[i];
+                boid.UpdateLocalFromTransform();
+            }
+            
             // Enque all the boids            
             Thread thread = new Thread(UpdateThread);
             thread.Start();            

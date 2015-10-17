@@ -149,7 +149,7 @@ namespace BGE
             }
             foreach (Boid boid in boids)
             {
-                int cell = FindCell(boid.position);
+                int cell = FindCell(boid.transform.position);
                 if (cell != -1)
                 {
                     cells[cell].contained.Add(boid);

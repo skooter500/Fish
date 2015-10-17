@@ -22,7 +22,10 @@ namespace BGE
 
         [HideInInspector]
         public List<Boid> boids = new List<Boid>();
-        public List<GameObject> enemies = new List<GameObject>();       
+        public List<GameObject> enemies = new List<GameObject>();
+        [HideInInspector]
+        public List<Vector3> enemyPositions = new List<Vector3>();
+
      
         [Range(0, 2)]
         public float timeMultiplier = 1.0f;
@@ -30,14 +33,13 @@ namespace BGE
         [Header("Debug")]
         public bool drawGizmos;        
 
-        [Header("Performance")]
-        public float tagDither = 1.0f;
-        public int maxTagged = 50;
-
         [HideInInspector]
         public Vector3 flockCenter;
         [HideInInspector]
-        public Vector3 oldFlockCenter;        
+        public Vector3 oldFlockCenter;
+
+        [HideInInspector]
+        public float threadTimeDelta;
 
         void OnDrawGizmos()
         {
@@ -55,7 +57,22 @@ namespace BGE
                 space = new Space(transform.position, radius * 3, radius * 3, radius * 3, numCells, boids);
             }
             flockCenter = transform.position;
+
+            UpdateEnemyPositions();
         }
+
+        private void UpdateEnemyPositions()
+        {            
+            for (int i = 0; i < enemies.Count; i++)
+            {
+                if (enemyPositions.Count <= i)
+                {
+                    enemyPositions.Add(Vector3.zero);
+                }
+                enemyPositions[i] = enemies[i].transform.position;
+            }
+        }
+
 
 
         public void Update()
@@ -69,8 +86,6 @@ namespace BGE
                 LineDrawer.DrawSphere(flockCenter, radius, 20, Color.magenta);
                 if (UseCellSpacePartitioning)
                 {
-                    // In case the flock center moves
-
                     space.Draw();
                 }
             }            

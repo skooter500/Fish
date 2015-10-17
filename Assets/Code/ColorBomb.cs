@@ -26,7 +26,7 @@ public class ColorBomb : MonoBehaviour {
 
         foreach(Boid boid in flock.boids)
         {
-            center += boid.position;
+            center += boid.transform.position;
         }
         center /= flock.boids.Count;
         return center;

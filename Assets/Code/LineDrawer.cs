@@ -90,7 +90,6 @@ namespace BGE
 
         public static void DrawLine(Vector3 start, Vector3 end, Color colour)
         {
-            //Debug.DrawLine(start, end, colour);
             lines.Add(new Line(start, end, colour, false));
         }
 

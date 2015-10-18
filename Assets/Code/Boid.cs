@@ -220,7 +220,6 @@ namespace BGE
         public void OnDrawGizmos()
         {
             Gizmos.color = Color.green;
-            //Gizmos.DrawWireSphere(sphereCentre, sphereRadius);
         }
 
 
@@ -338,8 +337,8 @@ namespace BGE
             //}
             if (offsetPursuitTarget != null)
             {
-                offset = position - offsetPursuitTarget.GetComponent<Boid>().position;
-                offset = Quaternion.Inverse(rotation) * offset;
+                offset = transform.position - offsetPursuitTarget.transform.position;
+                offset = Quaternion.Inverse(transform.rotation) * offset;
             }
 
             wanderNoiseX = Utilities.RandomRange(0, 10000);
@@ -973,6 +972,8 @@ namespace BGE
                 // raycast the scene
                 UpdateSceneAvoidanceFeelers();
             }
+
+            
 
             dirty = true;
         }

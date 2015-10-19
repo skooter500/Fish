@@ -191,9 +191,10 @@ namespace BGE
         public float sceneAvoidanceWeight = 100.0f;
         public float sceneAvoidanceForwardFeelerDepth = 40;
         public float sceneAvoidanceSideFeelerDepth = 15;
-        public float sceneAvoidanceDither = 0.05f;
+        public float sceneAvoidanceFrontFeelerDither = 0.5f;
+        public float sceneAvoidanceSideFeelerDither = 0.05f;
 
-        
+
         [HideInInspector]
         public Vector3 force;
 
@@ -792,19 +793,26 @@ namespace BGE
             return rotation * direction;
         }
 
-
-        void UpdateSceneAvoidanceFeelers()
+        void UpdateSceneAvoidanceFrontFeeler()
         {
-            Vector3 feelerDirection;
             RaycastHit info;
-
             float forwardFeelerDepth = sceneAvoidanceForwardFeelerDepth + ((velocity.magnitude / maxSpeed) * sceneAvoidanceForwardFeelerDepth);
-            float sideFeelerDepth = sceneAvoidanceSideFeelerDepth + ((velocity.magnitude / maxSpeed) * sceneAvoidanceSideFeelerDepth);
-
+            
             // Forward feeler
             bool collided = Physics.Raycast(transform.position, TransformDirection(Vector3.forward), out info, forwardFeelerDepth);
             sceneAvoidanceFeelers[0] = new SceneAvoidanceFeelerInfo(info.point, info.normal, collided && info.collider != myCollider);
+        }
+        
 
+        void UpdateSceneAvoidanceSideFeelers()
+        {
+            Vector3 feelerDirection;
+            RaycastHit info;
+            bool collided;
+
+            float sideFeelerDepth = sceneAvoidanceSideFeelerDepth + ((velocity.magnitude / maxSpeed) * sceneAvoidanceSideFeelerDepth);
+
+            
             // Left feeler
             feelerDirection = Vector3.forward;
             feelerDirection = Quaternion.AngleAxis(-45, Vector3.up) * feelerDirection;
@@ -967,10 +975,16 @@ namespace BGE
             // Update the thread..
             UpdateLocalFromTransform();
 
-            if (sceneAvoidanceEnabled && (UnityEngine.Random.Range(0.0f, 1.0f) < sceneAvoidanceDither))
+            // Update the front feeler each frame
+            if (sceneAvoidanceEnabled && (UnityEngine.Random.Range(0.0f, 1.0f) < sceneAvoidanceFrontFeelerDither))
             {
-                // raycast the scene
-                UpdateSceneAvoidanceFeelers();
+                UpdateSceneAvoidanceFrontFeeler();
+            }
+
+            if (sceneAvoidanceEnabled && (UnityEngine.Random.Range(0.0f, 1.0f) < sceneAvoidanceSideFeelerDither))
+            {
+                //Update the side feelers
+                UpdateSceneAvoidanceSideFeelers();
             }
 
             

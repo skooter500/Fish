@@ -41,6 +41,8 @@ namespace BGE
         [HideInInspector]
         public float threadTimeDelta;
 
+        public Vector3 centreOfMass;
+
         void OnDrawGizmos()
         {
             Gizmos.color = Color.yellow;

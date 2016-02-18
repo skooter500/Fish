@@ -28,11 +28,11 @@ namespace BGE
         [Header("Boid Attributes")]
 
         // Need these cause we are running ona thread and cant touch the transform
-        private Vector3 position = Vector3.zero;
-        private Vector3 forward = Vector3.forward;
-        private Vector3 up = Vector3.up;
-        private Vector3 right = Vector3.right;
-        private Quaternion rotation = Quaternion.identity;
+        public Vector3 position = Vector3.zero;
+        public Vector3 forward = Vector3.forward;
+        public Vector3 up = Vector3.up;
+        public Vector3 right = Vector3.right;
+        public Quaternion rotation = Quaternion.identity;
 
         private Vector3 tempUp;
 
@@ -52,7 +52,6 @@ namespace BGE
         public float maxTurnDegrees;
         public bool applyBanking;
         public float straighteningTendancy = 0.2f;
-
         
         [HideInInspector]
         public bool clamping;
@@ -104,7 +103,6 @@ namespace BGE
         public float wanderNoiseDeltaX;
         private float wanderNoiseX;
         private float wanderNoiseY;
-
 
         [Header("Separation")]
         public bool separationEnabled;
@@ -193,7 +191,6 @@ namespace BGE
         public float sceneAvoidanceSideFeelerDepth = 15;
         public float sceneAvoidanceFrontFeelerDither = 0.5f;
         public float sceneAvoidanceSideFeelerDither = 0.05f;
-
 
         [HideInInspector]
         public Vector3 force;
@@ -349,7 +346,7 @@ namespace BGE
 
             if (centreOnPosition)
             {
-                sphereCentre = position;
+                sphereCentre = transform.position;
             }
 
             myCollider = GetComponentInChildren<Collider>();
@@ -784,9 +781,7 @@ namespace BGE
 
             Vector3 force = Vector3.Reflect(desiredVelocity - velocity, -normal);
             return force;
-        }
-
-        
+        }        
 
         Vector3 TransformDirection(Vector3 direction)
         {
@@ -830,7 +825,6 @@ namespace BGE
             feelerDirection = Quaternion.AngleAxis(45, Vector3.right) * feelerDirection;
             collided = Physics.Raycast(transform.position, TransformDirection(feelerDirection), out info, sideFeelerDepth);
             sceneAvoidanceFeelers[3] = new SceneAvoidanceFeelerInfo(info.point, info.normal, collided && info.collider != myCollider);
-
 
             // Down feeler
             feelerDirection = Vector3.forward;
@@ -986,8 +980,6 @@ namespace BGE
                 //Update the side feelers
                 UpdateSceneAvoidanceSideFeelers();
             }
-
-            
 
             dirty = true;
         }

@@ -17,7 +17,7 @@ namespace BGE
 
         List<GameObject> segments;
 
-        float segmentExtents = 3;
+        public float segmentExtents = 3;
         public float gap;
 
         // Animation stuff

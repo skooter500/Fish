@@ -19,12 +19,6 @@ public class ForceController : MonoBehaviour {
     {
 
         rigidBody = GetComponent<Rigidbody>();
-
-        if (vrMode && GameObject.FindGameObjectWithTag("ovrplayer") != null)
-        {
-            ovrCamera = GameObject.FindGameObjectWithTag("ovrplayer").GetComponentInChildren<Camera>();
-        }
-
         rigidBody.freezeRotation = true;        
     }
 
@@ -58,14 +52,8 @@ public class ForceController : MonoBehaviour {
 
     void Walk(float units)
     {
-        if (ovrCamera != null)
-        {
-            rigidBody.AddForce(ovrCamera.transform.forward* units);
-        }
-        else
-        {
-            rigidBody.AddForce(transform.forward* units);
-        }
+        
+        rigidBody.AddForce(GetComponentInChildren<Camera>().transform.forward * units);
     }
 
     void Fly(float units)
@@ -75,17 +63,8 @@ public class ForceController : MonoBehaviour {
 
     void Strafe(float units)
     {
-        if (ovrCamera != null)
-        {
-            rigidBody.AddForce(ovrCamera.transform.right* units);
-        }
-        else
-        {
-            rigidBody.AddForce(transform.right * units);
-        }
+        rigidBody.AddForce(transform.right * units);
     }
-
-    int test = 0;
 
     // Update is called once per frame
     void FixedUpdate()

@@ -11,7 +11,6 @@ namespace BGE
     public class MinnowFactory : MonoBehaviour
     {
         private long threadCount = 0;
-        public float radius;
         public int boidCount;
         public GameObject boidPrefab;
 
@@ -33,15 +32,9 @@ namespace BGE
         [HideInInspector]
         public float threadTimeDelta;
 
-        void OnDrawGizmos()
-        {
-            Gizmos.color = Color.yellow;
-            Gizmos.DrawWireSphere(transform.position, radius);
-        }
 
         MinnowFactory()
         {
-            radius = 100;
             boidCount = 200;
 
             spread = 1.0f;
@@ -70,6 +63,19 @@ namespace BGE
             }
         }
 
+        void CalculateCentreOfMass()
+        {
+            Vector3 cent = Vector3.zero;
+            foreach (Boid boid in flock.boids)
+            {
+                cent += boid.position;
+            }
+            if (flock.boids.Count > 0)
+            {
+                flock.centreOfMass = cent / flock.boids.Count;
+            }
+        }
+
         System.Collections.IEnumerator UpdateThreadTimeDelta()
         {
             while (true)
@@ -78,6 +84,9 @@ namespace BGE
                 threadFPS = newThreadCount - lastThreadCount;
                 flock.threadTimeDelta = 1.0f / threadFPS;
                 lastThreadCount = newThreadCount;
+
+                CalculateCentreOfMass();
+
                 yield return new WaitForSeconds(1.0f);
             }
         }
@@ -101,7 +110,7 @@ namespace BGE
                     {
                         unit.y = Mathf.Abs(unit.y);
                     }
-                    boid.transform.position = transform.position + unit * UnityEngine.Random.Range(0, radius * spread);
+                    boid.transform.position = transform.position + unit * UnityEngine.Random.Range(0, flock.radius * spread);
 
                     Vector3 p = boid.transform.position;                    
                     inside = false;
@@ -119,7 +128,7 @@ namespace BGE
                 boid.flock = flock;
                 boid.multiThreadingEnabled = true;
                 boid.sphereConstrainEnabled = true;
-                boid.sphereRadius = radius;
+                boid.sphereRadius = flock.radius;
                 AudioSource audioSource = boid.GetComponent<AudioSource>();
                 if (audioSource != null)
                 {

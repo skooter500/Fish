@@ -223,7 +223,7 @@ public class GameOfLifeTextureGenerator : TextureGenerator
             current = next;
             next = temp; 
             t = 0.0f;
-            //UpdateTexture();
+            UpdateTexture();
         }
     }
 

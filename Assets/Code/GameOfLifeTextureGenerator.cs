@@ -176,6 +176,7 @@ public class GameOfLifeTextureGenerator : TextureGenerator
         while (true)
         {
             yield return new WaitForSeconds(delay * 50);
+            Debug.Log("Randomizing board");
             Randomise();
         }
     }
@@ -185,6 +186,7 @@ public class GameOfLifeTextureGenerator : TextureGenerator
         while (true)
         {
             yield return new WaitForSeconds(delay);
+            Debug.Log("Updating the board");
             if (!paused)
             {
                 ClearBoard(next);

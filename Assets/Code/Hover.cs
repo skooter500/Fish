@@ -22,7 +22,7 @@ public class Hover : MonoBehaviour {
 	
 	// Update is called once per frame
 	void Update () {
-        Vector3 hoverPos = new Vector3();
+        Vector3 hoverPos = new Vector3();    
 
         hoverPos.y = Mathf.Sin(theta) * amplitude;
         theta += Time.deltaTime * frequency;

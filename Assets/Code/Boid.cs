@@ -921,44 +921,12 @@ namespace BGE
 
             if (speed > 0.01f)
             {
-                float maxTurnFrame = maxTurnDegrees * Time.deltaTime;
-                float maxTurn = maxTurnFrame * Mathf.Deg2Rad; // Max turn in rads
-                float dot = Vector3.Dot(transform.forward, velocity.normalized);
-                bankAngle = Mathf.Acos(dot);
+                Vector3 newForward = velocity;
+                
+                float fy = Mathf.Clamp(transform.forward.y, -0.9f, 0.9f);
+                //newForward.y = fy;
+                transform.forward = newForward.normalized;
 
-                if (float.IsNaN(bankAngle))
-                {
-                    bankAngle = 0.0f;
-                }
-
-                float side = Vector3.Dot(transform.right, velocity.normalized);
-                if (side < 0) // Angle < 90
-                {
-                    bankAngle = -bankAngle;
-                }
-
-                if (Mathf.Abs(bankAngle) > maxTurn)
-                {
-                    clamping = true;
-                    // Clamp the turn
-                    Vector3 axis = Vector3.Cross(transform.forward, velocity.normalized);
-                    Quaternion q = Quaternion.AngleAxis(maxTurnFrame, axis);
-                    transform.forward = q * transform.forward;
-                    velocity = transform.forward * velocity.magnitude;
-                }
-                else
-                {
-                    clamping = false;
-                    transform.forward = velocity;
-                    transform.forward.Normalize();
-                }
-                if (Mathf.Abs(bankAngle) > maxAngle)
-                {
-                    maxAngle = Mathf.Abs(bankAngle);
-                }
-
-                //BoidManager.PrintFloat("Rotation angle: ", angle * Mathf.Rad2Deg);
-                //BoidManager.PrintFloat("Max angle: ", maxAngle * Mathf.Rad2Deg);
                 if (applyBanking)
                 {
                     transform.LookAt(transform.position + transform.forward, tempUp);
@@ -1344,6 +1312,7 @@ namespace BGE
             wanderTargetPos *= wanderRadius;
 
             Vector3 localTarget = wanderTargetPos + Vector3.forward * wanderDistance;
+            
             Vector3 worldTarget = transform.TransformPoint(localTarget);
             if (drawGizmos)
             {

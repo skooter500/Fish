@@ -7,16 +7,11 @@ namespace BGE
 {
     public class FPSController : MonoBehaviour
     {
-        Camera ovrCamera;
-        float speed = 500.0f;
+        float speed = 50.0f;
         // Use this for initialization
         void Start()
         {
 
-            if (GameObject.FindGameObjectWithTag("ovrplayer") != null)
-            {
-                //ovrCamera = GameObject.FindGameObjectWithTag("ovrplayer").GetComponentInChildren<Camera>();
-            }
         }
 
         void Yaw(float angle)
@@ -48,14 +43,8 @@ namespace BGE
 
         void Walk(float units)
         {
-            if (ovrCamera != null)
-            {
-                transform.position += ovrCamera.transform.forward * units;
-            }
-            else
-            {
-                transform.position += transform.forward * units;
-            }
+            transform.position += transform.forward * units;
+            
         }
 
         void Fly(float units)
@@ -65,14 +54,8 @@ namespace BGE
 
         void Strafe(float units)
         {
-            if (ovrCamera != null)
-            {
-                transform.position += ovrCamera.transform.right * units;
-            }
-            else
-            {
-                transform.position += transform.right * units;
-            }
+            transform.position += transform.right * units;
+            
         }
 
         // Update is called once per frame
@@ -81,7 +64,7 @@ namespace BGE
             float mouseX, mouseY;
             float speed = this.speed;
 
-            float runAxis = Input.GetAxis("Run Axis");
+            float runAxis = 0; // Input.GetAxis("Run Axis");
 
             if (Input.GetKey(KeyCode.LeftShift) || runAxis != 0)
             {
@@ -122,23 +105,23 @@ namespace BGE
 
 
             Yaw(mouseX);
-            float contYaw = Input.GetAxis("Yaw Axis");
-            float contPitch = Input.GetAxis("Pitch Axis");
+            float contYaw = 0; // Input.GetAxis("Yaw Axis");
+            float contPitch = 0; //Input.GetAxis("Pitch Axis");
             Yaw(contYaw);
 
             // If in Rift mode, dont pitch
-            if (ovrCamera == null)
+            /*if (ovrCamera == null)
             {
                 Pitch(-mouseY);
                 Pitch(contPitch);
             }
-            else
+            else*/
             {
-                Fly(-contPitch * speed * Time.deltaTime);
+                //Fly(-contPitch * speed * Time.deltaTime);
             }
 
-            float contWalk = Input.GetAxis("Walk Axis");
-            float contStrafe = Input.GetAxis("Strafe Axis");
+            float contWalk = 0; // Input.GetAxis("Walk Axis");
+            float contStrafe = 0; // Input.GetAxis("Strafe Axis");
             if (Mathf.Abs(contWalk) > 0.1f)
             {
                 Walk(-contWalk * speed * Time.deltaTime);

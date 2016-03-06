@@ -40,17 +40,7 @@ namespace BGE
         // Use this for initialization
         void Start()
         {
-            ovrCameraController = (GameObject)GameObject.FindGameObjectWithTag("ovrplayer");
-            if (ovrCameraController != null)
-            {
-                cameras = (Camera[])ovrCameraController.GetComponentsInChildren<Camera>();
-            }
-            else
-            {
-                cameras = new Camera[1];
-                cameras = GameObject.FindObjectsOfType<Camera>();
-            }
-
+            cameras = GameObject.FindObjectsOfType<Camera>();
         }
 
         void Awake()

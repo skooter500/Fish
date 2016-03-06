@@ -27,6 +27,7 @@ var indicatorOffset : float = .5; // How far up is the indicator from the follow
 //
 var bondDistance : float = 2;
 var bondDamping : float = 3;
+var angularBondDamping : float = 3;
 //Controller
 var vDirection : float;
 var hDirection : float;
@@ -151,7 +152,7 @@ private function DelayedMovement(prevFollower : Transform,follower : Transform){
 	follower.transform.position = Vector3.Lerp (follower.transform.position, wantedPosition, Time.deltaTime * bondDamping); 
 
 	wantedRotation = Quaternion.LookRotation(prevFollower.position - follower.transform.position, prevFollower.up);
-	follower.transform.rotation = Quaternion.Slerp (follower.transform.rotation, wantedRotation, Time.deltaTime * bondDamping);
+	follower.transform.rotation = Quaternion.Slerp (follower.transform.rotation, wantedRotation, Time.deltaTime * angularBondDamping);
 }
 /*
 private function FlockMovement(prevFollower : Transform,follower : Transform){

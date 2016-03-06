@@ -189,6 +189,8 @@ namespace BGE
         public bool applyGravity = false;
         public Vector3 gravity = new Vector3(0, -9, 0);
 
+        public float rotateMax = Mathf.PI / 4.0f;
+
         public void OnDrawGizmos()
         {
             Gizmos.color = Color.green;
@@ -756,11 +758,11 @@ namespace BGE
                 Vector3 worldCenter = TransformPointNoScale(transform, Vector3.forward * wanderDistance);
                 LineDrawer.DrawSphere(worldCenter, wanderRadius, 10, Color.yellow);
             }
-
+            
             wiggleTheta += timeDelta * wiggleAngularSpeedDegrees * Mathf.Deg2Rad;
             if (wiggleTheta > Utilities.TWO_PI)
             {
-                wiggleTheta = 0;
+                wiggleTheta = Utilities.TWO_PI - wiggleTheta;
             }
 
             return Seek(worldTargetOnY);
@@ -921,11 +923,15 @@ namespace BGE
 
             if (speed > 0.01f)
             {
-                Vector3 newForward = velocity;
-                
-                float fy = Mathf.Clamp(transform.forward.y, -0.9f, 0.9f);
-                //newForward.y = fy;
-                transform.forward = newForward.normalized;
+                Vector3 forward = velocity.normalized;
+                //forward.y = Mathf.Clamp(transform.forward.y, -0.5f, 0.25f);
+                transform.forward = forward;
+                /*transform.forward = Vector3.RotateTowards(
+                    transform.forward,
+                    forward,
+                    rotateMax * Time.deltaTime,
+                    1.0f
+                );*/
 
                 if (applyBanking)
                 {

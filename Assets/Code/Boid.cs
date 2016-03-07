@@ -1334,7 +1334,7 @@ namespace BGE
             wanderTargetPos.x = Mathf.Sin(theta);
             wanderTargetPos.z = -Mathf.Cos(theta);
 
-            n = Mathf.PerlinNoise(wanderNoiseX, 0);
+            n = Mathf.PerlinNoise(wanderNoiseY, 0);
             theta = Utilities.Map(n, 0.0f, 1.0f, 0, Mathf.PI * 2.0f);
 
             wanderTargetPos.y = 0;

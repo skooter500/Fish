@@ -8,39 +8,9 @@ namespace BGE
 {
     public class LineDrawer : MonoBehaviour
     {
-
-        Camera[] cameras;
-
-        GameObject ovrCameraController;
-
-        struct Line
-        {
-            public Vector3 start;
-            public Vector3 end;
-            public Color color;
-            public bool isDebug;
-            public Line(Vector3 start, Vector3 end, Color color, bool isDebug)
-            {
-                this.start = start;
-                this.end = end;
-                this.color = color;
-                this.isDebug = isDebug;
-            }
-        }
-
-        static List<Line> lines = new List<Line>();
-
-        static List<Vectrosity.VectorLine> vectrosityLines = new List<Vectrosity.VectorLine>();
-
-        Material lineMaterial;
-
-        public bool useVectocity;
-
-
         // Use this for initialization
         void Start()
         {
-            cameras = GameObject.FindObjectsOfType<Camera>();
         }
 
         void Awake()
@@ -48,52 +18,11 @@ namespace BGE
             DontDestroyOnLoad(this);
         }
 
-        void LateUpdate()
-        {
-            if (useVectocity)
-            {
-                for (int j = 0; j < cameras.Length; j++)
-                {
-                    Vectrosity.VectorLine.SetCamera3D(cameras[j]);
-                    for (int i = 0; i < lines.Count; i++)
-                    {
-                        // Create a new one or... update an existing vectorcity line
-                        Vectrosity.VectorLine vectrocityLine;
-                        if (i > vectrosityLines.Count - 1)
-                        {
-                            Vector3[] points = new Vector3[2];
-                            points[0] = lines[i].start;
-                            points[1] = lines[i].end;
-                            vectrocityLine = Vectrosity.VectorLine.SetLine3D(lines[i].color, points);
-                            vectrocityLine.SetColor(lines[i].color);
-                            vectrocityLine.SetWidth(1, 0);
-                            vectrosityLines.Add(vectrocityLine);
-                        }
-                        else
-                        {
-                            vectrocityLine = vectrosityLines[i];
-                            vectrocityLine.points3[0] = lines[i].start;
-                            vectrocityLine.points3[1] = lines[i].end;
-                            vectrocityLine.SetColor(lines[i].color);
-                            vectrocityLine.SetWidth(1, 0);
-                        }
-                    }
-                }
-                // Destroy any unused lines
-                while (vectrosityLines.Count > lines.Count)
-                {
-                    var myLine = vectrosityLines[vectrosityLines.Count - 1];
-                    Vectrosity.VectorLine.Destroy(ref myLine);
-                    vectrosityLines.RemoveAt(vectrosityLines.Count - 1);
-                }
-                lines.Clear();
-            }
-		}
 
         public static void DrawLine(Vector3 start, Vector3 end, Color colour)
         {
-            Debug.DrawLine(start, end, colour);
-            //lines.Add(new Line(start, end, colour, false));
+            Gizmos.color = colour;
+            Gizmos.DrawLine(start, end);
         }
 
         public static void DrawTarget(Vector3 target, Color colour)
@@ -108,7 +37,7 @@ namespace BGE
         {
             Vector3 tl = new Vector3(min.x, min.y, max.z);
             Vector3 br = new Vector3(max.x, min.y, min.z);
-                
+
             LineDrawer.DrawLine(min, tl, colour);
             LineDrawer.DrawLine(tl, max, colour);
             LineDrawer.DrawLine(max, br, colour);
@@ -122,8 +51,8 @@ namespace BGE
             for (int i = 1; i <= points; i++)
             {
                 float theta = thetaInc * i;
-                Vector3 point = centre + 
-                    (new Vector3((float) Math.Sin(theta), 0, (float) Math.Cos(theta)) * radius);
+                Vector3 point = centre +
+                    (new Vector3((float)Math.Sin(theta), 0, (float)Math.Cos(theta)) * radius);
                 DrawLine(lastPoint, point, colour);
                 lastPoint = point;
             }
@@ -159,57 +88,22 @@ namespace BGE
 
         public static void DrawArrowLine(Vector3 start, Vector3 end, Color color, Quaternion rot)
         {
-            lines.Add(new Line(start, end, color, false));
+            DrawLine(start, end, color);
 
-	        float side = 1;
-	        float back = -5;
-	        Vector3[] points = new Vector3[3];
+            float side = 1;
+            float back = -5;
+            Vector3[] points = new Vector3[3];
             points[0] = new Vector3(-side, 0, back);
             points[1] = new Vector3(0, 0, 0);
             points[2] = new Vector3(side, 0, back);
-	
-	        for (int i = 0 ; i < 3 ; i ++)
-	        {
-		        points[i] = (rot * points[i]) + end;
-	        }
 
-            lines.Add(new Line(points[0], points[1], color, false));
-            lines.Add(new Line(points[2], points[1], color, false));
-        }
-
-        void CreateLineMaterial()
-        {
-            if (!lineMaterial)
+            for (int i = 0; i < 3; i++)
             {
-                lineMaterial = new Material("Shader \"Lines/Colored Blended\" {" +
-                    "SubShader { Pass { " +
-                    "    Blend SrcAlpha OneMinusSrcAlpha " +
-                    "    ZWrite Off Cull Off Fog { Mode Off } " +
-                    "    BindChannels {" +
-                    "      Bind \"vertex\", vertex Bind \"color\", color }" +
-                    "} } }");
-                lineMaterial.hideFlags = HideFlags.HideAndDontSave;
-                lineMaterial.shader.hideFlags = HideFlags.HideAndDontSave;
+                points[i] = (rot * points[i]) + end;
             }
-        }
 
-        void OnPostRender()
-        {
-            if (!useVectocity)
-            {
-                CreateLineMaterial();
-                // set the current material
-                lineMaterial.SetPass(0);
-                GL.Begin(GL.LINES);
-                foreach (Line line in lines)
-                {
-                    GL.Color(line.color);
-                    GL.Vertex3(line.start.x, line.start.y, line.start.z);
-                    GL.Vertex3(line.end.x, line.end.y, line.end.z);
-                }
-                GL.End();                
-            }
-            lines.Clear();
+            DrawLine(points[0], points[1], color);
+            DrawLine(points[2], points[1], color);
         }
     }
 }

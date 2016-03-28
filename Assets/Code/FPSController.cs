@@ -98,6 +98,16 @@ namespace BGE
             {
                 Roll(Time.deltaTime * speed);
             }
+
+            if (Input.GetKey(KeyCode.R))
+            {
+                Fly(Time.deltaTime * speed);
+            }
+            if (Input.GetKey(KeyCode.F))
+            {
+                Fly(-Time.deltaTime * speed);
+            }
+
             //BoidManager.PrintVector("OVR Forward: ", ovrCamera.transform.forward);
 
             mouseX = Input.GetAxis("Mouse X");

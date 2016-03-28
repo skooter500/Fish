@@ -172,59 +172,6 @@ namespace BGE
         public void Update()
         {
             bool turning = false;
-
-            if (sideWiggle)
-            {
-                float turnAngle = TurnAngle();
-                bankAngle = boid.bankAngle;
-
-                float threshold = 0.01f;
-                float turnSpeed = maxTurnSpeed * Mathf.Deg2Rad * Time.deltaTime * 1.1f;
-                if (boid.clamping && lastClamp)
-                {
-                    turning = true;
-                    if (bankAngle < -threshold)
-                    {
-                        if (turnAngle > -maxTurnAngleRadians)
-                        {
-                            // Turn left
-                            head.transform.RotateAround(transform.TransformPoint(headRotPoint), transform.up, -turnSpeed);
-                            tail.transform.RotateAround(transform.TransformPoint(tailRotPoint), transform.up, turnSpeed);
-                            myBankAngle--;
-                        }
-                    }
-                    else if (bankAngle > threshold)
-                    {
-                        if (turnAngle < maxTurnAngleRadians)
-                        {
-                            // Turn right
-                            head.transform.RotateAround(transform.TransformPoint(headRotPoint), transform.up, turnSpeed);
-                            tail.transform.RotateAround(transform.TransformPoint(tailRotPoint), transform.up, -turnSpeed);
-                            myBankAngle++;
-                        }
-                    }
-                }
-                else
-                {
-                    // One degree threshold
-                    float turnThreshold = 1.0f * Mathf.Deg2Rad; 
-                    // Straighten up
-                    float rot = 0;
-                    if (turnAngle < -turnThreshold)
-                    {
-                        rot = turnSpeed;
-                        myBankAngle += 1;
-                    }
-                    if (turnAngle > turnThreshold)
-                    {
-                        rot = -turnSpeed;
-                        myBankAngle -= 1;
-                    }
-                    head.transform.RotateAround(transform.TransformPoint(headRotPoint), transform.up, rot);
-                    tail.transform.RotateAround(transform.TransformPoint(tailRotPoint), transform.up, -rot);                    
-                }
-            }
-
             if (forwardWiggle)
             {
                 float speed = (boidSpeedToAnimationSpeed) ? boid.velocity.magnitude : 20.0f;
@@ -259,13 +206,6 @@ namespace BGE
                 //transform.Rotate(transform.right, bodyRot - oldBodyRot);
                 oldBodyRot = bodyRot;                
             }
-            lastClamp = boid.clamping;
-            /*BoidManager.PrintVector("My Right: ", transform.right);
-            BoidManager.PrintVector("Parent Rigfht: ", transform.parent.right);
-            BoidManager.PrintMessage(transform.right == transform.parent.right ? "Same" : "Different");
-            BoidManager.PrintVector("My up: ", transform.up);
-            BoidManager.PrintVector("Parent up: ", transform.parent.up);
-             */
         }
     }
 }

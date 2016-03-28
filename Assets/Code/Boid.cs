@@ -24,9 +24,7 @@ namespace BGE
 
     public class Boid : MonoBehaviour
     {
-        // Variables required to implement the boid
-        [Header("Boid Attributes")]
-
+    
         // Need these cause we are running ona thread and cant touch the transform
         public Vector3 position = Vector3.zero;
         public Vector3 forward = Vector3.forward;
@@ -38,23 +36,23 @@ namespace BGE
 
         private bool dirty = false;
 
-        public float mass;
-        public float maxSpeed;
-        public float maxForce;
-        public float forceMultiplier;
+        // Variables required to implement the boid
+        [Header("Boid Attributes")]
+        public float mass = 1.0f;
+        public float maxSpeed = 20.0f;
+        public float maxForce = 10.0f;
+        public float forceMultiplier = 1.0f;
         [Range(0.0f, 2.0f)]
-        public float timeMultiplier;
+        public float timeMultiplier = 1.0f;
         [Range(0.0f, 1.0f)]
-        public float damping;
+        public float damping = 0.01f;
         public enum CalculationMethods { WeightedTruncatedSum, WeightedTruncatedRunningSumWithPrioritisation, PrioritisedDithering };
-        public CalculationMethods calculationMethod;
-        public float radius;
-        public float maxTurnDegrees;
-        public bool applyBanking;
+        public CalculationMethods calculationMethod = CalculationMethods.WeightedTruncatedRunningSumWithPrioritisation;
+        public float radius = 5.0f;
+        public float maxTurnDegrees = 180.0f;
+        public bool applyBanking = true;
         public float straighteningTendancy = 0.2f;
-        
-        [HideInInspector]
-        public bool clamping;
+
 
         [HideInInspector]
         public Flock flock;
@@ -62,162 +60,213 @@ namespace BGE
         public bool enforceNonPenetrationConstraint;
 
         [Header("Debugging")]
-        public bool drawGizmos;
-        public bool drawForces;
-        public bool drawVectors;
-        public bool drawNeighbours;
+        //public bool drawGizmos = false;
+        //public bool drawForces = false;
+        //public bool drawVectors = false;
+        //public bool drawNeighbours = false;
 
         [Header("Seek")]
-        public bool seekEnabled;
-        public Vector3 seekTargetPos;
-        public float seekWeight;
-        public bool seekPlayer;
+        public bool seekEnabled = false;
+        public Vector3 seekTargetPos = Vector3.zero;
+        public float seekWeight = 1.0f;
+        public bool seekPlayer = false;
 
         [Header("Flee")]
         public bool fleeEnabled;
-        public float fleeWeight;
-        public GameObject fleeTarget;
+        public float fleeWeight = 1.0f;
+        public GameObject fleeTarget = null;
+        public float fleeRange = 100.0f;
         private Vector3 fleeTargetPosition = Vector3.zero;
-
-        public float fleeRange;
         [HideInInspector]
         public Vector3 fleeForce;
 
         [Header("Arrive")]
-        public bool arriveEnabled;
-        public Vector3 arriveTargetPos;
-        public float arriveWeight;
-        public float arriveSlowingDistance;
+        public bool arriveEnabled = false;
+        public Vector3 arriveTargetPos = Vector3.zero;
+        public float arriveWeight = 1.0f;
+        public float arriveSlowingDistance = 15.0f;
         [Range(0.0f, 1.0f)]
-        public float arriveDeceleration;
-
+        public float arriveDeceleration = 0.9f;
 
         public enum WanderMethod { Jitter, Noise };
         [Header("Wander")]
         public bool wanderEnabled;
         public WanderMethod wanderMethod;
-        public float wanderRadius;
-        public float wanderJitter;
-        public float wanderDistance;
-        public float wanderWeight;
-        public float wanderNoiseDeltaX;
+        public float wanderRadius = 10.0f;
+        public float wanderJitter = 20.0f;
+        public float wanderDistance = 15.0f;
+        public float wanderWeight = 1.0f;
+        public float wanderNoiseDeltaX = 0.5f;
         private float wanderNoiseX;
         private float wanderNoiseY;
 
+
         [Header("Separation")]
-        public bool separationEnabled;
-        public float separationWeight;
+        public bool separationEnabled = false;
+        public float separationWeight = 1.0f;
 
         [Header("Alignment")]
-        public bool alignmentEnabled;
-        public float alignmentWeight;
+        public bool alignmentEnabled = false;
+        public float alignmentWeight = 1.0f;
 
         [Header("Cohesion")]
-        public bool cohesionEnabled;
-        public float cohesionWeight;
+        public bool cohesionEnabled = false;
+        public float cohesionWeight = 1.0f;
 
         [Header("Obstacle Avoidance")]
-        public bool obstacleAvoidanceEnabled;
-        public float minBoxLength;
-        public float obstacleAvoidanceWeight;
+        public bool obstacleAvoidanceEnabled = false;
+        public float minBoxLength = 50.0f;
+        public float obstacleAvoidanceWeight = 1.0f;
 
         [Header("Plane Avoidance")]
-        public bool planeAvoidanceEnabled;
-        public float planeAvoidanceWeight;
-        public float planeY;
+        public bool planeAvoidanceEnabled = false;
+        public float planeAvoidanceWeight = 1.0f;
+        public float planeY = 0;
 
         [Header("Follow Path")]
-        public bool followPathEnabled;
-        public float followPathWeight;
+        public bool followPathEnabled = false;
+        public float followPathWeight = 1.0f;
         public bool ignoreHeight = false;
         public Path path;
 
         [Header("Pursuit")]
-        public bool pursuitEnabled;
-        public GameObject pursuitTarget;
-        public float pursuitWeight;
+        public bool pursuitEnabled = false;
+        public GameObject pursuitTarget = null;
+        public float pursuitWeight = 1.0f;
+        private Vector3 pursuitTargetPos;
 
         [Header("Evade")]
-        public bool evadeEnabled;
-        public GameObject evadeTarget;
-        public float evadeWeight;
+        public bool evadeEnabled = false;
+        public GameObject evadeTarget = null;
+        public float evadeWeight = 1.0f;
 
-        [Header("Interpose")]
-        public bool interposeEnabled;
-        public float interposeWeight;
-
-        [Header("Hide")]
-        public bool hideEnabled;
-        public float hideWeight;
-
-        [Header("Min Distance Pursuit")]
-        public bool minDistancePursuitEnabled;
-        public float minDistancePursuitWeight;
-        public float minDistance;
 
         [Header("Offset Pursuit")]
-        public bool offsetPursuitEnabled;
-        public GameObject offsetPursuitTarget;
-        public float offsetPursuitWeight;
+        public bool offsetPursuitEnabled = false;
+        public GameObject offsetPursuitTarget = null;
+        public float offsetPursuitWeight = 1.0f;
         [Range(0.0f, 1.0f)]
         public float pitchForceScale = 1.0f;
-
         [HideInInspector]
         public Vector3 offset;
+        private Vector3 offsetPursuitTargetPos = Vector3.zero;
 
         [Header("Sphere Constrain")]
-        public bool sphereConstrainEnabled;
-        public bool centreOnPosition;
-        public Vector3 sphereCentre;
-        public float sphereRadius;
-        public float sphereConstrainWeight;
+        public bool sphereConstrainEnabled = false;
+        public bool centreOnPosition = true;
+        public Vector3 sphereCentre = Vector3.zero;
+        public float sphereRadius = 1000.0f;
+        public float sphereConstrainWeight = 1.0f;
 
         [Header("Random Walk")]
-        public bool randomWalkEnabled;
+        public bool randomWalkEnabled = false;
         [HideInInspector]
-        public Vector3 randomWalkCenter;
-        public float randomWalkWaitMaxSeconds;
-        private float randomWalkWait;
-
-        public float randomWalkRadius;
-        public bool randomWalkKeepY;
-        public float randomWalkWeight;
-        private Vector3 randomWalkForce;
+        public Vector3 randomWalkCenter = Vector3.zero;
+        public float randomWalkWaitMaxSeconds = 5.0f;
+        private float randomWalkWait = 0.0f;
+        public float randomWalkRadius = 1000.0f;
+        public bool randomWalkKeepY = true;
+        public float randomWalkWeight = 1.0f;
+        private Vector3 randomWalkForce = Vector3.zero;
 
         [Header("Scene Avoidance")]
-        public bool sceneAvoidanceEnabled = true;
-        public float sceneAvoidanceWeight = 100.0f;
-        public float sceneAvoidanceForwardFeelerDepth = 40;
+        public bool sceneAvoidanceEnabled = false;
+        public float sceneAvoidanceWeight = 1.0f;
+        public float sceneAvoidanceForwardFeelerDepth = 30;
         public float sceneAvoidanceSideFeelerDepth = 15;
+        SceneAvoidanceFeelerInfo[] sceneAvoidanceFeelers = new SceneAvoidanceFeelerInfo[5];
         public float sceneAvoidanceFrontFeelerDither = 0.5f;
         public float sceneAvoidanceSideFeelerDither = 0.05f;
 
-        [HideInInspector]
-        public Vector3 force;
+        [Header("Wiggle")]
+        public float wiggleAngularSpeedDegrees = 30;
+        public float wiggleAmplitude = 50;
+        public bool wiggleEnabled = false;
+        public float wiggleWeigth = 1.0f;
+        public WiggleAxis wiggleDirection = WiggleAxis.Horizontal;
+        public enum WiggleAxis { Horizontal, Vertical };
+        private Vector3 wiggleWorldTarget = Vector3.zero;
+        private float wiggleTheta = 0.0f;
 
         [HideInInspector]
-        public Vector3 velocity;
+        public Vector3 force = Vector3.zero;
+
+        [HideInInspector]
+        public Vector3 velocity = Vector3.zero;
 
         [HideInInspector]
         public Vector3 acceleration;
 
         List<Boid> tagged = new List<Boid>();
         List<Vector3> PlaneAvoidanceFeelers = new List<Vector3>();
-        SceneAvoidanceFeelerInfo[] sceneAvoidanceFeelers = new SceneAvoidanceFeelerInfo[5];
 
         private Vector3 wanderTargetPos;
         private Vector3 randomWalkTarget;
 
-        Color debugLineColour = Color.cyan;        
-        Collider myCollider;
-
+        
         [Header("Gravity")]
         public bool applyGravity = false;
         public Vector3 gravity = new Vector3(0, -9, 0);
 
+        Collider myCollider;
+
         public void OnDrawGizmos()
         {
-            Gizmos.color = Color.green;
+            if (seekEnabled)
+            {
+                Gizmos.color = Color.green;
+                Gizmos.DrawLine(transform.position, seekTargetPos);
+            }
+            if (arriveEnabled)
+            {
+                Gizmos.color = Color.cyan;
+                Gizmos.DrawLine(transform.position, arriveTargetPos);
+            }
+            if (pursuitEnabled)
+            {
+                Gizmos.color = Color.magenta;
+                Gizmos.DrawLine(transform.position, pursuitTargetPos);
+            }
+            if (offsetPursuitEnabled)
+            {
+                Gizmos.color = Color.yellow;
+                Gizmos.DrawLine(transform.position, offsetPursuitTargetPos);
+            }
+
+            if (wanderEnabled)
+            {
+                Gizmos.color = Color.blue;
+                Vector3 wanderCircleCenter = transform.TransformPoint(Vector3.forward * wanderDistance);
+                Gizmos.DrawWireSphere(wanderCircleCenter, wanderRadius);
+                Gizmos.color = Color.green;
+                Vector3 worldTarget = transform.TransformPoint(wanderTargetPos + Vector3.forward * wanderDistance);
+                Gizmos.DrawLine(transform.position, worldTarget);
+            }
+
+            if (wiggleEnabled)
+            {
+                LineDrawer.DrawTarget(wiggleWorldTarget, Color.red);
+                Vector3 worldCenter = TransformPoint(Vector3.forward * wanderDistance);
+                LineDrawer.DrawSphere(worldCenter, wanderRadius, 10, Color.yellow);
+            }
+
+            if (sceneAvoidanceEnabled)
+            {
+                foreach (SceneAvoidanceFeelerInfo feeler in sceneAvoidanceFeelers)
+                {
+                    if (feeler.collided)
+                    {
+                        Gizmos.color = Color.cyan;
+                        Gizmos.DrawLine(transform.position, feeler.point);
+                    }
+                }
+            }
+
+            if (sphereConstrainEnabled)
+            {
+                Gizmos.color = Color.green;
+                Gizmos.DrawWireSphere((flock != null) ? flock.flockCenter : sphereCentre, sphereRadius);
+            }
         }
 
 
@@ -233,96 +282,7 @@ namespace BGE
         
         public Boid()
         {
-            TurnOffAll();
-
-            drawGizmos = false;
-            drawForces = false;
-            drawVectors = false;
-            drawNeighbours = false;
-            applyBanking = true;
-            flock = null;
-
-            // Set default values
-            force = Vector3.zero;
-            velocity = Vector3.zero;
-            mass = 1.0f;
-            damping = 0.01f;
-            radius = 5.0f;
-            forceMultiplier = 1.0f;
-            timeMultiplier = 1.0f;
-
-            calculationMethod = CalculationMethods.WeightedTruncatedRunningSumWithPrioritisation;
-
-            seekTargetPos = Vector3.zero;
-            seekWeight = 1.0f;
-
-            fleeWeight = 1.0f;
-            fleeTarget = null;
-            fleeRange = 100.0f;
-
-            arriveSlowingDistance = 15.0f;
-            arriveDeceleration = 0.9f;
-            arriveTargetPos = Vector3.zero;
-            arriveWeight = 1.0f;
-
-            //wanderMethod = WanderMethod.Jitter;
-            wanderRadius = 10.0f;
-            wanderDistance = 15.0f;
-            wanderJitter = 20.0f;
-            wanderWeight = 1.0f;
-
-
-            wanderNoiseDeltaX = 0.01f;
-
-            cohesionWeight = 1.0f;
-            separationWeight = 1.0f;
-            alignmentWeight = 1.0f;
-
-            obstacleAvoidanceWeight = 1.0f;
-            minBoxLength = 50.0f;
-
-            followPathWeight = 1.0f;
-
-            pursuitWeight = 1.0f;
-            pursuitTarget = null;
-
-            evadeTarget = null;
-            evadeWeight = 1.0f;
-
-            interposeWeight = 1.0f;
-            hideWeight = 1.0f;
-
-            planeAvoidanceWeight = 1.0f;
-
-            offsetPursuitTarget = null;
-            offsetPursuitWeight = 1.0f;
-
-            sphereCentre = Vector3.zero;
-
-            sphereConstrainWeight = 1.0f;
-            centreOnPosition = true;
-            sphereRadius = 1000.0f;
-
-            randomWalkWeight = 1.0f;
-            randomWalkCenter = Vector3.zero;
-            randomWalkRadius = 500.0f;
-            randomWalkKeepY = false;
-
-            randomWalkForce = Vector3.zero;
-            randomWalkWaitMaxSeconds = 5.0f;
-
-            maxSpeed = 20;
-            maxForce = 10;
-            maxTurnDegrees = 180.0f;
-
-            sceneAvoidanceEnabled = false;
-            sceneAvoidanceWeight = 1.0f;
-
-            minDistancePursuitEnabled = false;
-            minDistancePursuitWeight = 1.0f;
-            minDistance = 5.0f;
-
-            planeY = 0.0f;
+            TurnOffAll();            
         }
 
         void Start()
@@ -373,13 +333,10 @@ namespace BGE
             followPathEnabled = false;
             pursuitEnabled = false;
             evadeEnabled = false;
-            interposeEnabled = false;
-            hideEnabled = false;
             offsetPursuitEnabled = false;
             sphereConstrainEnabled = false;
             randomWalkEnabled = false;
             wiggleEnabled = false;
-            minDistancePursuitEnabled = false;
         }
 
 
@@ -576,14 +533,8 @@ namespace BGE
             {
                 if (flock != null)
                 {
-                    if (flock.UseCellSpacePartitioning)
-                    {
-                        TagNeighboursPartitioned(flock.neighbourDistance);                                                
-                    }
-                    else
-                    {
-                        TagNeighboursSimple(flock.neighbourDistance);
-                    }
+                    TagNeighboursSimple(flock.neighbourDistance);
+                    
                 }
             }
 
@@ -677,17 +628,7 @@ namespace BGE
                     return steeringForce;
                 }
             }
-
-            if (minDistancePursuitEnabled)
-            {
-                force = MinDistancePursuit(minDistance) * minDistancePursuitWeight;
-                force *= forceMultiplier;
-                if (!accumulateForce(ref steeringForce, force))
-                {
-                    return steeringForce;
-                }
-            }            
-
+            
             if (followPathEnabled)
             {
                 force = FollowPath() * followPathWeight;
@@ -711,22 +652,11 @@ namespace BGE
          
         }
 
-        float wiggleTheta = 0;
-
-        [Header("Wiggle")]
-        public float wiggleAngularSpeedDegrees = 30;
-        public float wiggleLowDegrees = -30;
-        public float wiggleHighDegrees = 30;
-        public bool wiggleEnabled = false;
-        public float wiggleWeigth = 1.0f;
-        public WiggleAxis wiggleDirection = WiggleAxis.Horizontal;
-        public enum WiggleAxis { Horizontal, Vertical };
-
         Vector3 Wiggle()
         {
 
             float n = Mathf.Sin(wiggleTheta);
-            float t = Utilities.Map(n, -1.0f, 1.0f, wiggleLowDegrees, wiggleHighDegrees);
+            float t = Utilities.Map(n, -1.0f, 1.0f, -wiggleAmplitude, wiggleAmplitude);
             float theta = Mathf.Sin(Utilities.DegreesToRads(t));
 
             if (wiggleDirection == WiggleAxis.Horizontal)
@@ -741,31 +671,18 @@ namespace BGE
                 wanderTargetPos.z = Mathf.Cos(theta);
                 wanderTargetPos.x = 0;
             }
-            
+
             wanderTargetPos *= wanderRadius;
-            Vector3 yawRoll = rotation.eulerAngles;
+            Vector3 yawRoll = transform.rotation.eulerAngles;
             yawRoll.x = 0;
             Vector3 localTarget = wanderTargetPos + (Vector3.forward * wanderDistance);
-            Vector3 worldTarget = TransformPoint(localTarget);
+            wiggleWorldTarget = TransformPoint(localTarget);
 
-            Vector3 worldTargetOnY = position + Quaternion.Euler(yawRoll) * localTarget;
-
-            BoidManager.PrintVector("World target: ", worldTarget);
-            BoidManager.PrintVector("World target on y: ", worldTargetOnY);
-
-            if (drawGizmos)
-            {
-                LineDrawer.DrawTarget(worldTarget, Color.red);
-                LineDrawer.DrawTarget(worldTargetOnY, Color.yellow);
-
-                Vector3 worldCenter = TransformPoint(Vector3.forward * wanderDistance);
-                LineDrawer.DrawSphere(worldCenter, wanderRadius, 10, Color.yellow);
-            }
-
+            Vector3 worldTargetOnY = transform.position + Quaternion.Euler(yawRoll) * localTarget;
             wiggleTheta += ThreadTimeDelta() * wiggleAngularSpeedDegrees * Mathf.Deg2Rad;
             if (wiggleTheta > Utilities.TWO_PI)
             {
-                wiggleTheta = 0;
+                wiggleTheta = Utilities.TWO_PI - wiggleTheta;
             }
 
             return Seek(worldTargetOnY);
@@ -849,10 +766,6 @@ namespace BGE
             return force;
         }        
 
-        float maxAngle = float.MinValue;
-        [HideInInspector]
-        public float bankAngle = 0.0f;
-
         void Update()
         {
             float smoothRate;
@@ -868,17 +781,8 @@ namespace BGE
                 timeDelta *= flock.timeMultiplier;
             }           
             
-            if (drawForces)
-            {
-                Quaternion q = Quaternion.FromToRotation(Vector3.forward, force);
-                LineDrawer.DrawArrowLine(transform.position, transform.position + force, Color.magenta, q);
-            }
             Utilities.checkNaN(force);
             Vector3 newAcceleration = force / mass;
-            if (drawVectors)
-            {
-                LineDrawer.DrawVectors(transform);
-            }
 
             if (timeDelta > 0.0f)
             {
@@ -917,54 +821,16 @@ namespace BGE
 
             if (speed > 0.01f)
             {
-                float maxTurnFrame = maxTurnDegrees * Time.deltaTime;
-                float maxTurn = maxTurnFrame * Mathf.Deg2Rad; // Max turn in rads
-                float dot = Vector3.Dot(transform.forward, velocity.normalized);
-                bankAngle = Mathf.Acos(dot);
-
-                if (float.IsNaN(bankAngle))
-                {
-                    bankAngle = 0.0f;
-                }
-
-                float side = Vector3.Dot(transform.right, velocity.normalized);
-                if (side < 0) // Angle < 90
-                {
-                    bankAngle = -bankAngle;
-                }
-
-                if (Mathf.Abs(bankAngle) > maxTurn)
-                {
-                    clamping = true;
-                    // Clamp the turn
-                    Vector3 axis = Vector3.Cross(transform.forward, velocity.normalized);
-                    Quaternion q = Quaternion.AngleAxis(maxTurnFrame, axis);
-                    transform.forward = q * transform.forward;
-                    velocity = transform.forward * velocity.magnitude;
-                }
-                else
-                {
-                    clamping = false;
-                    transform.forward = velocity;
-                    transform.forward.Normalize();
-                }
-                if (Mathf.Abs(bankAngle) > maxAngle)
-                {
-                    maxAngle = Mathf.Abs(bankAngle);
-                }
-
-                if (applyBanking)
-                {
-                    transform.LookAt(transform.position + transform.forward, tempUp);
-                }
-                velocity *= (1.0f - damping);
+                transform.forward = velocity;
+                transform.forward.Normalize();
             }
-
-            if (path != null && drawGizmos)
+                
+            if (applyBanking)
             {
-                path.draw = true;
-                path.Draw();
+                transform.LookAt(transform.position + transform.forward, tempUp);
             }
+            velocity *= (1.0f - damping);
+
 
             // Update the thread..
             UpdateLocalFromTransform();
@@ -1005,11 +871,7 @@ namespace BGE
 
             desiredVelocity = targetPos - position;
             desiredVelocity.Normalize();
-            desiredVelocity *= maxSpeed;
-            if (drawGizmos)
-            {
-                LineDrawer.DrawTarget(targetPos, Color.red);
-            }
+            desiredVelocity *= maxSpeed;            
             return (desiredVelocity - velocity);
         }
 
@@ -1288,14 +1150,9 @@ namespace BGE
             float dist = toTarget.magnitude;
             float time = dist / maxSpeed;
 
-            Vector3 targetPos = pursuitTarget.GetComponent<Boid>().position + (time * pursuitTarget.GetComponent<Boid>().velocity);
-            if (drawGizmos)
-            {
-                LineDrawer.DrawTarget(targetPos, Color.red);
-                LineDrawer.DrawLine(position, targetPos, Color.cyan);
-            }
-
-            return Seek(targetPos);
+            pursuitTargetPos = pursuitTarget.GetComponent<Boid>().position + (time * pursuitTarget.GetComponent<Boid>().velocity);
+            
+            return Seek(pursuitTargetPos);
         }
 
         Vector3 Flee(Vector3 targetPos, float fleeRange)
@@ -1367,10 +1224,6 @@ namespace BGE
 
             Vector3 localTarget = wanderTargetPos + Vector3.forward * wanderDistance;
             Vector3 worldTarget = TransformPoint(localTarget);
-            if (drawGizmos)
-            {
-                LineDrawer.DrawTarget(worldTarget, Color.blue);
-            }
             return (worldTarget - position);
         }
 
@@ -1389,12 +1242,6 @@ namespace BGE
             Vector3 localTarget = wanderTargetPos + (Vector3.forward * wanderDistance);
             Vector3 worldTarget = TransformPoint(localTarget);
 
-            if (drawGizmos)
-            {
-                LineDrawer.DrawTarget(worldTarget, Color.red);
-                Vector3 worldCenter = TransformPoint(Vector3.forward * wanderDistance);
-                LineDrawer.DrawSphere(worldCenter, wanderRadius, 10, Color.yellow);
-            }
             wanderNoiseX += wanderNoiseDeltaX;
             Vector3 desired = worldTarget - position;
             desired.Normalize();
@@ -1451,12 +1298,9 @@ namespace BGE
 
         public void DrawFeelers()
         {
-            if (drawGizmos)
+            foreach (Vector3 feeler in PlaneAvoidanceFeelers)
             {
-                foreach (Vector3 feeler in PlaneAvoidanceFeelers)
-                {
-                    LineDrawer.DrawLine(position, feeler, Color.green);
-                }
+                LineDrawer.DrawLine(position, feeler, Color.green);
             }
         }
 
@@ -1466,12 +1310,7 @@ namespace BGE
 
             float distance = desired.magnitude;
             //toTarget.Normalize();
-            if (drawGizmos)
-            {
-                LineDrawer.DrawTarget(target, Color.red);
-                LineDrawer.DrawSphere(target, arriveSlowingDistance, 20, Color.yellow);
-            }
-
+            
             if (distance < 1.0f)
             {
                 return Vector3.zero;
@@ -1527,10 +1366,6 @@ namespace BGE
             {
                 steeringForce = Vector3.Normalize(toTarget) * (sphereRadius - toTarget.magnitude);
             }
-            if (drawGizmos)
-            {
-                LineDrawer.DrawSphere((flock != null) ? flock.flockCenter : sphereCentre, radius, 20, Color.green);
-            }
             return steeringForce;
         }
 
@@ -1546,102 +1381,15 @@ namespace BGE
             {                
                 if (boid != this)
                 {
-                    if (drawNeighbours)
-                    {
-                        LineDrawer.DrawLine(position, boid.position, Color.cyan);
-                    }
                     if ((position - boid.position).sqrMagnitude < inRangeSq)
                     {
                         tagged.Add(boid);
                     }
                 }
             }
-            DrawNeighbours(Color.white);
             return tagged.Count;
         }
-
-        private void DrawNeighbours(Color color)
-        {
-            if (drawNeighbours)
-            {
-                foreach (Boid neighbour in tagged)
-                {
-                    LineDrawer.DrawCircle(neighbour.position, 5, 10, color);
-                }
-                LineDrawer.DrawCircle(position, 5, 10, Color.red);
-            }
-        }
-
-        private int TagNeighboursPartitioned(float inRange)
-        {
-
-            Bounds expanded = new Bounds();
-            expanded.min = new Vector3(position.x - inRange, 0, position.z - inRange);
-            expanded.max = new Vector3(position.x + inRange, 0, position.z + inRange);
-
-            if (drawNeighbours)
-            {
-                LineDrawer.DrawSquare(expanded.min, expanded.max, Color.yellow);
-            }
-
-            List<Cell> cells = flock.space.cells;
-            tagged.Clear();
-            int myCellIndex = flock.space.FindCell(position);
-            if (myCellIndex == -1)
-            {
-                //Debug.Log("Not found in space");
-                // Im outside the cells so return
-                return 0;
-            }
-            else
-            {
-                if (drawGizmos)
-                {
-                    LineDrawer.DrawSquare(cells[myCellIndex].bounds.min, cells[myCellIndex].bounds.max, Color.green);
-                }
-            }
-            Cell myCell = flock.space.cells[myCellIndex];
-
-            //foreach (Cell cell in flock.space.cells)
-            int border = 2;
-            for (int row = myCell.row - border; row < myCell.row + border; row++)
-            {
-                for (int col = myCell.col - border; col < myCell.col + border; col++)
-                {
-                    Cell cell = flock.space.GetCell(row, col);
-                    if (cell != null && cell.Intersects(expanded))
-                    {
-                        if (drawNeighbours)
-                        {
-                            LineDrawer.DrawSquare(cell.bounds.min, cell.bounds.max, Color.magenta);
-                        }
-                        List<Boid> cellNeighbourBoids = cell.contained;
-                        float rangeSquared = inRange * inRange;
-                        foreach (Boid neighbour in cellNeighbourBoids)
-                        {
-                            if (neighbour != this)
-                            {
-
-                                if (drawNeighbours)
-                                {
-                                    LineDrawer.DrawLine(position, neighbour.position, Color.blue);
-                                }
-                                if (Vector3.SqrMagnitude(position - neighbour.position) < rangeSquared)
-                                {
-                                    tagged.Add(neighbour);
-
-                                }
-                            }
-                        }
-                    }
-                }
-            }
-
-            DrawNeighbours(Color.white);
-
-            return this.tagged.Count;
-        }
-
+        
         public Vector3 Separation()
         {
             Vector3 steeringForce = Vector3.zero;

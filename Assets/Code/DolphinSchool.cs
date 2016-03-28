@@ -1,7 +1,6 @@
 ﻿using UnityEngine;
 using System.Collections.Generic;
 using BGE;
-using Gamelogic.Colors;
 
 public class DolphinSchool : MonoBehaviour {
 
@@ -16,7 +15,6 @@ public class DolphinSchool : MonoBehaviour {
     [HideInInspector]
     public GameObject leader;
 
-    PaletteGenerator pg;
 
     float fov = 45.0f;
     float minDist = 5000;
@@ -51,7 +49,7 @@ public class DolphinSchool : MonoBehaviour {
         Boid boid = leader.GetComponent<Boid>();
         //boid.path.Clear();
         boid.followPathEnabled = true;
-        boid.drawGizmos = false;
+        
         Vector3 waypoint = oldDest;
         Vector3 toDest = (dest - oldDest).normalized;
         while(Vector3.Distance(waypoint, dest) > 200)
@@ -112,9 +110,7 @@ public class DolphinSchool : MonoBehaviour {
 
 
     // Use this for initialization
-    void Start () {
-        
-        pg = GetComponent<PaletteGenerator>();
+    void Start () {        
         noiseForm = FindObjectOfType<NoiseForm>();
         leader = Instantiate<GameObject>(dolphinPrefab);
         leader.transform.position = transform.position;
@@ -148,16 +144,11 @@ public class DolphinSchool : MonoBehaviour {
 
     Color RandomFromPalette()
     {
-        return pg.palette.colors[Random.Range(0, pg.palette.colors.Length)];
+        return Color.cyan;
     }
 
     void SetDolphinColors(GameObject dolphin)
     {
-        DolphinParts dolphinParts = dolphin.GetComponentInChildren<DolphinParts>();
-            
-        Utilities.RecursiveSetColor(dolphinParts.tail, pg.palette.colors[2]);
-        Utilities.RecursiveSetColor(dolphinParts.body, pg.palette.colors[1]);
-        Utilities.RecursiveSetColor(dolphinParts.head, pg.palette.colors[0]);
     }
 	
 	// Update is called once per frame

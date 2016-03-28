@@ -8,14 +8,6 @@ namespace BGE
 {
     public class Flock: MonoBehaviour
     {
-
-        [Header("Cell Space Partitioning")]
-        public bool UseCellSpacePartitioning;
-        [HideInInspector]
-        public Space space;
-        [HideInInspector]
-        public float numCells;
-
         public float neighbourDistance;
 
         public float radius = 100;
@@ -52,12 +44,6 @@ namespace BGE
 
         void Start()
         {
-            if (UseCellSpacePartitioning)
-            {
-                // Allow 3x the radius in case boids go outside of the sphere...
-                numCells = 40; //(radius * 3) / neighbourDistance;
-                space = new Space(transform.position, radius * 3, radius * 3, radius * 3, numCells, boids);
-            }
             flockCenter = transform.position;
 
             UpdateEnemyPositions();
@@ -74,34 +60,10 @@ namespace BGE
                 enemyPositions[i] = enemies[i].transform.position;
             }
         }
-
-
-
+        
         public void Update()
         {
-            if (UseCellSpacePartitioning)
-            {
-                space.bounds.center = transform.position;
-            }
-
-            if (drawGizmos)
-            {
-                LineDrawer.DrawSphere(flockCenter, radius, 20, Color.magenta);
-                if (UseCellSpacePartitioning)
-                {
-                    space.Draw();
-                }
-            }
             UpdateEnemyPositions();
         }
-
-        void LateUpdate()
-        {
-            if (UseCellSpacePartitioning)
-            {
-                space.Partition();
-            }
-        }
-
     }
 }

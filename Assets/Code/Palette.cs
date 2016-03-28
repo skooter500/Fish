@@ -1,12 +1,10 @@
 ﻿using UnityEngine;
 using BGE;
 using System.Collections.Generic;
-using Gamelogic.Colors;
+
 
 public class Palette : MonoBehaviour {
-
-    PaletteGenerator generator;
-
+   
     public static Palette Instance;
 
     Palette()
@@ -31,7 +29,6 @@ public class Palette : MonoBehaviour {
     
 	// Use this for initialization
 	void Start () {
-        generator = GetComponent<PaletteGenerator>();                
 	}
 	
 	// Update is called once per frame

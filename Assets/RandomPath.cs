@@ -28,7 +28,6 @@ public class RandomPath : MonoBehaviour {
         dest.y = noiseForm.GetHeight(dest) + heightAbove;        
         //boid.path.Clear();
         boid.followPathEnabled = true;
-        boid.drawGizmos = false;
         Vector3 waypoint = oldDest;
         Vector3 toDest = (dest - oldDest).normalized;
         while (Vector3.Distance(waypoint, dest) > 200)

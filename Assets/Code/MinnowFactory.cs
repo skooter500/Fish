@@ -144,14 +144,6 @@ namespace BGE
                         audioSource.enabled = false;
                     }
                 }
-                if (i == boidCount / 2)
-                {
-                    if (drawGizmos)
-                    {
-                        boid.drawGizmos = drawGizmos;
-                        boid.drawNeighbours = false;
-                    }
-                }
             }
 
             StartUpdateThreads();

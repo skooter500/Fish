@@ -759,6 +759,7 @@ namespace BGE
 
             timeDelta = Time.deltaTime * timeMultiplier;
             if (flock != null)
+
             {
                 timeDelta *= flock.timeMultiplier;
             }
@@ -777,19 +778,13 @@ namespace BGE
             }
             Utilities.checkNaN(force);
             Vector3 newAcceleration = force / mass;
-            if (drawVectors)
-            {
-                LineDrawer.DrawVectors(transform);
-            }
-
-
+            
             if (timeDelta > 0.0f)
             {
                 smoothRate = Utilities.Clip(9.0f * timeDelta, 0.15f, 0.4f) / 2.0f;
                 Utilities.BlendIntoAccumulator(smoothRate, newAcceleration, ref acceleration);
             }
-
-
+            
             velocity += acceleration * timeDelta;
 
             float speed = velocity.magnitude;
@@ -834,13 +829,7 @@ namespace BGE
                 // Apply damping
                 velocity *= (1.0f - damping);
             }
-
-            if (path != null && drawGizmos)
-            {
-                path.draw = true;
-                path.Draw();
-            }
-
+            
             if (calculateThisFrame && enforceNonPenetrationConstraint)
             {
                 EnforceNonPenetrationConstraint();

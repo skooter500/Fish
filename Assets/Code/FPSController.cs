@@ -119,17 +119,9 @@ namespace BGE
             float contPitch = 0; //Input.GetAxis("Pitch Axis");
             Yaw(contYaw);
 
-            // If in Rift mode, dont pitch
-            /*if (ovrCamera == null)
-            {
-                Pitch(-mouseY);
-                Pitch(contPitch);
-            }
-            else*/
-            {
-                //Fly(-contPitch * speed * Time.deltaTime);
-            }
-
+            Pitch(-mouseY);
+            Pitch(contPitch);
+            
             float contWalk = 0; // Input.GetAxis("Walk Axis");
             float contStrafe = 0; // Input.GetAxis("Strafe Axis");
             if (Mathf.Abs(contWalk) > 0.1f)

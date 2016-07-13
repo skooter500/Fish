@@ -7,16 +7,11 @@ namespace BGE
 {
     public class FPSController : MonoBehaviour
     {
-        Camera ovrCamera;
-        float speed = 200.0f;
+        float speed = 50.0f;
         // Use this for initialization
         void Start()
         {
 
-            if (GameObject.FindGameObjectWithTag("ovrplayer") != null)
-            {
-                //ovrCamera = GameObject.FindGameObjectWithTag("ovrplayer").GetComponentInChildren<Camera>();
-            }
         }
 
         void Yaw(float angle)
@@ -48,14 +43,8 @@ namespace BGE
 
         void Walk(float units)
         {
-            if (ovrCamera != null)
-            {
-                transform.position += ovrCamera.transform.forward * units;
-            }
-            else
-            {
-                transform.position += transform.forward * units;
-            }
+            transform.position += transform.forward * units;
+
         }
 
         void Fly(float units)
@@ -65,14 +54,8 @@ namespace BGE
 
         void Strafe(float units)
         {
-            if (ovrCamera != null)
-            {
-                transform.position += ovrCamera.transform.right * units;
-            }
-            else
-            {
-                transform.position += transform.right * units;
-            }
+            transform.position += transform.right * units;
+
         }
 
         // Update is called once per frame
@@ -81,11 +64,11 @@ namespace BGE
             float mouseX, mouseY;
             float speed = this.speed;
 
-            float runAxis = Input.GetAxis("Run Axis");
+            float runAxis = 0; // Input.GetAxis("Run Axis");
 
             if (Input.GetKey(KeyCode.LeftShift) || runAxis != 0)
             {
-                speed *= 5.0f;
+                speed *= 10.0f;
             }
 
             if (Input.GetKey(KeyCode.W))
@@ -115,6 +98,16 @@ namespace BGE
             {
                 Roll(Time.deltaTime * speed);
             }
+
+            if (Input.GetKey(KeyCode.R))
+            {
+                Fly(Time.deltaTime * speed);
+            }
+            if (Input.GetKey(KeyCode.F))
+            {
+                Fly(-Time.deltaTime * speed);
+            }
+
             //BoidManager.PrintVector("OVR Forward: ", ovrCamera.transform.forward);
 
             mouseX = Input.GetAxis("Mouse X");
@@ -122,23 +115,15 @@ namespace BGE
 
 
             Yaw(mouseX);
-            float contYaw = Input.GetAxis("Yaw Axis");
-            float contPitch = Input.GetAxis("Pitch Axis");
+            float contYaw = 0; // Input.GetAxis("Yaw Axis");
+            float contPitch = 0; //Input.GetAxis("Pitch Axis");
             Yaw(contYaw);
 
-            // If in Rift mode, dont pitch
-            if (ovrCamera == null)
-            {
-                Pitch(-mouseY);
-                Pitch(contPitch);
-            }
-            else
-            {
-                Fly(-contPitch * speed * Time.deltaTime);
-            }
+            Pitch(-mouseY);
+            Pitch(contPitch);
 
-            float contWalk = Input.GetAxis("Walk Axis");
-            float contStrafe = Input.GetAxis("Strafe Axis");
+            float contWalk = 0; // Input.GetAxis("Walk Axis");
+            float contStrafe = 0; // Input.GetAxis("Strafe Axis");
             if (Mathf.Abs(contWalk) > 0.1f)
             {
                 Walk(-contWalk * speed * Time.deltaTime);
